@@ -13,6 +13,7 @@ export interface ApiResponse<T> {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private apiUrl = environment.apiUrl;
+  private readonly tokenKey = 'intern-manager-api-token-v1';
 
   constructor(private http: HttpClient) { }
 
@@ -23,18 +24,30 @@ export class ApiService {
         httpParams = httpParams.set(key, params[key]);
       });
     }
-    return this.http.get<ApiResponse<T>>(`${this.apiUrl}${endpoint}`, { params: httpParams });
+    return this.http.get<ApiResponse<T>>(`${this.apiUrl}${endpoint}`, {
+      params: httpParams,
+      ...this.authOptions()
+    });
   }
 
   post<T>(endpoint: string, body: any): Observable<ApiResponse<T>> {
-    return this.http.post<ApiResponse<T>>(`${this.apiUrl}${endpoint}`, body);
+    return this.http.post<ApiResponse<T>>(`${this.apiUrl}${endpoint}`, body, this.authOptions());
   }
 
   put<T>(endpoint: string, body: any): Observable<ApiResponse<T>> {
-    return this.http.put<ApiResponse<T>>(`${this.apiUrl}${endpoint}`, body);
+    return this.http.put<ApiResponse<T>>(`${this.apiUrl}${endpoint}`, body, this.authOptions());
   }
 
   delete<T>(endpoint: string): Observable<ApiResponse<T>> {
-    return this.http.delete<ApiResponse<T>>(`${this.apiUrl}${endpoint}`);
+    return this.http.delete<ApiResponse<T>>(`${this.apiUrl}${endpoint}`, this.authOptions());
+  }
+
+  private authOptions(): { headers?: { Authorization: string } } {
+    if (typeof localStorage === 'undefined') {
+      return {};
+    }
+
+    const token = localStorage.getItem(this.tokenKey);
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 }

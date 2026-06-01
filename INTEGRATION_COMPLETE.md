@@ -1,35 +1,26 @@
-# ✅ Frontend Backend Integration Complete!
+# Frontend Backend Integration Status
 
-## 🎯 Status: PRODUCTION READY
+## Status: needs deployed backend URL
 
-### ✅ All Services Connected
-- AuthService ✓
-- JobService ✓
-- ApplicationService ✓
-- AttendanceService ✓
-- LogbookService ✓
-- EvaluationService ✓
-- ApiService ✓
+The frontend now builds with the checked-in auth guard and its API client is aligned with the current Go backend routes where those routes exist.
 
-### ✅ Security Implemented
-- JWT Authentication
-- Auth Interceptor (token injection)
-- Error Interceptor (401 handling)
-- Auth Guard (route protection)
-- RBAC Support
+Important remaining deployment work:
 
-### ✅ Backend Connected
-All endpoints on `http://localhost:8080` are properly integrated.
+- Set `src/environments/environment.ts` to `useMockData: false` only after the backend is deployed and `apiUrl` points at that backend, for example `https://your-backend.example.com/api`.
+- The Go backend must be deployed as a backend service. Vercel static frontend hosting will not automatically run the `backend` branch at `/api`.
+- Add backend environment variables in the backend host: `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME`, and `JWT_SECRET`.
+- Remove real secrets from `BackEnd/.env` in GitHub and rotate those credentials.
 
-## 🚀 Next Steps
-1. Run: `npm install`
-2. Start: `npm start`
-3. Navigate to: `http://localhost:4200`
+## Current backend route match
 
-## 📞 Backend Info
-- Port: 8080
-- Database: TiDB Cloud
-- Framework: Go + Gin
-- Authentication: JWT (24h expiry)
+- `POST /api/auth/login`
+- `POST /api/auth/register`
+- `GET /api/jobs`
+- `POST /api/applications`
+- `PUT /api/applications/:id/status`
+- `POST /api/attendance/check-in`
+- `PUT /api/attendance/check-out`
+- `POST /api/logbooks`
+- `PUT /api/logbooks/:id/approve`
 
-**Everything is ready for component development!**
+The frontend still contains mock mode for local/demo use.

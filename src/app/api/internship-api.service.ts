@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, forkJoin, map, of } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   ApiApplication,
@@ -46,6 +46,11 @@ export type InternshipDbSnapshot = {
   evaluations: Evaluation[];
 };
 
+type LoginResponse = ApiUser & {
+  token?: string;
+  user?: ApiUser;
+};
+
 /**
  * REST client aligned with `internship_db` tables.
  * Expected routes (adjust with your coworker if paths differ):
@@ -63,6 +68,7 @@ export type InternshipDbSnapshot = {
 export class InternshipApiService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiUrl.replace(/\/$/, '');
+  private readonly tokenKey = 'intern-manager-api-token-v1';
 
   apiEnabled(): boolean {
     return !environment.useMockData;
@@ -76,7 +82,7 @@ export class InternshipApiService {
     return forkJoin({
       users: this.getList<ApiUser, User>('users', mapUser),
       companies: this.getList<ApiCompany, Company>('companies', mapCompany),
-      jobPostings: this.getList<ApiJobPosting, JobPosting>('job-postings', mapJobPosting),
+      jobPostings: this.getList<ApiJobPosting, JobPosting>('jobs', mapJobPosting),
       applications: this.getList<ApiApplication, Application>('applications', mapApplication),
       internships: this.getList<ApiInternship, Internship>('internships', mapInternship),
       attendances: this.getList<ApiAttendance, Attendance>('attendances', mapAttendance),
@@ -96,9 +102,14 @@ export class InternshipApiService {
     }
 
     return this.http
-      .post<{ user: ApiUser }>(`${this.base}/auth/login`, { email, password })
+      .post<LoginResponse>(`${this.base}/auth/login`, { email, password })
       .pipe(
-        map((res) => mapUser(res.user)),
+        map((res) => {
+          if (res.token) {
+            this.setToken(res.token);
+          }
+          return mapUser(res.user ?? res);
+        }),
         catchError(() => of(null))
       );
   }
@@ -119,12 +130,10 @@ export class InternshipApiService {
       return of(null);
     }
 
-    return this.http
-      .post<{ user: ApiUser }>(`${this.base}/auth/register`, body)
-      .pipe(
-        map((res) => mapUser(res.user)),
-        catchError(() => of(null))
-      );
+    return this.http.post(`${this.base}/auth/register`, body).pipe(
+      switchMap(() => this.login(body.email, body.password)),
+      catchError(() => of(null))
+    );
   }
 
   createApplication(body: Omit<Application, 'id' | 'updatedAt'>): Observable<Application | null> {
@@ -132,7 +141,7 @@ export class InternshipApiService {
   }
 
   patchApplication(id: number, status: ApplicationStatus): Observable<Application | null> {
-    return this.patchOne<ApiApplication, Application>(`applications/${id}`, { status }, mapApplication);
+    return this.putOne<ApiApplication, Application>(`applications/${id}/status`, { status }, mapApplication);
   }
 
   createInternship(body: Omit<Internship, 'id' | 'createdAt' | 'updatedAt'>): Observable<Internship | null> {
@@ -140,7 +149,7 @@ export class InternshipApiService {
   }
 
   createAttendance(body: Omit<Attendance, 'id' | 'createdAt'>): Observable<Attendance | null> {
-    return this.postOne<ApiAttendance, Attendance>('attendances', {
+    return this.postOne<ApiAttendance, Attendance>('attendance/check-in', {
       internship_id: body.internshipId,
       student_id: body.studentId,
       check_in_time: body.checkInTime,
@@ -151,9 +160,10 @@ export class InternshipApiService {
     }, mapAttendance);
   }
 
-  patchAttendance(id: number, patch: Partial<Pick<Attendance, 'checkOutTime' | 'status'>>): Observable<Attendance | null> {
-    return this.patchOne<ApiAttendance, Attendance>(`attendances/${id}`, {
-      check_out_time: patch.checkOutTime ?? null,
+  patchAttendance(attendance: Attendance, patch: Partial<Pick<Attendance, 'checkOutTime' | 'status'>>): Observable<Attendance | null> {
+    return this.putOne<ApiAttendance, Attendance>('attendance/check-out', {
+      internship_id: attendance.internshipId,
+      student_id: attendance.studentId,
       status: patch.status
     }, mapAttendance);
   }
@@ -169,8 +179,9 @@ export class InternshipApiService {
   }
 
   patchLogbook(id: number, patch: Partial<Pick<Logbook, 'status' | 'mentorComment'>>): Observable<Logbook | null> {
-    return this.patchOne<ApiLogbook, Logbook>(`logbooks/${id}`, {
+    return this.putOne<ApiLogbook, Logbook>(`logbooks/${id}/approve`, {
       status: patch.status,
+      comment: patch.mentorComment ?? null,
       mentor_comment: patch.mentorComment ?? null
     }, mapLogbook);
   }
@@ -186,23 +197,45 @@ export class InternshipApiService {
   }
 
   private getList<D, M>(path: string, mapper: (dto: D) => M): Observable<M[]> {
-    return this.http.get<D[]>(`${this.base}/${path}`).pipe(
+    return this.http.get<D[]>(`${this.base}/${path}`, this.authOptions()).pipe(
       map((rows) => rows.map(mapper)),
       catchError(() => of([]))
     );
   }
 
   private postOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
-    return this.http.post<D>(`${this.base}/${path}`, body).pipe(
+    return this.http.post<D>(`${this.base}/${path}`, body, this.authOptions()).pipe(
       map(mapper),
       catchError(() => of(null))
     );
   }
 
   private patchOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
-    return this.http.patch<D>(`${this.base}/${path}`, body).pipe(
+    return this.http.patch<D>(`${this.base}/${path}`, body, this.authOptions()).pipe(
       map(mapper),
       catchError(() => of(null))
     );
+  }
+
+  private putOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
+    return this.http.put<D>(`${this.base}/${path}`, body, this.authOptions()).pipe(
+      map(mapper),
+      catchError(() => of(null))
+    );
+  }
+
+  private setToken(token: string): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(this.tokenKey, token);
+    }
+  }
+
+  private authOptions(): { headers?: { Authorization: string } } {
+    if (typeof localStorage === 'undefined') {
+      return {};
+    }
+
+    const token = localStorage.getItem(this.tokenKey);
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 }

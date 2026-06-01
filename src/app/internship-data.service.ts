@@ -84,6 +84,20 @@ export class InternshipDataService {
     return this.users.some((user) => user.email.toLowerCase() === normalized);
   }
 
+  async login(email: string, password: string): Promise<User | null> {
+    if (this.api.apiEnabled()) {
+      const user = await firstValueFrom(this.api.login(email, password));
+      if (user && !this.users.some((item) => item.id === user.id)) {
+        this.users = [...this.users, user];
+      }
+      return user;
+    }
+
+    return this.users.find(
+      (item) => item.email.toLowerCase() === email && item.password === password
+    ) ?? null;
+  }
+
   async register(input: RegisterInput): Promise<{ user: User } | { error: string }> {
     const name = input.name.trim();
     const email = input.email.trim().toLowerCase();
@@ -93,8 +107,8 @@ export class InternshipDataService {
       return { error: 'กรุณากรอกชื่อ อีเมล และรหัสผ่าน' };
     }
 
-    if (password.length < 6) {
-      return { error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' };
+    if (password.length < (this.api.apiEnabled() ? 8 : 6)) {
+      return { error: this.api.apiEnabled() ? 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' : 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' };
     }
 
     if (this.emailExists(email)) {
@@ -240,8 +254,13 @@ export class InternshipDataService {
 
   updateAttendance(attendanceId: number, updates: Partial<Attendance>): void {
     if (this.api.apiEnabled()) {
+      const attendance = this.attendances.find((item) => item.id === attendanceId);
+      if (!attendance) {
+        return;
+      }
+
       void firstValueFrom(
-        this.api.patchAttendance(attendanceId, {
+        this.api.patchAttendance(attendance, {
           checkOutTime: updates.checkOutTime,
           status: updates.status
         })

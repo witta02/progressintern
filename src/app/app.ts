@@ -374,11 +374,9 @@ export class App {
     return this.registerForm.role === 'company';
   }
 
-  protected login(): void {
+  protected async login(): Promise<void> {
     const email = this.loginForm.email.trim().toLowerCase();
-    const user = this.users.find(
-      (item) => item.email.toLowerCase() === email && item.password === this.loginForm.password
-    );
+    const user = await this.data.login(email, this.loginForm.password);
 
     if (!user) {
       this.loginError = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';

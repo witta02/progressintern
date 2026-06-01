@@ -9,9 +9,9 @@ The app runs fully in the browser with demo data shaped like your MySQL tables. 
 ## When the backend is ready
 
 1. Ask your coworker for:
-   - Base URL (e.g. `http://localhost:3000` or `https://staging.example.com`)
+   - Base URL (e.g. `http://localhost:8080` or `https://staging.example.com`)
    - Whether routes use `/api/...` (this project expects that prefix)
-   - Login endpoint shape (default: `POST /api/auth/login` → `{ "user": { ... } }`)
+   - Login endpoint shape. The current Go backend returns `{ "id": 1, "name": "...", "email": "...", "role": "...", "token": "..." }`
 
 2. Edit **`src/environments/environment.development.ts`**:
 
@@ -28,7 +28,7 @@ export const environment = {
 ```json
 {
   "/api": {
-    "target": "http://THEIR_HOST:PORT",
+    "target": "http://localhost:8080",
     "secure": false,
     "changeOrigin": true
   }
@@ -41,23 +41,20 @@ export const environment = {
 
 ## Expected REST routes
 
-| Table | GET list | POST create | PATCH |
-|-------|----------|-------------|-------|
-| users | `/api/users` | `/api/users` | `/api/users/:id` |
-| companies | `/api/companies` | | |
-| job_postings | `/api/job-postings` | `/api/job-postings` | |
-| applications | `/api/applications` | `/api/applications` | `/api/applications/:id` |
-| internships | `/api/internships` | `/api/internships` | |
-| attendances | `/api/attendances` | `/api/attendances` | `/api/attendances/:id` |
-| logbooks | `/api/logbooks` | `/api/logbooks` | `/api/logbooks/:id` |
-| evaluations | `/api/evaluations` | `/api/evaluations` | |
+| Area | Backend route |
+|------|---------------|
+| Auth | `POST /api/auth/register`, `POST /api/auth/login` |
+| Jobs | `GET /api/jobs`, `POST /api/jobs` |
+| Applications | `POST /api/applications`, `GET /api/applications/company/:id`, `PUT /api/applications/:id/status` |
+| Attendance | `POST /api/attendance/check-in`, `PUT /api/attendance/check-out` |
+| Logbooks | `POST /api/logbooks`, `PUT /api/logbooks/:id/approve` |
 
 JSON fields should use **snake_case** (see `src/app/api/api.mapper.ts`). The front-end maps them to camelCase automatically.
 
 ## Auth
 
 - **Mock mode:** email + password checked against loaded `users`.
-- **API mode:** `POST /api/auth/login` with `{ email, password }`; response must include `user` object matching the `users` table (password optional in response).
+- **API mode:** `POST /api/auth/login` with `{ email, password }`; response must include user fields and a `token`.
 - **Register:** `POST /api/auth/register` with `{ name, email, password, role, phone?, company_name?, description?, address?, contact_email? }` — for `role: "company"`, also create a `companies` row linked via `user_id`.
 
 Share this file with your backend teammate so paths and field names stay aligned.

@@ -14,6 +14,7 @@ import {
   JobPosting,
   Logbook,
   LogbookStatus,
+  RegisterInput,
   User
 } from './internship.models';
 
@@ -73,9 +74,95 @@ export class InternshipDataService {
     return this.companyForUser(userId)?.id;
   }
 
-  addStudent(student: Omit<User, 'id' | 'role'> & { advisorId: number }): void {
-    this.users = [...this.users, { ...student, id: this.nextId(this.users), role: 'student' }];
+  addStudent(student: Omit<User, 'id' | 'role' | 'status'> & { advisorId: number }): void {
+    this.users = [...this.users, { ...student, id: this.nextId(this.users), role: 'student', status: 'active' }];
     this.persist();
+  }
+
+  emailExists(email: string): boolean {
+    const normalized = email.trim().toLowerCase();
+    return this.users.some((user) => user.email.toLowerCase() === normalized);
+  }
+
+  async register(input: RegisterInput): Promise<{ user: User } | { error: string }> {
+    const name = input.name.trim();
+    const email = input.email.trim().toLowerCase();
+    const password = input.password;
+
+    if (!name || !email || !password) {
+      return { error: 'กรุณากรอกชื่อ อีเมล และรหัสผ่าน' };
+    }
+
+    if (password.length < 6) {
+      return { error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' };
+    }
+
+    if (this.emailExists(email)) {
+      return { error: 'อีเมลนี้ถูกใช้งานแล้ว' };
+    }
+
+    if (input.role === 'company' && !input.companyName?.trim()) {
+      return { error: 'กรุณากรอกชื่อบริษัท' };
+    }
+
+    if (this.api.apiEnabled()) {
+      const created = await firstValueFrom(
+        this.api.register({
+          name,
+          email,
+          password,
+          role: input.role,
+          phone: input.phone?.trim() || undefined,
+          school: input.school?.trim() || undefined,
+          company_name: input.companyName?.trim(),
+          description: input.description?.trim(),
+          address: input.address?.trim(),
+          contact_email: input.contactEmail?.trim() || email
+        })
+      );
+
+      if (!created) {
+        return { error: 'ลงทะเบียนไม่สำเร็จ ตรวจสอบการเชื่อมต่อ API' };
+      }
+
+      this.users = [...this.users, created];
+      await this.refreshFromApi();
+      const user = this.users.find((u) => u.id === created.id) ?? created;
+      return { user };
+    }
+
+    const now = new Date().toISOString();
+    const user: User = {
+      id: this.nextId(this.users),
+      name,
+      email,
+      password,
+      role: input.role,
+      status: input.role === 'student' ? 'pending' : 'active',
+      phone: input.phone?.trim() || undefined,
+      school: input.school?.trim() || undefined,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    this.users = [...this.users, user];
+
+    if (input.role === 'company') {
+      const company: Company = {
+        id: this.nextId(this.companies),
+        userId: user.id,
+        companyName: input.companyName!.trim(),
+        description: input.description?.trim() || undefined,
+        address: input.address?.trim() || undefined,
+        contactEmail: input.contactEmail?.trim() || email,
+        createdAt: now,
+        updatedAt: now
+      };
+      this.companies = [...this.companies, company];
+    }
+
+    this.persist();
+    return { user };
   }
 
   updateUser(userId: number, updates: Partial<User>): void {
@@ -233,14 +320,16 @@ export class InternshipDataService {
 
   private seedDemoData(): void {
     this.users = [
-      { id: 1, name: 'ผู้ดูแลระบบ', email: 'admin@demo.local', password: 'admin123', role: 'admin' },
+      { id: 1, name: 'ผู้ดูแลระบบ', email: 'admin@demo.local', password: 'admin123', role: 'admin', status: 'active' },
       {
         id: 2,
         name: 'อ.มณีรัตน์ ศรีสุข',
         email: 'advisor@demo.ac.th',
         password: 'advisor123',
         role: 'advisor',
-        phone: '081-000-0001'
+        status: 'active',
+        phone: '081-000-0001',
+        school: 'มหาวิทยาลัยเทคโนโลยีราชมงคล'
       },
       {
         id: 3,
@@ -248,8 +337,10 @@ export class InternshipDataService {
         email: 'student@demo.ac.th',
         password: 'student123',
         role: 'student',
+        status: 'active',
         advisorId: 2,
         phone: '081-111-2222',
+        school: 'มหาวิทยาลัยเทคโนโลยีราชมงคล',
         resumeUrl: '/uploads/resume-natthapong.pdf'
       },
       {
@@ -257,7 +348,8 @@ export class InternshipDataService {
         name: 'บริษัท โปรเกรสซอฟต์ จำกัด',
         email: 'company@demo.co.th',
         password: 'company123',
-        role: 'company'
+        role: 'company',
+        status: 'active'
       },
       {
         id: 5,
@@ -265,8 +357,29 @@ export class InternshipDataService {
         email: 'chonthicha@demo.ac.th',
         password: 'student123',
         role: 'student',
+        status: 'active',
         advisorId: 2,
-        phone: '082-333-4444'
+        phone: '082-333-4444',
+        school: 'มหาวิทยาลัยเทคโนโลยีราชมงคล'
+      },
+      {
+        id: 6,
+        name: 'อ.สมชาย รักเรียน',
+        email: 'advisor2@demo.ac.th',
+        password: 'advisor123',
+        role: 'advisor',
+        status: 'active',
+        school: 'วิทยาลัยเทคนิคกรุงเทพ'
+      },
+      {
+        id: 7,
+        name: 'วิภาวดี ดีเลิศ',
+        email: 'student2@demo.ac.th',
+        password: 'student123',
+        role: 'student',
+        status: 'pending',
+        advisorId: 6,
+        school: 'วิทยาลัยเทคนิคกรุงเทพ'
       }
     ];
 

@@ -3,6 +3,8 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../environments/environment';
 import { InternshipDataService } from './internship-data.service';
+import { NotificationHostComponent } from './notification-host.component';
+import { NotificationService } from './notification.service';
 import {
   Application,
   ApplicationStatus,
@@ -15,29 +17,86 @@ import {
   JobPosting,
   Logbook,
   LogbookStatus,
+  RegisterRole,
   Role,
   User
 } from './internship.models';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NotificationHostComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
   protected readonly data = inject(InternshipDataService);
+  protected readonly notifications = inject(NotificationService);
   protected readonly useMockData = environment.useMockData;
   protected readonly schemaTables = DB_SCHEMA_TABLES;
 
+  private readonly sessionKey = 'intern-manager-session-v1';
+
   protected currentUserId: number | null = null;
+
+  constructor() {
+    this.loadSession();
+    setTimeout(() => {
+      this.notifications.info('ยินดีต้อนรับเข้าสู่ระบบจัดการฝึกงาน', 'ระบบพร้อมใช้งาน');
+    }, 1000);
+  }
+
+  private loadSession(): void {
+    if (typeof localStorage === 'undefined') return;
+    const saved = localStorage.getItem(this.sessionKey);
+    if (saved) {
+      const id = parseInt(saved, 10);
+      if (!isNaN(id)) {
+        this.currentUserId = id;
+        setTimeout(() => {
+          const user = this.users.find((u) => u.id === id);
+          if (user) {
+            this.finishLogin(user, false);
+          } else {
+            this.logout();
+          }
+        }, 200);
+      }
+    }
+  }
+  protected sidebarOpen = true;
   protected activeView = 'dashboard';
+  protected authMode: 'login' | 'register' = 'login';
   protected loginError = '';
-  protected notice = '';
+  protected registerError = '';
+  protected registerLoading = false;
+  protected notificationPanelOpen = false;
+  
+  protected studentSearchQuery = '';
+
   protected loginForm = {
     email: 'student@demo.ac.th',
     password: 'student123'
   };
+
+  protected registerForm = {
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'student' as RegisterRole,
+    phone: '',
+    school: '',
+    companyName: '',
+    description: '',
+    address: '',
+    contactEmail: ''
+  };
+
+  protected readonly registerRoleOptions: { value: RegisterRole; label: string }[] = [
+    { value: 'student', label: 'นักศึกษา (student)' },
+    { value: 'advisor', label: 'ครูอาจารย์ (teacher/advisor)' },
+    { value: 'company', label: 'บริษัท (company)' }
+  ];
 
   protected newStudent = {
     name: '',
@@ -46,7 +105,10 @@ export class App {
   };
 
   protected profileDraft = {
+    name: '',
+    email: '',
     phone: '',
+    school: '',
     resumeUrl: ''
   };
 
@@ -71,8 +133,9 @@ export class App {
     applications: 'การสมัคร',
     internships: 'ฝึกงาน',
     attendance: 'ลงเวลา',
-    logbooks: 'Logbook',
+    logbooks: 'บันทึก',
     evaluations: 'ประเมินผล',
+    edit: 'แก้ไขข้อมูล',
     schema: 'ฐานข้อมูล'
   };
 
@@ -122,7 +185,7 @@ export class App {
 
   protected get topSummary(): string[] {
     if (this.currentUser.role === 'student') {
-      return [`${this.visibleInternships.length} internship ของฉัน`, `${this.visibleApplications.length} ใบสมัครของฉัน`];
+      return [`สถานะ: ${this.currentUser.status}`, `${this.visibleInternships.length} internship ของฉัน`];
     }
 
     if (this.currentUser.role === 'company') {
@@ -130,7 +193,7 @@ export class App {
     }
 
     if (this.currentUser.role === 'advisor') {
-      return [`${this.managedStudents.length} นักศึกษา`, `${this.visibleInternships.length} internship`];
+      return [`สังกัด: ${this.currentUser.school}`, `${this.managedStudents.length} นักศึกษาในสังกัด`];
     }
 
     return [`${this.users.length} users`, `${this.internships.length} internships`];
@@ -138,10 +201,10 @@ export class App {
 
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
-      admin: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'schema'],
-      advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations'],
-      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations'],
-      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations']
+      admin: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit', 'schema'],
+      advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit'],
+      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit'],
+      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit']
     };
 
     return viewsByRole[this.currentUser.role];
@@ -159,7 +222,7 @@ export class App {
 
     if (this.currentUser.role === 'advisor') {
       return [
-        { label: 'นักศึกษาในความดูแล', value: this.managedStudents.length, helper: 'mock: ผูก advisorId' },
+        { label: 'นักศึกษาในสังกัด', value: this.managedStudents.length, helper: 'นักศึกษาที่โรงเรียนเดียวกัน' },
         { label: 'ใบสมัครของนักศึกษา', value: this.visibleApplications.length, helper: 'ติดตามผลสมัครงาน' },
         { label: 'กำลังฝึกงาน', value: this.visibleInternships.length, helper: 'internship ของนักศึกษาในความดูแล' },
         { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'ติดตามการลงเวลา' }
@@ -200,8 +263,27 @@ export class App {
       return [];
     }
 
+    // Advisor can see students with the same school name
+    if (this.currentUser.school) {
+      return this.users.filter(
+        (user) => user.role === 'student' && user.school === this.currentUser.school
+      );
+    }
+
     return this.users.filter(
       (user) => user.role === 'student' && user.advisorId === this.currentUser.id
+    );
+  }
+  
+  protected get otherStudents(): User[] {
+    if (this.currentUser.role !== 'advisor') return [];
+    
+    const query = this.studentSearchQuery.trim().toLowerCase();
+    
+    return this.users.filter(user => 
+      user.role === 'student' && 
+      user.school !== this.currentUser.school &&
+      (user.school?.toLowerCase().includes(query) || user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query))
     );
   }
 
@@ -282,6 +364,16 @@ export class App {
     return this.data.evaluations.filter((evaluation) => internshipIds.includes(evaluation.internshipId));
   }
 
+  protected setAuthMode(mode: 'login' | 'register'): void {
+    this.authMode = mode;
+    this.loginError = '';
+    this.registerError = '';
+  }
+
+  protected get isRegisterCompany(): boolean {
+    return this.registerForm.role === 'company';
+  }
+
   protected login(): void {
     const email = this.loginForm.email.trim().toLowerCase();
     const user = this.users.find(
@@ -290,10 +382,49 @@ export class App {
 
     if (!user) {
       this.loginError = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+      this.notifications.error('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 'เข้าสู่ระบบไม่สำเร็จ');
       return;
     }
 
     this.finishLogin(user);
+  }
+
+  protected async register(): Promise<void> {
+    this.registerError = '';
+
+    if (this.registerForm.password !== this.registerForm.confirmPassword) {
+      this.registerError = 'รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน';
+      this.notifications.error('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน', 'สมัครสมาชิก');
+      return;
+    }
+
+    this.registerLoading = true;
+
+    const result = await this.data.register({
+      name: this.registerForm.name,
+      email: this.registerForm.email,
+      password: this.registerForm.password,
+      role: this.registerForm.role,
+      phone: this.registerForm.phone || undefined,
+      school: this.registerForm.school || undefined,
+      companyName: this.isRegisterCompany ? this.registerForm.companyName : undefined,
+      description: this.isRegisterCompany ? this.registerForm.description : undefined,
+      address: this.isRegisterCompany ? this.registerForm.address : undefined,
+      contactEmail: this.isRegisterCompany ? this.registerForm.contactEmail : undefined
+    });
+
+    this.registerLoading = false;
+
+    if ('error' in result) {
+      this.registerError = result.error;
+      this.notifications.error(result.error, 'สมัครสมาชิกไม่สำเร็จ');
+      return;
+    }
+
+    this.resetRegisterForm();
+    this.authMode = 'login';
+    this.finishLogin(result.user);
+    this.notifications.success(`ยินดีต้อนรับ ${result.user.name}`, 'สมัครสมาชิกสำเร็จ');
   }
 
   protected useDemoAccount(user: User): void {
@@ -301,24 +432,65 @@ export class App {
       email: user.email,
       password: user.password ?? ''
     };
+    this.notifications.info(`เลือกบัญชี ${user.name} แล้ว กด Login เพื่อเข้าสู่ระบบ`, 'บัญชีทดสอบ');
   }
 
   protected logout(): void {
     this.currentUserId = null;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(this.sessionKey);
+    }
+    this.sidebarOpen = true;
     this.activeView = 'dashboard';
     this.loginError = '';
-    this.notice = '';
+    this.notificationPanelOpen = false;
     this.selectedEvaluationInternshipId = null;
+    this.notifications.info('คุณออกจากระบบแล้ว', 'ออกจากระบบ');
+  }
+
+  protected toggleNotificationPanel(): void {
+    this.notificationPanelOpen = !this.notificationPanelOpen;
+    if (this.notificationPanelOpen) {
+      this.notifications.markAllRead();
+    }
+  }
+
+  protected closeNotificationPanel(): void {
+    this.notificationPanelOpen = false;
   }
 
   protected setActiveView(view: string): void {
     this.activeView = this.availableViews.includes(view) ? view : 'dashboard';
-    this.notice = '';
+    this.notificationPanelOpen = false;
 
     if (this.activeView === 'evaluations') {
       this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
       this.evaluationType = this.currentUser.role === 'advisor' ? 'advisor' : 'mentor';
     }
+    
+    if (this.activeView === 'edit') {
+      this.profileDraft = {
+        name: this.currentUser.name,
+        email: this.currentUser.email,
+        phone: this.currentUser.phone ?? '',
+        school: this.currentUser.school ?? '',
+        resumeUrl: this.currentUser.resumeUrl ?? ''
+      };
+    }
+
+    this.closeSidebar();
+  }
+
+  protected toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  protected closeSidebar(): void {
+    this.sidebarOpen = false;
+  }
+
+  protected openSidebar(): void {
+    this.sidebarOpen = true;
   }
 
   protected roleName(role: Role): string {
@@ -363,6 +535,7 @@ export class App {
   protected canApply(job: JobPosting): boolean {
     return (
       this.currentUser.role === 'student' &&
+      this.currentUser.status === 'active' &&
       job.status === 'open' &&
       !this.applications.some(
         (application) =>
@@ -372,7 +545,19 @@ export class App {
   }
 
   protected applyJob(job: JobPosting): void {
+    if (this.currentUser.status !== 'active') {
+      this.notifications.warning('บัญชีของคุณยังไม่ได้รับการอนุมัติ', 'สมัครงาน');
+      return;
+    }
+    
     if (!this.canApply(job)) {
+      if (this.currentUser.role !== 'student') {
+        this.notifications.warning('เฉพาะนักศึกษาจึงสมัครงานได้', 'สมัครงาน');
+      } else if (job.status !== 'open') {
+        this.notifications.warning('ตำแหน่งนี้ปิดรับสมัครแล้ว', 'สมัครงาน');
+      } else {
+        this.notifications.warning('คุณสมัครตำแหน่งนี้แล้ว', 'สมัครงาน');
+      }
       return;
     }
 
@@ -382,13 +567,25 @@ export class App {
       status: 'pending',
       appliedAt: new Date().toISOString()
     });
-    this.notice = `สมัครตำแหน่ง ${job.title} แล้ว รอการพิจารณาจากบริษัท`;
+    this.notifications.success(
+      `สมัครตำแหน่ง ${job.title} แล้ว รอการพิจารณาจากบริษัท`,
+      'ส่งใบสมัคร'
+    );
     this.setActiveView('applications');
   }
 
   protected updateApplication(application: Application, status: ApplicationStatus): void {
     this.data.updateApplicationStatus(application, status);
-    this.notice = `อัปเดตใบสมัครของ ${this.userName(application.studentId)} เป็น ${status}`;
+    const student = this.userName(application.studentId);
+    const label = this.applicationStatusLabel(status);
+
+    if (status === 'rejected') {
+      this.notifications.warning(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+    } else if (status === 'approved') {
+      this.notifications.success(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+    } else {
+      this.notifications.info(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+    }
 
     if (
       status !== 'approved' ||
@@ -399,6 +596,7 @@ export class App {
 
     const job = this.jobPostings.find((item) => item.id === application.jobPostingId);
     if (!job) {
+      this.notifications.warning('ไม่พบตำแหน่งงานที่เชื่อมกับใบสมัคร', 'ฝึกงาน');
       return;
     }
 
@@ -410,66 +608,93 @@ export class App {
       endDate: '2026-09-30',
       status: 'active'
     });
-    this.notice = `อนุมัติใบสมัครและสร้าง internship ให้ ${this.userName(application.studentId)} แล้ว`;
+    this.notifications.success(
+      `สร้างฝึกงานให้ ${student} ตำแหน่ง ${job.title} แล้ว`,
+      'ฝึกงาน'
+    );
   }
 
   protected addStudent(): void {
     if (!this.newStudent.name.trim() || !this.newStudent.email.trim()) {
-      this.notice = 'กรุณากรอกชื่อนักศึกษาและอีเมล';
+      this.notifications.warning('กรุณากรอกชื่อนักศึกษาและอีเมล', 'เพิ่มนักศึกษา');
       return;
     }
 
     if (this.users.some((user) => user.email.toLowerCase() === this.newStudent.email.trim().toLowerCase())) {
-      this.notice = 'อีเมลนี้มีอยู่ในระบบแล้ว';
+      this.notifications.error('อีเมลนี้มีอยู่ในระบบแล้ว', 'เพิ่มนักศึกษา');
       return;
     }
 
     if (this.newStudent.password.trim().length < 6) {
-      this.notice = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+      this.notifications.warning('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'เพิ่มนักศึกษา');
       return;
     }
 
+    const name = this.newStudent.name.trim();
     this.data.addStudent({
-      name: this.newStudent.name.trim(),
+      name,
       email: this.newStudent.email.trim(),
       password: this.newStudent.password.trim(),
-      advisorId: this.currentUser.id
+      advisorId: this.currentUser.id,
+      school: this.currentUser.school
     });
-    this.notice = `สร้างบัญชีนักศึกษา ${this.newStudent.name.trim()} แล้ว`;
+    this.notifications.success(`สร้างบัญชีนักศึกษา ${name} แล้ว`, 'เพิ่มนักศึกษา');
     this.newStudent = { name: '', email: '', password: 'student123' };
+  }
+  
+  protected approveStudent(student: User): void {
+    this.data.updateUser(student.id, { status: 'active', school: this.currentUser.school });
+    this.notifications.success(`อนุมัติและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
+  }
+  
+  protected rejectStudent(student: User): void {
+    this.data.updateUser(student.id, { status: 'rejected' });
+    this.notifications.warning(`ปฏิเสธบัญชีของ ${student.name} แล้ว`, 'จัดการนักศึกษา');
+  }
+  
+  protected claimStudent(student: User): void {
+    this.data.updateUser(student.id, { school: this.currentUser.school, status: 'active' });
+    this.notifications.success(`แก้ไขโรงเรียนและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
   }
 
   protected saveProfile(): void {
     this.data.updateUser(this.currentUser.id, {
+      name: this.profileDraft.name,
+      email: this.profileDraft.email,
       phone: this.profileDraft.phone,
+      school: this.profileDraft.school,
       resumeUrl: this.profileDraft.resumeUrl
     });
-    this.notice = 'บันทึกข้อมูลส่วนตัวแล้ว';
+    this.notifications.success('บันทึกข้อมูลส่วนตัวแล้ว', 'โปรไฟล์');
   }
 
   protected addJob(): void {
     if (!this.currentCompanyId || !this.newJob.title.trim()) {
-      this.notice = 'กรุณากรอกชื่อตำแหน่งงาน';
+      this.notifications.warning('กรุณากรอกชื่อตำแหน่งงาน', 'โพสต์งาน');
       return;
     }
 
+    const title = this.newJob.title.trim();
     this.data.addJob({
       companyId: this.currentCompanyId,
-      title: this.newJob.title.trim(),
+      title,
       description: this.newJob.description.trim() || 'รายละเอียดงานฝึกงาน',
       requirements: this.newJob.requirements.trim() || 'พร้อมเรียนรู้งาน',
       benefits: this.newJob.benefits.trim() || undefined,
       slots: Number(this.newJob.slots) || 1
     });
     this.newJob = { title: '', description: '', requirements: '', benefits: '', slots: 1 };
-    this.notice = 'โพสต์ตำแหน่งงานใหม่แล้ว';
+    this.notifications.success(`โพสต์ตำแหน่ง ${title} แล้ว`, 'ตำแหน่งงาน');
   }
 
   protected checkIn(): void {
-    if (!this.activeInternship || this.hasOpenAttendance()) {
-      this.notice = this.hasOpenAttendance()
-        ? 'มีรายการ check in ที่ยังไม่ได้ check out'
-        : 'ยังไม่มี internship ที่ active';
+    if (!this.activeInternship) {
+      this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'ลงเวลา');
+      return;
+    }
+
+    if (this.hasOpenAttendance()) {
+      this.notifications.warning('มีรายการ check in ที่ยังไม่ได้ check out', 'ลงเวลา');
       return;
     }
 
@@ -483,7 +708,10 @@ export class App {
       checkInTime: now.toISOString(),
       status
     });
-    this.notice = `Check in แล้ว (${status})`;
+    this.notifications.success(
+      `Check in แล้ว (${this.attendanceStatusLabel(status)})`,
+      'ลงเวลา'
+    );
   }
 
   protected checkOut(): void {
@@ -493,26 +721,32 @@ export class App {
     );
 
     if (!openAttendance) {
-      this.notice = 'ยังไม่มีรายการ check in ที่เปิดอยู่';
+      this.notifications.warning('ยังไม่มีรายการ check in ที่เปิดอยู่', 'ลงเวลา');
       return;
     }
 
     this.data.updateAttendance(openAttendance.id, {
       checkOutTime: new Date().toISOString()
     });
-    this.notice = 'Check out แล้ว';
+    this.notifications.success('Check out แล้ว', 'ลงเวลา');
   }
 
   protected setAttendanceStatus(attendance: Attendance, status: AttendanceStatus): void {
     this.data.setAttendanceStatus(attendance, status);
-    this.notice = `อัปเดตสถานะเวลาของ ${this.userName(attendance.studentId)} เป็น ${status}`;
+    this.notifications.success(
+      `${this.userName(attendance.studentId)} → ${this.attendanceStatusLabel(status)}`,
+      'อัปเดตการลงเวลา'
+    );
   }
 
   protected addLogbook(): void {
-    if (!this.activeInternship || !this.logbookTitle.trim() || !this.logbookText.trim()) {
-      this.notice = !this.activeInternship
-        ? 'ยังไม่มี internship ที่ active'
-        : 'กรุณากรอกหัวข้อและเนื้อหา logbook';
+    if (!this.activeInternship) {
+      this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'บันทึก');
+      return;
+    }
+
+    if (!this.logbookTitle.trim() || !this.logbookText.trim()) {
+      this.notifications.warning('กรุณากรอกหัวข้อและเนื้อหาบันทึก', 'บันทึก');
       return;
     }
 
@@ -523,7 +757,7 @@ export class App {
     });
     this.logbookTitle = '';
     this.logbookText = '';
-    this.notice = 'ส่ง Logbook แล้ว (status: pending)';
+    this.notifications.success('ส่งบันทึกแล้ว (รออนุมัติ)', 'บันทึก');
   }
 
   protected reviewLogbook(logbook: Logbook, status: LogbookStatus): void {
@@ -532,27 +766,39 @@ export class App {
       status,
       status === 'approved' ? 'รับรองโดย mentor' : 'ต้องแก้ไขและส่งใหม่'
     );
-    this.notice = `อัปเดต Logbook ของ ${this.userName(this.internshipFor(logbook.internshipId)?.studentId || 0)} เป็น ${status}`;
+    const student = this.userName(this.internshipFor(logbook.internshipId)?.studentId || 0);
+    const label = this.logbookStatusLabel(status);
+
+    if (status === 'approved') {
+      this.notifications.success(`บันทึกของ ${student} → ${label}`, 'บันทึก');
+    } else {
+      this.notifications.warning(`บันทึกของ ${student} → ${label}`, 'บันทึก');
+    }
   }
 
   protected addEvaluation(): void {
-    if (!this.selectedEvaluationInternship || !this.evaluationFeedback.trim()) {
-      this.notice = !this.selectedEvaluationInternship
-        ? 'กรุณาเลือกนักศึกษาที่ต้องการประเมิน'
-        : 'กรุณากรอก feedback';
+    if (!this.selectedEvaluationInternship) {
+      this.notifications.warning('กรุณาเลือกนักศึกษาที่ต้องการประเมิน', 'ประเมินผล');
       return;
     }
 
+    if (!this.evaluationFeedback.trim()) {
+      this.notifications.warning('กรุณากรอกข้อเสนอแนะ', 'ประเมินผล');
+      return;
+    }
+
+    const student = this.userName(this.selectedEvaluationInternship.studentId);
+    const score = Number(this.evaluationScore);
     this.data.addEvaluation({
       internshipId: this.selectedEvaluationInternship.id,
       evaluatorId: this.currentUser.id,
-      score: Number(this.evaluationScore),
+      score,
       feedback: this.evaluationFeedback.trim(),
       evaluationType: this.evaluationType
     });
     this.evaluationFeedback = '';
     this.evaluationScore = 85;
-    this.notice = `บันทึกการประเมิน ${this.userName(this.selectedEvaluationInternship.studentId)} แล้ว`;
+    this.notifications.success(`บันทึกการประเมิน ${student} คะแนน ${score}`, 'ประเมินผล');
   }
 
   protected hasOpenAttendance(): boolean {
@@ -571,17 +817,47 @@ export class App {
   }
 
   protected resetDemoData(): void {
+    this.notifications.warning('กำลังรีเซ็ตข้อมูลทดสอบและโหลดหน้าใหม่', 'Demo data');
     this.data.resetDemoData();
   }
 
-  private finishLogin(user: User): void {
+  private resetRegisterForm(): void {
+    this.registerForm = {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      role: 'student',
+      phone: '',
+      school: '',
+      companyName: '',
+      description: '',
+      address: '',
+      contactEmail: ''
+    };
+  }
+
+  private finishLogin(user: User, showNotification = true): void {
     this.currentUserId = user.id;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(this.sessionKey, user.id.toString());
+    }
     this.loginError = '';
-    this.notice = `เข้าสู่ระบบเป็น ${this.roleName(user.role)} แล้ว`;
+    
+    if (showNotification) {
+      this.notifications.success(
+        `เข้าสู่ระบบเป็น ${this.roleName(user.role)}`,
+        `ยินดีต้อนรับ ${user.name}`
+      );
+    }
+    
     this.setActiveView('dashboard');
     this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
     this.profileDraft = {
+      name: user.name,
+      email: user.email,
       phone: user.phone ?? '',
+      school: user.school ?? '',
       resumeUrl: user.resumeUrl ?? ''
     };
     this.evaluationType = user.role === 'advisor' ? 'advisor' : 'mentor';
@@ -589,5 +865,30 @@ export class App {
 
   private today(): string {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  private applicationStatusLabel(status: ApplicationStatus): string {
+    return {
+      pending: 'รอดำเนินการ',
+      interview: 'นัดสัมภาษณ์',
+      approved: 'อนุมัติ',
+      rejected: 'ปฏิเสธ'
+    }[status];
+  }
+
+  private attendanceStatusLabel(status: AttendanceStatus): string {
+    return {
+      present: 'มาตรงเวลา',
+      late: 'สาย',
+      absent: 'ขาด'
+    }[status];
+  }
+
+  private logbookStatusLabel(status: LogbookStatus): string {
+    return {
+      pending: 'รออนุมัติ',
+      approved: 'อนุมัติ',
+      rejected: 'ปฏิเสธ'
+    }[status];
   }
 }

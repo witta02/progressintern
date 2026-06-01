@@ -58,5 +58,6 @@ JSON fields should use **snake_case** (see `src/app/api/api.mapper.ts`). The fro
 
 - **Mock mode:** email + password checked against loaded `users`.
 - **API mode:** `POST /api/auth/login` with `{ email, password }`; response must include `user` object matching the `users` table (password optional in response).
+- **Register:** `POST /api/auth/register` with `{ name, email, password, role, phone?, company_name?, description?, address?, contact_email? }` — for `role: "company"`, also create a `companies` row linked via `user_id`.
 
 Share this file with your backend teammate so paths and field names stay aligned.

@@ -74,14 +74,14 @@ export class InternshipApiService {
     }
 
     return forkJoin({
-      users: this.getList<ApiUser>('users', mapUser),
-      companies: this.getList<ApiCompany>('companies', mapCompany),
-      jobPostings: this.getList<ApiJobPosting>('job-postings', mapJobPosting),
-      applications: this.getList<ApiApplication>('applications', mapApplication),
-      internships: this.getList<ApiInternship>('internships', mapInternship),
-      attendances: this.getList<ApiAttendance>('attendances', mapAttendance),
-      logbooks: this.getList<ApiLogbook>('logbooks', mapLogbook),
-      evaluations: this.getList<ApiEvaluation>('evaluations', mapEvaluation)
+      users: this.getList<ApiUser, User>('users', mapUser),
+      companies: this.getList<ApiCompany, Company>('companies', mapCompany),
+      jobPostings: this.getList<ApiJobPosting, JobPosting>('job-postings', mapJobPosting),
+      applications: this.getList<ApiApplication, Application>('applications', mapApplication),
+      internships: this.getList<ApiInternship, Internship>('internships', mapInternship),
+      attendances: this.getList<ApiAttendance, Attendance>('attendances', mapAttendance),
+      logbooks: this.getList<ApiLogbook, Logbook>('logbooks', mapLogbook),
+      evaluations: this.getList<ApiEvaluation, Evaluation>('evaluations', mapEvaluation)
     }).pipe(
       catchError((err) => {
         console.error('[InternshipApi] Failed to load data', err);
@@ -97,6 +97,30 @@ export class InternshipApiService {
 
     return this.http
       .post<{ user: ApiUser }>(`${this.base}/auth/login`, { email, password })
+      .pipe(
+        map((res) => mapUser(res.user)),
+        catchError(() => of(null))
+      );
+  }
+
+  register(body: {
+    name: string;
+    email: string;
+    password: string;
+    role: 'student' | 'company' | 'advisor';
+    phone?: string;
+    school?: string;
+    company_name?: string;
+    description?: string;
+    address?: string;
+    contact_email?: string;
+  }): Observable<User | null> {
+    if (!this.apiEnabled()) {
+      return of(null);
+    }
+
+    return this.http
+      .post<{ user: ApiUser }>(`${this.base}/auth/register`, body)
       .pipe(
         map((res) => mapUser(res.user)),
         catchError(() => of(null))

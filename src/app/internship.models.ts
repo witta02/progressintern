@@ -2,6 +2,22 @@
 
 export type Role = 'student' | 'company' | 'advisor' | 'admin';
 
+/** Roles allowed on public registration */
+export type RegisterRole = 'student' | 'company' | 'advisor';
+
+export interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+  role: RegisterRole;
+  phone?: string;
+  school?: string;
+  companyName?: string;
+  description?: string;
+  address?: string;
+  contactEmail?: string;
+}
+
 export type ApplicationStatus = 'pending' | 'interview' | 'approved' | 'rejected';
 export type JobPostingStatus = 'open' | 'closed';
 export type InternshipStatus = 'active' | 'completed' | 'terminated';
@@ -9,13 +25,17 @@ export type AttendanceStatus = 'present' | 'late' | 'absent';
 export type LogbookStatus = 'pending' | 'approved' | 'rejected';
 export type EvaluationType = 'mentor' | 'advisor';
 
+export type UserStatus = 'pending' | 'active' | 'rejected';
+
 export interface User {
   id: number;
   name: string;
   email: string;
   password?: string;
   role: Role;
+  status?: UserStatus;
   phone?: string;
+  school?: string;
   profileImage?: string;
   resumeUrl?: string;
   createdAt?: string;

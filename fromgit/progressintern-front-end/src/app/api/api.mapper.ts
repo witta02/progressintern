@@ -18,8 +18,10 @@ export type ApiUser = {
   password?: string;
   role: User['role'];
   phone?: string | null;
+  school?: string | null;
   profile_image?: string | null;
   resume_url?: string | null;
+  status: User['status'];
   created_at?: string;
   updated_at?: string;
 };
@@ -113,8 +115,10 @@ export function mapUser(dto: ApiUser): User {
     password: dto.password,
     role: dto.role,
     phone: dto.phone ?? undefined,
+    school: dto.school ?? undefined,
     profileImage: dto.profile_image ?? undefined,
     resumeUrl: dto.resume_url ?? undefined,
+    status: dto.status,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };

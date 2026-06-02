@@ -25,7 +25,7 @@ export type AttendanceStatus = 'present' | 'late' | 'absent';
 export type LogbookStatus = 'pending' | 'approved' | 'rejected';
 export type EvaluationType = 'mentor' | 'advisor';
 
-export type UserStatus = 'pending' | 'active' | 'rejected';
+export type UserStatus = 'pending' | 'active' | 'ban' | 'rejected';
 
 export interface User {
   id: number;
@@ -33,7 +33,7 @@ export interface User {
   email: string;
   password?: string;
   role: Role;
-  status?: UserStatus;
+  status: UserStatus;
   phone?: string;
   school?: string;
   profileImage?: string;
@@ -127,7 +127,7 @@ export interface Evaluation {
 
 /** Column reference for admin schema view */
 export const DB_SCHEMA_TABLES: { name: string; columns: string }[] = [
-  { name: 'users', columns: 'id, name, email, password, role, phone, profile_image, resume_url, created_at, updated_at' },
+  { name: 'users', columns: 'id, name, email, password, role, phone, profile_image, resume_url, created_at, updated_at, school, status' },
   { name: 'companies', columns: 'id, user_id, company_name, description, address, website, contact_email, created_at, updated_at' },
   { name: 'job_postings', columns: 'id, company_id, title, description, requirements, benefits, slots, status, created_at, updated_at' },
   { name: 'applications', columns: 'id, student_id, job_posting_id, status, applied_at, updated_at' },

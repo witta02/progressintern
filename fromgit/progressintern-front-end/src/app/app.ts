@@ -45,21 +45,25 @@ export class App {
     }, 1000);
   }
 
-  private loadSession(): void {
+  private async loadSession(): Promise<void> {
     if (typeof localStorage === 'undefined') return;
     const saved = localStorage.getItem(this.sessionKey);
     if (saved) {
       const id = parseInt(saved, 10);
       if (!isNaN(id)) {
         this.currentUserId = id;
-        setTimeout(() => {
-          const user = this.users.find((u) => u.id === id);
-          if (user) {
-            this.finishLogin(user, false);
-          } else {
-            this.logout();
-          }
-        }, 200);
+        
+        // Wait for data to load if using API
+        if (!this.useMockData) {
+          await this.data.refreshFromApi();
+        }
+
+        const user = this.users.find((u) => u.id === id);
+        if (user) {
+          this.finishLogin(user, false);
+        } else {
+          this.logout();
+        }
       }
     }
   }
@@ -163,8 +167,8 @@ export class App {
     return this.data.attendances;
   }
 
-  protected get currentUser(): User {
-    return this.users.find((user) => user.id === this.currentUserId) ?? this.users[0];
+  protected get currentUser(): User | undefined {
+    return this.users.find((user) => user.id === this.currentUserId);
   }
 
   protected get isAuthenticated(): boolean {
@@ -176,7 +180,7 @@ export class App {
   }
 
   protected get roleLabel(): string {
-    return this.roleName(this.currentUser.role);
+    return this.currentUser ? this.roleName(this.currentUser.role) : '';
   }
 
   protected get openAttendanceCount(): number {
@@ -184,6 +188,8 @@ export class App {
   }
 
   protected get topSummary(): string[] {
+    if (!this.currentUser) return [];
+
     if (this.currentUser.role === 'student') {
       return [`สถานะ: ${this.currentUser.status}`, `${this.visibleInternships.length} internship ของฉัน`];
     }
@@ -200,6 +206,8 @@ export class App {
   }
 
   protected get availableViews(): string[] {
+    if (!this.currentUser) return [];
+    
     const viewsByRole: Record<Role, string[]> = {
       admin: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit', 'schema'],
       advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit'],
@@ -207,10 +215,12 @@ export class App {
       company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit']
     };
 
-    return viewsByRole[this.currentUser.role];
+    return viewsByRole[this.currentUser.role] ?? [];
   }
 
   protected get dashboardMetrics() {
+    if (!this.currentUser) return [];
+
     if (this.currentUser.role === 'admin') {
       return [
         { label: 'ผู้ใช้ทั้งหมด', value: this.users.length, helper: 'ทุก role ในระบบ' },
@@ -543,7 +553,7 @@ export class App {
   }
 
   protected applyJob(job: JobPosting): void {
-    if (this.currentUser.status !== 'active') {
+    if (!this.currentUser || this.currentUser.status !== 'active') {
       this.notifications.warning('บัญชีของคุณยังไม่ได้รับการอนุมัติ', 'สมัครงาน');
       return;
     }

@@ -25,7 +25,7 @@
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateX(12px);
+    transform: translateX(100%);
   }
 
   to {

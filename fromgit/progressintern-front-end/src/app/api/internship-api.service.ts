@@ -137,7 +137,10 @@ export class InternshipApiService {
   }
 
   createApplication(body: Omit<Application, 'id' | 'updatedAt'>): Observable<Application | null> {
-    return this.postOne<ApiApplication, Application>('applications', toApiApplication(body), mapApplication);
+    return this.postOne<ApiApplication, Application>('applications', {
+      student_id: body.studentId,
+      job_posting_id: body.jobPostingId
+    }, mapApplication);
   }
 
   patchApplication(id: number, status: ApplicationStatus): Observable<Application | null> {
@@ -204,7 +207,7 @@ export class InternshipApiService {
     );
   }
 
-  private postOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
+  public postOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
     return this.http.post<D>(`${this.base}/${path}`, body, this.authOptions()).pipe(
       map(mapper),
       catchError(() => of(null))

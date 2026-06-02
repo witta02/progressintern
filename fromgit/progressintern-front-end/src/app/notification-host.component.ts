@@ -21,13 +21,14 @@ import { AppNotification, NotificationService } from './notification.service';
         class="toast"
         [ngClass]="'toast-' + toast.type"
         role="alert"
+        style="animation: slideIn 0.3s ease-out;"
       >
         <div class="toast-body">
           <strong>{{ toast.title }}</strong>
           <p>{{ toast.message }}</p>
         </div>
         <button type="button" class="toast-close" aria-label="ปิด" (click)="notifications.dismissToast(toast.id)">
-          ×
+          &times;
         </button>
       </article>
     </div>

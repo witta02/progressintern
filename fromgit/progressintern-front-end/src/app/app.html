@@ -147,9 +147,9 @@
       </div>
 
       <div class="navbar-end">
-        <div class="navbar-user" title="{{ currentUser.email }}">
+        <div class="navbar-user" title="{{ currentUser?.email }}">
           <span class="navbar-user-badge">{{ roleLabel }}</span>
-          <span class="navbar-user-name">{{ currentUser.name }}</span>
+          <span class="navbar-user-name">{{ currentUser?.name }}</span>
         </div>
         <button type="button" class="navbar-logout" (click)="logout()">ออกจากระบบ</button>
         <div class="notification-bell-wrap">

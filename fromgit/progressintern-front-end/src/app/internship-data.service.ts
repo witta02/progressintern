@@ -185,6 +185,22 @@ export class InternshipDataService {
   }
 
   addJob(job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): void {
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(this.api.postOne('jobs', {
+        company_id: job.companyId,
+        title: job.title,
+        description: job.description,
+        requirements: job.requirements,
+        benefits: job.benefits,
+        slots: job.slots
+      }, (dto: any) => dto)).then((created) => {
+        if (created) {
+          this.refreshFromApi();
+        }
+      });
+      return;
+    }
+
     this.jobPostings = [
       ...this.jobPostings,
       { ...job, id: this.nextId(this.jobPostings), status: 'open' }
@@ -194,10 +210,16 @@ export class InternshipDataService {
 
   addApplication(application: Omit<Application, 'id' | 'updatedAt'>): void {
     if (this.api.apiEnabled()) {
+      console.log('DEBUG: Sending application payload:', application);
       void firstValueFrom(this.api.createApplication(application)).then((created) => {
+        console.log('DEBUG: Application response:', created);
         if (created) {
-          this.applications = [...this.applications, created];
+          this.refreshFromApi();
+        } else {
+          console.error('DEBUG: Application creation failed - null response');
         }
+      }).catch((err) => {
+        console.error('DEBUG: Application creation failed - error:', err);
       });
       return;
     }
@@ -394,7 +416,7 @@ export class InternshipDataService {
         email: 'student2@demo.ac.th',
         password: 'student123',
         role: 'student',
-        status: 'pending',
+        status: 'active',
         advisorId: 6,
         school: 'วิทยาลัยเทคนิคกรุงเทพ'
       }

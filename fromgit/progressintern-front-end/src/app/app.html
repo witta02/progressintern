@@ -1,0 +1,553 @@
+<main *ngIf="!isAuthenticated" class="login-shell">
+  <section class="login-panel" [class.register-panel]="authMode === 'register'">
+    <div class="brand login-brand">
+      <div class="brand-mark">IM</div>
+      <div>
+        <h1>Intern Manager</h1>
+        <p>internship_db · {{ useMockData ? 'Mock data' : 'Live API' }}</p>
+      </div>
+    </div>
+
+    <div class="auth-tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        class="auth-tab"
+        [class.active]="authMode === 'login'"
+        [attr.aria-selected]="authMode === 'login'"
+        (click)="setAuthMode('login')"
+      >
+        เข้าสู่ระบบ
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="auth-tab"
+        [class.active]="authMode === 'register'"
+        [attr.aria-selected]="authMode === 'register'"
+        (click)="setAuthMode('register')"
+      >
+        สมัครสมาชิก
+      </button>
+    </div>
+
+    <form *ngIf="authMode === 'login'" class="login-form" (ngSubmit)="login()">
+      <label class="field">
+        <span>Email</span>
+        <input name="loginEmail" type="email" [(ngModel)]="loginForm.email" placeholder="email@example.com" autocomplete="username">
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input name="loginPassword" type="password" [(ngModel)]="loginForm.password" placeholder="password" autocomplete="current-password">
+      </label>
+      <p *ngIf="loginError" class="error-text">{{ loginError }}</p>
+      <button type="submit">Login</button>
+      <p class="auth-switch">
+        ยังไม่มีบัญชี?
+        <button type="button" class="link-button" (click)="setAuthMode('register')">สมัครสมาชิก</button>
+      </p>
+    </form>
+
+    <form *ngIf="authMode === 'register'" class="login-form register-form" (ngSubmit)="register()">
+      <label class="field">
+        <span>ประเภทบัญชี</span>
+        <select name="registerRole" [(ngModel)]="registerForm.role">
+          <option *ngFor="let option of registerRoleOptions" [ngValue]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>ชื่อ-นามสกุล / ชื่อผู้ติดต่อ</span>
+        <input name="registerName" [(ngModel)]="registerForm.name" placeholder="ชื่อเต็ม" autocomplete="name">
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com" autocomplete="email">
+      </label>
+      <label class="field">
+        <span>เบอร์โทร (ไม่บังคับ)</span>
+        <input name="registerPhone" [(ngModel)]="registerForm.phone" placeholder="081-xxx-xxxx" autocomplete="tel">
+      </label>
+      <label class="field" *ngIf="registerForm.role === 'student' || registerForm.role === 'advisor'">
+        <span>สถานศึกษา / สังกัด</span>
+        <input name="registerSchool" [(ngModel)]="registerForm.school" placeholder="ชื่อโรงเรียน/มหาวิทยาลัย">
+      </label>
+      <label class="field">
+        <span>รหัสผ่าน</span>
+        <input name="registerPassword" type="password" [(ngModel)]="registerForm.password" placeholder="อย่างน้อย 6 ตัว" autocomplete="new-password">
+      </label>
+      <label class="field">
+        <span>ยืนยันรหัสผ่าน</span>
+        <input name="registerConfirm" type="password" [(ngModel)]="registerForm.confirmPassword" placeholder="พิมพ์รหัสผ่านอีกครั้ง" autocomplete="new-password">
+      </label>
+
+      <ng-container *ngIf="isRegisterCompany">
+        <label class="field">
+          <span>ชื่อบริษัท (company_name)</span>
+          <input name="companyName" [(ngModel)]="registerForm.companyName" placeholder="ชื่อบริษัท">
+        </label>
+        <label class="field">
+          <span>รายละเอียด (description)</span>
+          <input name="companyDescription" [(ngModel)]="registerForm.description" placeholder="เกี่ยวกับบริษัท">
+        </label>
+        <label class="field">
+          <span>ที่อยู่ (address)</span>
+          <input name="companyAddress" [(ngModel)]="registerForm.address" placeholder="ที่อยู่">
+        </label>
+        <label class="field">
+          <span>อีเมลติดต่อ (contact_email)</span>
+          <input name="contactEmail" type="email" [(ngModel)]="registerForm.contactEmail" placeholder="hr@company.com">
+        </label>
+      </ng-container>
+
+      <p *ngIf="registerError" class="error-text">{{ registerError }}</p>
+      <button type="submit" [disabled]="registerLoading">{{ registerLoading ? 'กำลังสมัคร...' : 'สมัครสมาชิก' }}</button>
+      <p class="auth-switch">
+        มีบัญชีแล้ว?
+        <button type="button" class="link-button" (click)="setAuthMode('login')">เข้าสู่ระบบ</button>
+      </p>
+    </form>
+
+    <div class="demo-list" *ngIf="authMode === 'login'">
+      <p>บัญชีทดสอบ (ตรง schema users)</p>
+      <button type="button" class="demo-account" *ngFor="let user of demoUsers" (click)="useDemoAccount(user)">
+        <span>{{ user.name }}</span>
+        <small>{{ roleName(user.role) }} · {{ user.email }}</small>
+      </button>
+      <button type="button" class="reset-demo" (click)="resetDemoData()">Reset demo data</button>
+    </div>
+  </section>
+</main>
+
+<main *ngIf="isAuthenticated" class="app-shell" [class.sidebar-open]="sidebarOpen">
+  <button
+    type="button"
+    class="sidebar-backdrop"
+    *ngIf="sidebarOpen"
+    aria-label="ปิดเมนู"
+    (click)="closeSidebar()"
+  ></button>
+
+  <section class="content">
+    <nav class="navbar" aria-label="Main navigation">
+      <button type="button" class="navbar-brand" (click)="setActiveView('dashboard')">
+        <span class="navbar-brand-mark">IM</span>
+        <span class="navbar-brand-text">Intern Manager</span>
+      </button>
+
+      <div class="navbar-nav" role="navigation">
+        <button
+          type="button"
+          *ngFor="let view of availableViews"
+          class="navbar-link"
+          [class.active]="activeView === view"
+          (click)="setActiveView(view)"
+        >
+          {{ viewLabels[view] }}
+        </button>
+      </div>
+
+      <div class="navbar-end">
+        <div class="navbar-user" title="{{ currentUser.email }}">
+          <span class="navbar-user-badge">{{ roleLabel }}</span>
+          <span class="navbar-user-name">{{ currentUser.name }}</span>
+        </div>
+        <button type="button" class="navbar-logout" (click)="logout()">ออกจากระบบ</button>
+        <div class="notification-bell-wrap">
+          <button
+            type="button"
+            class="notification-bell"
+            [attr.aria-expanded]="notificationPanelOpen"
+            aria-label="การแจ้งเตือน"
+            (click)="toggleNotificationPanel()"
+          >
+            🔔
+            <span class="notification-badge" *ngIf="notifications.unreadCount() > 0">{{ notifications.unreadCount() }}</span>
+          </button>
+        </div>
+        <button
+          type="button"
+          class="menu-toggle"
+          [attr.aria-expanded]="sidebarOpen"
+          aria-controls="app-sidebar"
+          [attr.aria-label]="sidebarOpen ? 'ปิดเมนู' : 'เปิดเมนู'"
+          (click)="toggleSidebar()"
+        >
+          <span class="menu-toggle-bar"></span>
+          <span class="menu-toggle-bar"></span>
+          <span class="menu-toggle-bar"></span>
+        </button>
+      </div>
+    </nav>
+
+    <header class="page-header">
+      <div class="page-header-main">
+        <p class="eyebrow">Role-based workflow · {{ useMockData ? 'mock' : 'API' }}</p>
+        <h2>{{ activeView === 'dashboard' ? 'ภาพรวมระบบ' : viewLabels[activeView] }}</h2>
+      </div>
+      <div class="top-actions">
+        <span *ngFor="let item of topSummary">{{ item }}</span>
+      </div>
+    </header>
+
+    <div class="page-body">
+    <section *ngIf="activeView === 'dashboard'" class="view-grid">
+      <div *ngIf="currentUser.role === 'student' && currentUser.status === 'pending'" class="panel wide" style="background: #fffbeb; border-color: #f5dfa0;">
+        <h3 style="color: #8a5a00;">รอการอนุมัติบัญชี</h3>
+        <p>บัญชีของคุณกำลังรอการตรวจสอบจากอาจารย์ที่ปรึกษาในสังกัด {{ currentUser.school }}</p>
+      </div>
+
+      <article class="metric" *ngFor="let metric of dashboardMetrics">
+        <span>{{ metric.label }}</span>
+        <strong>{{ metric.value }}</strong>
+        <small>{{ metric.helper }}</small>
+      </article>
+
+      <article *ngIf="currentUser.role === 'advisor'" class="panel wide">
+        <div class="panel-title">
+          <h3>จัดการนักศึกษาในสังกัด ({{ currentUser.school }})</h3>
+          <p>อนุมัติ หรือแก้ไขข้อมูลโรงเรียนให้นักศึกษาที่พิมพ์ผิด</p>
+        </div>
+        
+        <div class="stack">
+          <div class="table-card">
+            <div class="table-row header" style="grid-template-columns: 1.2fr 1fr 1fr 0.8fr 1.2fr;">
+              <span>ชื่อ-นามสกุล</span>
+              <span>อีเมล</span>
+              <span>โรงเรียน (ที่ระบุ)</span>
+              <span>สถานะ</span>
+              <span>จัดการ</span>
+            </div>
+            <div class="table-row" *ngFor="let student of managedStudents" style="grid-template-columns: 1.2fr 1fr 1fr 0.8fr 1.2fr;">
+              <span><strong>{{ student.name }}</strong></span>
+              <span>{{ student.email }}</span>
+              <span>{{ student.school }}</span>
+              <span><mark [class.good]="student.status === 'active'" [class.danger]="student.status === 'rejected'">{{ student.status }}</mark></span>
+              <span class="inline-actions">
+                <button class="small" *ngIf="student.status === 'pending'" (click)="approveStudent(student)">อนุมัติ</button>
+                <button class="small secondary" *ngIf="student.status === 'pending'" (click)="rejectStudent(student)">ปฏิเสธ</button>
+                <span *ngIf="student.status === 'active'">-</span>
+              </span>
+            </div>
+            <div class="empty-row" *ngIf="managedStudents.length === 0">
+              ไม่พบนักศึกษาในสังกัดปัจจุบัน
+            </div>
+          </div>
+
+          <div class="panel" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
+            <div class="panel-title">
+              <h4>ค้นหานักศึกษาจากโรงเรียนอื่น (กรณีพิมพ์ชื่อโรงเรียนผิด)</h4>
+              <p>ครูอาจารย์สามารถแก้ไขชื่อโรงเรียนของนักศึกษาให้มาอยู่ในสังกัดตัวเองได้</p>
+            </div>
+            <div class="field" style="margin-bottom: 15px;">
+              <input [(ngModel)]="studentSearchQuery" placeholder="ค้นหาด้วยชื่อ, อีเมล หรือชื่อโรงเรียนที่พิมพ์ผิด...">
+            </div>
+            <div class="table-card" *ngIf="studentSearchQuery.trim()">
+              <div class="table-row header" style="grid-template-columns: 1.2fr 1fr 1fr 1.2fr;">
+                <span>ชื่อ-นามสกุล</span>
+                <span>อีเมล</span>
+                <span>โรงเรียนที่นักศึกษาพิมพ์</span>
+                <span>จัดการ</span>
+              </div>
+              <div class="table-row" *ngFor="let student of otherStudents" style="grid-template-columns: 1.2fr 1fr 1fr 1.2fr;">
+                <span><strong>{{ student.name }}</strong></span>
+                <span>{{ student.email }}</span>
+                <span style="color: #e11d48;">{{ student.school || '(ว่าง)' }}</span>
+                <span class="inline-actions">
+                  <button class="small secondary" (click)="claimStudent(student)">ย้ายเข้าสังกัด {{ currentUser.school }}</button>
+                </span>
+              </div>
+              <div class="empty-row" *ngIf="otherStudents.length === 0">
+                ไม่พบนักศึกษาที่ตรงกับการค้นหา
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="activeView === 'edit'" class="stack">
+      <article class="panel">
+        <div class="panel-title">
+          <h3>แก้ไขข้อมูลโปรไฟล์</h3>
+          <p>ปรับปรุงข้อมูลส่วนตัวของคุณให้เป็นปัจจุบัน</p>
+        </div>
+        <form class="login-form" (ngSubmit)="saveProfile()" style="max-width: 600px;">
+          <label class="field">
+            <span>ชื่อ-นามสกุล</span>
+            <input name="editName" [(ngModel)]="profileDraft.name">
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input name="editEmail" type="email" [(ngModel)]="profileDraft.email">
+          </label>
+          <label class="field">
+            <span>เบอร์โทรศัพท์</span>
+            <input name="editPhone" [(ngModel)]="profileDraft.phone">
+          </label>
+          <label class="field" *ngIf="currentUser.role === 'student' || currentUser.role === 'advisor'">
+            <span>สถานศึกษา / สังกัด</span>
+            <input name="editSchool" [(ngModel)]="profileDraft.school" [disabled]="currentUser.role === 'student' && currentUser.status === 'active'">
+            <small *ngIf="currentUser.role === 'student' && currentUser.status === 'active'" class="eyebrow" style="color: #8a5a00; margin-top: 4px;">* หากต้องการแก้ไขโรงเรียนหลังจากอนุมัติแล้ว กรุณาติดต่ออาจารย์ที่ปรึกษา</small>
+          </label>
+          <label class="field" *ngIf="currentUser.role === 'student'">
+            <span>Resume URL (Link)</span>
+            <input name="editResume" [(ngModel)]="profileDraft.resumeUrl">
+          </label>
+          <div style="margin-top: 10px;">
+            <button type="submit">บันทึกการเปลี่ยนแปลง</button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <section *ngIf="activeView === 'jobs'" class="stack">
+      <article *ngIf="currentUser.role === 'company'" class="panel">
+        <div class="panel-title">
+          <h3>โพสต์ตำแหน่งงาน</h3>
+          <p>job_postings: title, description, requirements, benefits, slots</p>
+        </div>
+        <form class="form-grid" (ngSubmit)="addJob()">
+          <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="title">
+          <input name="jobDescription" [(ngModel)]="newJob.description" placeholder="description">
+          <input name="jobRequirements" [(ngModel)]="newJob.requirements" placeholder="requirements">
+          <input name="jobBenefits" [(ngModel)]="newJob.benefits" placeholder="benefits">
+          <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="slots">
+          <button type="submit">โพสต์งาน</button>
+        </form>
+      </article>
+
+      <div class="table-card">
+        <div class="table-row header">
+          <span>ตำแหน่ง</span>
+          <span>บริษัท</span>
+          <span>รายละเอียด</span>
+          <span>สถานะ</span>
+          <span>Action</span>
+        </div>
+        <div class="table-row" *ngFor="let job of visibleJobs">
+          <span><strong>{{ job.title }}</strong></span>
+          <span>{{ companyName(job.companyId) }}</span>
+          <span>{{ jobSummary(job) }} · {{ job.slots }} อัตรา</span>
+          <span><mark>{{ job.status }}</mark></span>
+          <span>
+            <button class="small" *ngIf="canApply(job)" (click)="applyJob(job)">สมัคร</button>
+            <small *ngIf="!canApply(job) && currentUser.role === 'student'">สมัครแล้ว/ไม่เปิดรับ</small>
+          </span>
+        </div>
+        <div class="empty-row" *ngIf="visibleJobs.length === 0">
+          ยังไม่มีตำแหน่งงานที่มองเห็นได้สำหรับสิทธิ์นี้
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeView === 'applications'" class="stack">
+      <div class="table-card">
+        <div class="table-row header">
+          <span>นักศึกษา</span>
+          <span>ตำแหน่ง</span>
+          <span>วันที่สมัคร</span>
+          <span>สถานะ</span>
+          <span>Action</span>
+        </div>
+        <div class="table-row" *ngFor="let application of visibleApplications">
+          <span>{{ userName(application.studentId) }}</span>
+          <span>{{ jobName(application.jobPostingId) }}</span>
+          <span>{{ formatDateTime(application.appliedAt) }}</span>
+          <span><mark [class.good]="application.status === 'approved'" [class.danger]="application.status === 'rejected'">{{ application.status }}</mark></span>
+          <span class="inline-actions">
+            <ng-container *ngIf="currentUser.role === 'company' && (application.status === 'pending' || application.status === 'interview')">
+              <button class="small" (click)="updateApplication(application, 'interview')">Interview</button>
+              <button class="small" (click)="updateApplication(application, 'approved')">Approve</button>
+              <button class="small secondary" (click)="updateApplication(application, 'rejected')">Reject</button>
+            </ng-container>
+          </span>
+        </div>
+        <div class="empty-row" *ngIf="visibleApplications.length === 0">
+          ยังไม่มีประวัติการสมัครในขอบเขตสิทธิ์นี้
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeView === 'internships'" class="stack">
+      <div class="cards-grid">
+        <article class="panel" *ngFor="let internship of visibleInternships">
+          <div class="panel-title">
+            <h3>{{ internshipJobTitle(internship) }}</h3>
+            <p>{{ userName(internship.studentId) }} · {{ companyName(internship.companyId) }}</p>
+          </div>
+          <dl class="details">
+            <div><dt>ช่วงเวลา</dt><dd>{{ internship.startDate }} ถึง {{ internship.endDate }}</dd></div>
+            <div><dt>job_posting_id</dt><dd>{{ internship.jobPostingId }}</dd></div>
+            <div><dt>สถานะ</dt><dd>{{ internship.status }}</dd></div>
+          </dl>
+        </article>
+      </div>
+      <div class="empty-card" *ngIf="visibleInternships.length === 0">
+        ยังไม่มี internship
+      </div>
+    </section>
+
+    <section *ngIf="activeView === 'attendance'" class="stack">
+      <article *ngIf="currentUser.role === 'student' && activeInternship" class="panel">
+        <div class="panel-title">
+          <h3>Check in / Check out</h3>
+          <p>{{ internshipJobTitle(activeInternship) }} · status: present / late / absent</p>
+        </div>
+        <div class="button-row">
+          <button (click)="checkIn()" [disabled]="hasOpenAttendance()">Check in</button>
+          <button class="secondary" (click)="checkOut()" [disabled]="!hasOpenAttendance()">Check out</button>
+        </div>
+      </article>
+
+      <div class="table-card">
+        <div class="table-row header">
+          <span>นักศึกษา</span>
+          <span>Check in</span>
+          <span>Check out</span>
+          <span>สถานะ</span>
+          <span>Action</span>
+        </div>
+        <div class="table-row" *ngFor="let attendance of visibleAttendances">
+          <span>{{ userName(attendance.studentId) }}</span>
+          <span>{{ formatDateTime(attendance.checkInTime) }}</span>
+          <span>{{ attendance.checkOutTime ? formatDateTime(attendance.checkOutTime) : 'ยังไม่ออก' }}</span>
+          <span><mark>{{ attendance.status }}</mark></span>
+          <span class="inline-actions">
+            <ng-container *ngIf="currentUser.role === 'company'">
+              <button class="small" (click)="setAttendanceStatus(attendance, 'present')">Present</button>
+              <button class="small" (click)="setAttendanceStatus(attendance, 'late')">Late</button>
+              <button class="small secondary" (click)="setAttendanceStatus(attendance, 'absent')">Absent</button>
+            </ng-container>
+          </span>
+        </div>
+        <div class="empty-row" *ngIf="visibleAttendances.length === 0">
+          ยังไม่มีประวัติการลงเวลา
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeView === 'logbooks'" class="stack">
+      <article *ngIf="currentUser.role === 'student' && activeInternship" class="panel">
+        <div class="panel-title">
+          <h3>ส่งบันทึก</h3>
+          <p>หัวข้อ, เนื้อหา · สถานะ รออนุมัติ / อนุมัติ / ปฏิเสธ</p>
+        </div>
+        <form class="log-form" (ngSubmit)="addLogbook()">
+          <input name="logbookTitle" [(ngModel)]="logbookTitle" placeholder="หัวข้อ">
+          <textarea name="logbookText" [(ngModel)]="logbookText" rows="4" placeholder="เนื้อหา"></textarea>
+          <button type="submit">ส่งบันทึก</button>
+        </form>
+      </article>
+
+      <div class="table-card">
+        <div class="table-row header">
+          <span>นักศึกษา</span>
+          <span>หัวข้อ</span>
+          <span>เนื้อหา</span>
+          <span>สถานะ</span>
+          <span>Action</span>
+        </div>
+        <div class="table-row" *ngFor="let logbook of visibleLogbooks">
+          <span>{{ userName(internshipFor(logbook.internshipId)?.studentId || 0) }}</span>
+          <span>{{ logbook.title }}</span>
+          <span>{{ logbook.content }}</span>
+          <span><mark [class.good]="logbook.status === 'approved'" [class.danger]="logbook.status === 'rejected'">{{ logbook.status }}</mark></span>
+          <span class="inline-actions">
+            <ng-container *ngIf="currentUser.role === 'company' && logbook.status === 'pending'">
+              <button class="small" (click)="reviewLogbook(logbook, 'approved')">Approve</button>
+              <button class="small secondary" (click)="reviewLogbook(logbook, 'rejected')">Reject</button>
+            </ng-container>
+          </span>
+        </div>
+        <div class="empty-row" *ngIf="visibleLogbooks.length === 0">
+          ยังไม่มีบันทึกในขอบเขตสิทธิ์นี้
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeView === 'evaluations'" class="stack">
+      <article *ngIf="(currentUser.role === 'company' || currentUser.role === 'advisor') && visibleInternships[0]" class="panel">
+        <div class="panel-title">
+          <h3>ประเมินนักศึกษา</h3>
+          <p>evaluations: evaluator_id, score, feedback, evaluation_type (mentor | advisor)</p>
+        </div>
+        <form class="form-grid evaluation-form" (ngSubmit)="addEvaluation()">
+          <select name="evaluationInternship" [(ngModel)]="selectedEvaluationInternshipId">
+            <option [ngValue]="null" disabled>เลือกนักศึกษา</option>
+            <option *ngFor="let internship of visibleInternships" [ngValue]="internship.id">
+              {{ userName(internship.studentId) }} - {{ internshipJobTitle(internship) }}
+            </option>
+          </select>
+          <select name="evaluationType" [(ngModel)]="evaluationType">
+            <option value="mentor">mentor</option>
+            <option value="advisor">advisor</option>
+          </select>
+          <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore">
+          <input name="evaluationFeedback" [(ngModel)]="evaluationFeedback" placeholder="feedback">
+          <button type="submit" [disabled]="!selectedEvaluationInternshipId">บันทึกประเมิน</button>
+        </form>
+      </article>
+
+      <div class="table-card">
+        <div class="table-row header">
+          <span>นักศึกษา</span>
+          <span>ผู้ประเมิน</span>
+          <span>คะแนน</span>
+          <span>feedback</span>
+        </div>
+        <div class="table-row compact" *ngFor="let evaluation of visibleEvaluations">
+          <span>{{ userName(internshipFor(evaluation.internshipId)?.studentId || 0) }}</span>
+          <span>{{ evaluatorLabel(evaluation) }}</span>
+          <span>{{ evaluation.score }}/100</span>
+          <span>{{ evaluation.feedback }}</span>
+        </div>
+        <div class="empty-row" *ngIf="visibleEvaluations.length === 0">
+          ยังไม่มีผลประเมิน
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeView === 'schema' && currentUser.role === 'admin'" class="schema-grid">
+      <article class="schema-card" *ngFor="let table of schemaTables">
+        <strong>{{ table.name }}</strong>
+        <p class="schema-cols">{{ table.columns }}</p>
+      </article>
+    </section>
+    </div>
+  </section>
+
+  <aside id="app-sidebar" class="sidebar" [class.open]="sidebarOpen">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-mark">IM</div>
+        <div>
+          <h1>Intern Manager</h1>
+          <p>internship_db</p>
+        </div>
+      </div>
+      <button type="button" class="sidebar-close" aria-label="ปิดเมนู" (click)="closeSidebar()">×</button>
+    </div>
+
+    <div class="session-card">
+      <span class="badge">{{ roleLabel }}</span>
+      <strong>{{ currentUser.name }}</strong>
+      <small>{{ currentUser.email }}</small>
+      <small *ngIf="currentUser.school">{{ currentUser.school }}</small>
+      <small *ngIf="currentCompany">{{ currentCompany.companyName }}</small>
+      <small *ngIf="!useMockData && data.apiConnected" class="api-ok">API connected</small>
+      <small *ngIf="!useMockData && data.apiLoadError" class="error-text">{{ data.apiLoadError }}</small>
+    </div>
+
+    <nav class="nav">
+      <button *ngFor="let view of availableViews" [class.active]="activeView === view" (click)="setActiveView(view)">
+        {{ viewLabels[view] }}
+      </button>
+      <button class="logout-button" (click)="logout()">ออกจากระบบ</button>
+    </nav>
+  </aside>
+</main>
+
+<app-notification-host
+  [panelOpen]="notificationPanelOpen"
+  (panelClosed)="closeNotificationPanel()"
+></app-notification-host>

@@ -1,0 +1,310 @@
+package models
+
+import (
+	"time"
+)
+
+// ========================================================
+// 📦 DATABASE MODELS & VALIDATION STRUCTURES
+// ========================================================
+
+// ==================== Authentication ====================
+
+type User struct {
+	ID           int       `json:"id" db:"id"`
+	Name         string    `json:"name" db:"name"`
+	Email        string    `json:"email" db:"email"`
+	Password     string    `json:"-" db:"password"` // ซ่อนรหัสผ่านจาก JSON response
+	Role         string    `json:"role" db:"role"`  // student, company, advisor, admin
+	PhoneNumber  string    `json:"phone" db:"phone"`
+	ProfileImage string    `json:"profile_image" db:"profile_image"`
+	IsActive     bool      `json:"is_active" db:"is_active"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type LoginInput struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type RegisterInput struct {
+	Name         string `json:"name" binding:"required,min=3,max=255"`
+	Email        string `json:"email" binding:"required,email"`
+	Password     string `json:"password" binding:"required,min=8"`
+	Role         string `json:"role" binding:"required,oneof=student company advisor admin"`
+	Phone        string `json:"phone" binding:"omitempty"`
+	CompanyName  string `json:"company_name"`
+	Description  string `json:"description"`
+	Address      string `json:"address"`
+	ContactEmail string `json:"contact_email"`
+}
+
+type JWTResponse struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+	Token string `json:"token"`
+}
+
+// ==================== Company ====================
+
+type Company struct {
+	ID            int       `json:"id" db:"id"`
+	UserID        int       `json:"user_id" db:"user_id"`
+	CompanyName   string    `json:"company_name" db:"company_name"`
+	Website       string    `json:"website" db:"website"`
+	Address       string    `json:"address" db:"address"`
+	Phone         string    `json:"phone" db:"phone"`
+	Industry      string    `json:"industry" db:"industry"`
+	EmployeeCount int       `json:"employee_count" db:"employee_count"`
+	Description   string    `json:"description" db:"description"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type CreateCompanyInput struct {
+	CompanyName   string `json:"company_name" binding:"required,min=3,max=255"`
+	Website       string `json:"website" binding:"omitempty,url"`
+	Address       string `json:"address" binding:"required"`
+	Phone         string `json:"phone" binding:"required,len=10"`
+	Industry      string `json:"industry" binding:"required"`
+	EmployeeCount int    `json:"employee_count" binding:"omitempty,min=1"`
+	Description   string `json:"description" binding:"omitempty,max=5000"`
+}
+
+// ==================== Job Posting ====================
+
+type JobPosting struct {
+	ID           int        `json:"id" db:"id"`
+	CompanyID    int        `json:"company_id" db:"company_id"`
+	Title        string     `json:"title" db:"title"`
+	Description  string     `json:"description" db:"description"`
+	Requirements string     `json:"requirements" db:"requirements"`
+	Benefits     string     `json:"benefits" db:"benefits"`
+	Category     string     `json:"category" db:"category"`
+	Location     string     `json:"location" db:"location"`
+	SalaryRange  string     `json:"salary_range" db:"salary_range"`
+	Slots        int        `json:"slots" db:"slots"`
+	Status       string     `json:"status" db:"status"` // open, closed, filled
+	Deadline     *time.Time `json:"deadline" db:"deadline"`
+	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
+}
+
+type CreateJobInput struct {
+	Title        string     `json:"title" binding:"required,min=5,max=255"`
+	Description  string     `json:"description" binding:"required,min=20"`
+	Requirements string     `json:"requirements" binding:"omitempty"`
+	Benefits     string     `json:"benefits" binding:"omitempty"`
+	Category     string     `json:"category" binding:"omitempty"`
+	Location     string     `json:"location" binding:"required"`
+	SalaryRange  string     `json:"salary_range" binding:"omitempty"`
+	Slots        int        `json:"slots" binding:"required,min=1,max=100"`
+	Deadline     *time.Time `json:"deadline" binding:"omitempty"`
+}
+
+// ใช้สำหรับ handlers/jobs.go
+type JobPostingInput struct {
+	CompanyID    int    `json:"company_id" binding:"required"`
+	Title        string `json:"title" binding:"required"`
+	Description  string `json:"description" binding:"required"`
+	Requirements string `json:"requirements" binding:"omitempty"`
+	Benefits     string `json:"benefits" binding:"omitempty"`
+	Slots        int    `json:"slots" binding:"required"`
+}
+
+// ==================== Application ====================
+
+type Application struct {
+	ID              int       `json:"id" db:"id"`
+	StudentID       int       `json:"student_id" db:"student_id"`
+	JobPostingID    int       `json:"job_posting_id" db:"job_posting_id"`
+	ResumePath      string    `json:"resume_path" db:"resume_path"`
+	CoverLetter     string    `json:"cover_letter" db:"cover_letter"`
+	Status          string    `json:"status" db:"status"` // pending, interview, approved, rejected
+	RejectionReason string    `json:"rejection_reason" db:"rejection_reason"`
+	CreatedAt       time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type ApplyInput struct {
+	StudentID    int    `json:"student_id" binding:"required"`
+	JobPostingID int    `json:"job_posting_id" binding:"required"`
+	CoverLetter  string `json:"cover_letter" binding:"omitempty,max=5000"`
+}
+
+type ApplyJobInput = ApplyInput
+
+type UpdateStatusInput struct {
+	Status string `json:"status" binding:"required,oneof=pending interview approved rejected"`
+}
+
+type UpdateApplicationStatusInput struct {
+	Status          string `json:"status" binding:"required,oneof=pending interview approved rejected"`
+	RejectionReason string `json:"rejection_reason" binding:"omitempty"`
+}
+
+// ==================== Internship ====================
+
+type Internship struct {
+	ID           int       `json:"id" db:"id"`
+	StudentID    int       `json:"student_id" db:"student_id"`
+	CompanyID    int       `json:"company_id" db:"company_id"`
+	JobPostingID int       `json:"job_posting_id" db:"job_posting_id"`
+	MentorID     *int      `json:"mentor_id" db:"mentor_id"`
+	SupervisorID *int      `json:"supervisor_id" db:"supervisor_id"`
+	StartDate    time.Time `json:"start_date" db:"start_date"`
+	EndDate      time.Time `json:"end_date" db:"end_date"`
+	Status       string    `json:"status" db:"status"` // active, completed, cancelled
+	TotalHours   int       `json:"total_hours" db:"total_hours"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// ==================== Attendance ====================
+
+type Attendance struct {
+	ID           int        `json:"id" db:"id"`
+	InternshipID int        `json:"internship_id" db:"internship_id"`
+	StudentID    int        `json:"student_id" db:"student_id"`
+	CheckInTime  *time.Time `json:"check_in_time" db:"check_in_time"`
+	CheckOutTime *time.Time `json:"check_out_time" db:"check_out_time"`
+	Latitude     float64    `json:"latitude" db:"latitude"`
+	Longitude    float64    `json:"longitude" db:"longitude"`
+	Status       string     `json:"status" db:"status"` // present, absent, late, early_leave
+	Notes        string     `json:"notes" db:"notes"`
+	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
+}
+
+type CheckInInput struct {
+	InternshipID int     `json:"internship_id" binding:"required"`
+	StudentID    int     `json:"student_id" binding:"required"`
+	Latitude     float64 `json:"latitude" binding:"omitempty"`
+	Longitude    float64 `json:"longitude" binding:"omitempty"`
+}
+
+type CheckOutInput struct {
+	InternshipID int `json:"internship_id" binding:"required"`
+	StudentID    int `json:"student_id" binding:"required"`
+}
+
+// ใช้สำหรับ handlers/attendance.go
+type AttendanceInput struct {
+	InternshipID int     `json:"internship_id" binding:"required"`
+	StudentID    int     `json:"student_id" binding:"required"`
+	Latitude     float64 `json:"latitude" binding:"omitempty"`
+	Longitude    float64 `json:"longitude" binding:"omitempty"`
+}
+
+// ==================== Logbook ====================
+
+type Logbook struct {
+	ID            int        `json:"id" db:"id"`
+	InternshipID  int        `json:"internship_id" db:"internship_id"`
+	StudentID     int        `json:"student_id" db:"student_id"`
+	Title         string     `json:"title" db:"title"`
+	Content       string     `json:"content" db:"content"`
+	WeekNumber    *int       `json:"week_number" db:"week_number"`
+	Status        string     `json:"status" db:"status"` // draft, submitted, approved, rejected
+	MentorComment string     `json:"mentor_comment" db:"mentor_comment"`
+	MentorID      *int       `json:"mentor_id" db:"mentor_id"`
+	CreatedAt     time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at" db:"updated_at"`
+	SubmittedAt   *time.Time `json:"submitted_at" db:"submitted_at"`
+	ReviewedAt    *time.Time `json:"reviewed_at" db:"reviewed_at"`
+}
+
+type CreateLogbookInput struct {
+	InternshipID int    `json:"internship_id" binding:"required"`
+	StudentID    int    `json:"student_id" binding:"required"`
+	Title        string `json:"title" binding:"required,min=5,max=255"`
+	Content      string `json:"content" binding:"required,min=50"`
+	WeekNumber   *int   `json:"week_number" binding:"omitempty,min=1,max=52"`
+}
+
+// ใช้สำหรับ handlers/logbooks.go
+type LogbookInput struct {
+	InternshipID int    `json:"internship_id" binding:"required"`
+	StudentID    int    `json:"student_id"`
+	Title        string `json:"title" binding:"required"`
+	Content      string `json:"content" binding:"required"`
+}
+
+type ApproveLogbookInput struct {
+	Status        string `json:"status" binding:"required,oneof=approved rejected"`
+	MentorComment string `json:"mentor_comment" binding:"omitempty,max=2000"`
+}
+
+// ==================== Evaluation ====================
+
+type Evaluation struct {
+	ID            int       `json:"id" db:"id"`
+	InternshipID  int       `json:"internship_id" db:"internship_id"`
+	EvaluatorID   int       `json:"evaluator_id" db:"evaluator_id"`
+	EvaluatorRole string    `json:"evaluator_role" db:"evaluator_role"` // mentor, advisor, company
+	Score         float64   `json:"score" db:"score"`
+	MaxScore      float64   `json:"max_score" db:"max_score"`
+	RubricData    string    `json:"rubric_data" db:"rubric_data"` // JSON
+	Comment       string    `json:"comment" db:"comment"`
+	IsFinal       bool      `json:"is_final" db:"is_final"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type CreateEvaluationInput struct {
+	InternshipID  int     `json:"internship_id" binding:"required"`
+	EvaluatorRole string  `json:"evaluator_role" binding:"required,oneof=mentor advisor company"`
+	Score         float64 `json:"score" binding:"required,min=0,max=100"`
+	Comment       string  `json:"comment" binding:"omitempty,max=5000"`
+	RubricData    string  `json:"rubric_data" binding:"omitempty"`
+}
+
+// ==================== Notification ====================
+
+type Notification struct {
+	ID                int        `json:"id" db:"id"`
+	UserID            int        `json:"user_id" db:"user_id"`
+	Type              string     `json:"type" db:"type"`
+	Title             string     `json:"title" db:"title"`
+	Message           string     `json:"message" db:"message"`
+	RelatedEntityType string     `json:"related_entity_type" db:"related_entity_type"`
+	RelatedEntityID   *int       `json:"related_entity_id" db:"related_entity_id"`
+	IsRead            bool       `json:"is_read" db:"is_read"`
+	CreatedAt         time.Time  `json:"created_at" db:"created_at"`
+	ReadAt            *time.Time `json:"read_at" db:"read_at"`
+}
+
+// ==================== File Upload ====================
+
+type FileUpload struct {
+	ID                int       `json:"id" db:"id"`
+	UserID            int       `json:"user_id" db:"user_id"`
+	FilePath          string    `json:"file_path" db:"file_path"`
+	FileName          string    `json:"file_name" db:"file_name"`
+	FileType          string    `json:"file_type" db:"file_type"`
+	FileSize          int       `json:"file_size" db:"file_size"`
+	UploadType        string    `json:"upload_type" db:"upload_type"` // resume, certificate, etc
+	RelatedEntityType string    `json:"related_entity_type" db:"related_entity_type"`
+	RelatedEntityID   *int      `json:"related_entity_id" db:"related_entity_id"`
+	CreatedAt         time.Time `json:"created_at" db:"created_at"`
+}
+
+// ==================== API Response ====================
+
+type APIResponse struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
+}
+
+type PaginatedResponse struct {
+	Status   int         `json:"status"`
+	Message  string      `json:"message"`
+	Data     interface{} `json:"data"`
+	Page     int         `json:"page"`
+	PageSize int         `json:"page_size"`
+	Total    int64       `json:"total"`
+}

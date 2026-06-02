@@ -1,59 +1,38 @@
-# Realone
+# Progress Intern
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.13.
+Internship management app with an Angular frontend and a Go/Gin API backend.
 
-## Development server
-
-To start a local development server, run:
+## Frontend
 
 ```bash
-ng serve
+npm install
+npm run build
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+The Angular app uses `/api` as its backend base URL.
 
-## Code scaffolding
+## Backend
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Set these environment variables before running the API:
 
 ```bash
-ng generate component component-name
+DB_USER=
+DB_PASSWORD=
+DB_HOST=
+DB_PORT=4000
+DB_NAME=
+JWT_SECRET=
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Run locally:
 
 ```bash
-ng generate --help
+go run ./BackEnd
 ```
 
-## Building
+The local API listens on `PORT` or `8080` by default.
 
-To build the project run:
+## Vercel
 
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+This branch includes `vercel.json` and `api/index.go` so Vercel can route `/api/*` requests to the Go API handler while building the Angular app.

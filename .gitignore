@@ -11,6 +11,13 @@
 npm-debug.log
 yarn-error.log
 
+# Local secrets and binaries
+.env
+*.env
+*.exe
+BackEnd/.env
+BackEnd/*.exe
+
 # IDEs and editors
 .idea/
 .project

@@ -40,7 +40,7 @@ export class InternshipDataService {
     if (environment.useMockData) {
       this.seedDemoData();
       this.loadFromStorage();
-    } else {
+    } else if (this.isBrowser()) {
       void this.refreshFromApi();
     }
   }
@@ -209,11 +209,9 @@ export class InternshipDataService {
   updateApplicationStatus(application: Application, status: ApplicationStatus): void {
     if (this.api.apiEnabled()) {
       void firstValueFrom(this.api.patchApplication(application.id, status)).then((updated) => {
-        if (updated) {
-          this.applications = this.applications.map((item) =>
-            item.id === application.id ? updated : item
-          );
-        }
+        this.applications = this.applications.map((item) =>
+          item.id === application.id ? (updated ?? { ...item, status, updatedAt: new Date().toISOString() }) : item
+        );
       });
       return;
     }
@@ -265,9 +263,9 @@ export class InternshipDataService {
           status: updates.status
         })
       ).then((updated) => {
-        if (updated) {
-          this.attendances = this.attendances.map((a) => (a.id === attendanceId ? updated : a));
-        }
+        this.attendances = this.attendances.map((a) =>
+          a.id === attendanceId ? (updated ?? { ...a, ...updates }) : a
+        );
       });
       return;
     }
@@ -301,9 +299,9 @@ export class InternshipDataService {
       void firstValueFrom(
         this.api.patchLogbook(logbook.id, { status, mentorComment })
       ).then((updated) => {
-        if (updated) {
-          this.logbooks = this.logbooks.map((item) => (item.id === logbook.id ? updated : item));
-        }
+        this.logbooks = this.logbooks.map((item) =>
+          item.id === logbook.id ? (updated ?? { ...item, status, mentorComment: mentorComment ?? item.mentorComment }) : item
+        );
       });
       return;
     }
@@ -568,6 +566,10 @@ export class InternshipDataService {
   }
 
   private hasLocalStorage(): boolean {
-    return typeof localStorage !== 'undefined';
+    return this.isBrowser() && typeof localStorage !== 'undefined';
+  }
+
+  private isBrowser(): boolean {
+    return typeof window !== 'undefined';
   }
 }

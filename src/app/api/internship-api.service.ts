@@ -85,7 +85,7 @@ export class InternshipApiService {
       jobPostings: this.getList<ApiJobPosting, JobPosting>('jobs', mapJobPosting),
       applications: this.getList<ApiApplication, Application>('applications', mapApplication),
       internships: this.getList<ApiInternship, Internship>('internships', mapInternship),
-      attendances: this.getList<ApiAttendance, Attendance>('attendances', mapAttendance),
+      attendances: this.getList<ApiAttendance, Attendance>('attendance', mapAttendance),
       logbooks: this.getList<ApiLogbook, Logbook>('logbooks', mapLogbook),
       evaluations: this.getList<ApiEvaluation, Evaluation>('evaluations', mapEvaluation)
     }).pipe(
@@ -173,6 +173,7 @@ export class InternshipApiService {
       internship_id: body.internshipId,
       title: body.title,
       content: body.content,
+      student_id: this.currentUserId(),
       attachment_url: body.attachmentUrl ?? null,
       status: body.status ?? 'pending'
     }, mapLogbook);
@@ -228,6 +229,16 @@ export class InternshipApiService {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(this.tokenKey, token);
     }
+  }
+
+  private currentUserId(): number | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    const value = localStorage.getItem('intern-manager-session-v1');
+    const id = value ? Number(value) : null;
+    return Number.isFinite(id) ? id : null;
   }
 
   private authOptions(): { headers?: { Authorization: string } } {

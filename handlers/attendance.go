@@ -1,0 +1,144 @@
+package handlers
+
+import (
+	"internship-backend/config"
+
+	"github.com/gin-gonic/gin"
+)
+
+// ========================================================
+// [POST] นักศึกษาเช็คอินเข้างานประจำวัน
+// ========================================================
+func CheckInHandler(c *gin.Context) {
+	var input struct {
+		InternshipID int     `json:"internship_id" binding:"required"`
+		StudentID    int     `json:"student_id" binding:"required"`
+		Latitude     float64 `json:"latitude"`
+		Longitude    float64 `json:"longitude"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
+		return
+	}
+
+	// Check if already checked in today
+	var existingID int
+	err := config.DB.QueryRow(
+		"SELECT id FROM attendances WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()",
+		input.InternshipID, input.StudentID,
+	).Scan(&existingID)
+	if err == nil {
+		c.JSON(409, gin.H{"status": 409, "error": "วันนี้เช็คอินแล้ว"})
+		return
+	}
+
+	// Determine status: check against lated_time from job_postings
+	status := "present"
+	var latedTime interface{}
+	config.DB.QueryRow(
+		`SELECT j.lated_time FROM internships i 
+		 JOIN job_postings j ON i.job_posting_id = j.id 
+		 WHERE i.id = ?`, input.InternshipID,
+	).Scan(&latedTime)
+	// If lated_time is set and current time is past it, mark as late
+	if latedTime != nil {
+		var isLate bool
+		config.DB.QueryRow(
+			"SELECT CURTIME() > ? as is_late", latedTime,
+		).Scan(&isLate)
+		if isLate {
+			status = "late"
+		}
+	}
+
+	_, err = config.DB.Exec(
+		"INSERT INTO attendances (internship_id, student_id, check_in_time, latitude, longitude, status) "+
+			"VALUES (?, ?, NOW(), ?, ?, ?)",
+		input.InternshipID, input.StudentID, input.Latitude, input.Longitude, status,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "ลงเวลาเข้างานไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	msg := "เช็คอินเข้างานเรียบร้อย ขอให้เป็นวันที่ดี!"
+	if status == "late" {
+		msg = "เช็คอินเรียบร้อย (สาย)"
+	}
+
+	c.JSON(201, gin.H{"status": 201, "message": msg, "data": gin.H{"attendance_status": status}})
+}
+
+// ========================================================
+// [PUT] นักศึกษาเช็คเอาท์เลิกงาน
+// ========================================================
+func CheckOutHandler(c *gin.Context) {
+	var input struct {
+		ID                 int    `json:"id"`
+		InternshipID       int    `json:"internship_id" binding:"required"`
+		StudentID          int    `json:"student_id" binding:"required"`
+		Status             string `json:"status"`
+		VerificationStatus string `json:"verification_status"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
+		return
+	}
+
+	var sql string
+	var args []interface{}
+
+	if input.ID > 0 {
+		if input.VerificationStatus != "" {
+			// Approval/Rejection by company or advisor
+			sql = "UPDATE attendances SET verification_status = ?"
+			args = append(args, input.VerificationStatus)
+			if input.VerificationStatus == "rejected" {
+				sql += ", status = 'absent'"
+			}
+			sql += " WHERE id = ?"
+			args = append(args, input.ID)
+		} else if input.Status != "" {
+			// Manual status update
+			sql = "UPDATE attendances SET status = ? WHERE id = ?"
+			args = append(args, input.Status, input.ID)
+		} else {
+			// Student checkout
+			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, NOW()) WHERE id = ?"
+			args = append(args, input.ID)
+		}
+	} else {
+		if input.VerificationStatus != "" {
+			// Approval/Rejection by company or advisor
+			sql = "UPDATE attendances SET verification_status = ?"
+			args = append(args, input.VerificationStatus)
+			if input.VerificationStatus == "rejected" {
+				sql += ", status = 'absent'"
+			}
+			sql += " WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()"
+			args = append(args, input.InternshipID, input.StudentID)
+		} else if input.Status != "" {
+			// Manual status update
+			sql = "UPDATE attendances SET status = ? WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()"
+			args = append(args, input.Status, input.InternshipID, input.StudentID)
+		} else {
+			// Student checkout
+			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, NOW()) WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()"
+			args = append(args, input.InternshipID, input.StudentID)
+		}
+	}
+
+	result, err := config.DB.Exec(sql, args...)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "อัปเดตการลงเวลาไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบรายการเช็คอินวันนี้ หรือเช็คเอาท์ไปแล้ว"})
+		return
+	}
+
+	c.JSON(200, gin.H{"status": 200, "message": "อัปเดตการลงเวลาเรียบร้อย!"})
+}

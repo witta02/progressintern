@@ -1,0 +1,133 @@
+package handlers
+
+import (
+	"internship-backend/config"
+	"internship-backend/models"
+
+	"github.com/gin-gonic/gin"
+)
+
+// ========================================================
+// [POST] นักศึกษาส่งใบสมัครงาน
+// ========================================================
+func ApplyJobHandler(c *gin.Context) {
+	var input models.ApplyInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
+		return
+	}
+
+	_, err := config.DB.Exec(
+		"INSERT INTO applications (student_id, job_posting_id) VALUES (?, ?)",
+		input.StudentID, input.JobPostingID,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "สมัครงานไม่สำเร็จ (อาจสมัครไปแล้ว)"})
+		return
+	}
+
+	c.JSON(201, gin.H{"status": 201, "message": "ส่งใบสมัครเรียบร้อยแล้ว รอการพิจารณา"})
+}
+
+// ========================================================
+// [GET] บริษัทเรียกดูใบสมัครงานที่ส่งมาหาตัวเอง
+// ========================================================
+func GetCompanyAppsHandler(c *gin.Context) {
+	companyID := c.Param("id")
+
+	rows, err := config.DB.Query(
+		`SELECT a.id, u.name, u.email, j.title, a.status, a.applied_at
+		 FROM applications a
+		 JOIN users u ON a.student_id = u.id
+		 JOIN job_postings j ON a.job_posting_id = j.id
+		 WHERE j.company_id = ?
+		 ORDER BY a.applied_at DESC`,
+		companyID,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลผิดพลาด"})
+		return
+	}
+	defer rows.Close()
+
+	var list []gin.H
+	for rows.Next() {
+		var id int
+		var sName, sEmail, jTitle, status string
+		var appliedAt interface{}
+		rows.Scan(&id, &sName, &sEmail, &jTitle, &status, &appliedAt)
+		list = append(list, gin.H{
+			"application_id": id,
+			"student_name":   sName,
+			"student_email":  sEmail,
+			"job_title":      jTitle,
+			"status":         status,
+			"applied_at":     appliedAt,
+		})
+	}
+	if list == nil {
+		list = []gin.H{}
+	}
+
+	c.JSON(200, gin.H{"status": 200, "data": list})
+}
+
+// ========================================================
+// [PUT] บริษัทอัปเดตสถานะใบสมัคร
+// ========================================================
+func UpdateAppStatusHandler(c *gin.Context) {
+	appID := c.Param("id")
+	var input models.UpdateStatusInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "กรุณาระบุสถานะ"})
+		return
+	}
+
+	// ถ้าอนุมัติ ให้ตรวจสอบว่านักศึกษามีที่ฝึกงานอยู่แล้วหรือไม่
+	if input.Status == "approved" {
+		var sID, jpID, cID int
+		err := config.DB.QueryRow("SELECT student_id, job_posting_id FROM applications WHERE id = ?", appID).Scan(&sID, &jpID)
+		if err != nil {
+			c.JSON(404, gin.H{"status": 404, "error": "ไม่พบข้อมูลใบสมัคร"})
+			return
+		}
+
+		// ตรวจสอบว่ามีประวัติฝึกงานที่กำลังดำเนินอยู่ (active) หรือไม่
+		var existingInternshipID int
+		err = config.DB.QueryRow("SELECT id FROM internships WHERE student_id = ? AND status = 'active'", sID).Scan(&existingInternshipID)
+		if err == nil {
+			// นักศึกษามีที่ฝึกงานแล้ว -> ทำการปฏิเสธใบสมัครนี้โดยอัตโนมัติ (auto reject)
+			config.DB.Exec("UPDATE applications SET status = 'rejected' WHERE id = ?", appID)
+			c.JSON(400, gin.H{"status": 400, "error": "นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว"})
+			return
+		}
+
+		// อัปเดตสถานะใบสมัครเป็น approved
+		_, err = config.DB.Exec("UPDATE applications SET status = 'approved' WHERE id = ?", appID)
+		if err != nil {
+			c.JSON(500, gin.H{"status": 500, "error": "อนุมัติใบสมัครไม่สำเร็จ"})
+			return
+		}
+
+		// สร้างข้อมูลฝึกงานใหม่
+		config.DB.QueryRow("SELECT company_id FROM job_postings WHERE id = ?", jpID).Scan(&cID)
+		_, err = config.DB.Exec(
+			"INSERT INTO internships (student_id, company_id, job_posting_id, start_date, end_date) "+
+				"VALUES (?, ?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 4 MONTH))",
+			sID, cID, jpID,
+		)
+		if err != nil {
+			c.JSON(500, gin.H{"status": 500, "error": "สร้างประวัติการฝึกงานไม่สำเร็จ: " + err.Error()})
+			return
+		}
+	} else {
+		// ถ้าไม่ใช่ approved ให้อัปเดตสถานะตามปกติ
+		_, err := config.DB.Exec("UPDATE applications SET status = ? WHERE id = ?", input.Status, appID)
+		if err != nil {
+			c.JSON(500, gin.H{"status": 500, "error": "อัปเดตสถานะไม่สำเร็จ"})
+			return
+		}
+	}
+
+	c.JSON(200, gin.H{"status": 200, "message": "ปรับเปลี่ยนสถานะใบสมัครเรียบร้อย"})
+}

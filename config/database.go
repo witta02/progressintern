@@ -22,6 +22,12 @@ func InitDatabase() error {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
+	if dbHost == "" || dbPort == "" {
+		return fmt.Errorf("DB_HOST หรือ DB_PORT ไม่ได้ถูกกำหนดใน environment variables")
+	}
+
+	fmt.Printf("🔍 กำลังเชื่อมต่อฐานข้อมูลที่: %s:%s...\n", dbHost, dbPort)
+
 	// สร้าง DSN
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=true&parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
 

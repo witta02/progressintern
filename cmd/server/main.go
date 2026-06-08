@@ -15,8 +15,12 @@ import (
 // ========================================================
 
 func main() {
-	// โหลด .env file
-	if err := godotenv.Load(); err != nil {
+	// โหลด .env file (พยายามหาในที่ต่างๆ)
+	err := godotenv.Load()
+	if err != nil {
+		err = godotenv.Load("../../.env")
+	}
+	if err != nil {
 		log.Println("⚠️ ไม่พบไฟล์ .env - ใช้ environment variables จาก system")
 	}
 

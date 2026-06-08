@@ -2,7 +2,7 @@
 
 ## Current mode (default)
 
-`environment.development.ts` has **`useMockData: true`**.
+`environment.development.ts` has **`useMockData: faluse`**.
 
 The app runs fully in the browser with demo data shaped like your MySQL tables. No backend required.
 

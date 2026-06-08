@@ -1,20 +1,40 @@
-<main *ngIf="!isAuthenticated" class="login-shell">
-  <section class="login-panel" [class.register-panel]="authMode === 'register'">
-    <div class="brand login-brand">
-      <div class="brand-mark">IM</div>
+<div *ngIf="!initialized" class="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-sans relative overflow-hidden">
+  <!-- Decorative background elements -->
+  <div class="absolute top-0 -left-4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-35 animate-pulse"></div>
+  <div class="absolute top-0 -right-4 w-96 h-96 bg-emerald-100 rounded-full mix-blend-multiply filter blur-3xl opacity-35 animate-pulse delay-700"></div>
+  <div class="absolute -bottom-8 left-20 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-35 animate-pulse delay-1000"></div>
+
+  <!-- Soft elegant loading pulse or spinner -->
+  <div class="flex flex-col items-center gap-6 z-10">
+    <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-2xl shadow-blue-500/20 rotate-3 animate-bounce">IM</div>
+    <span class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Loading System...</span>
+  </div>
+</div>
+
+<main *ngIf="initialized && !isAuthenticated" class="min-h-screen grid place-items-center p-6 bg-slate-50 relative overflow-hidden font-sans">
+  <!-- Decorative background elements -->
+  <div class="absolute top-0 -left-4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+  <div class="absolute top-0 -right-4 w-96 h-96 bg-emerald-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse delay-700"></div>
+  <div class="absolute -bottom-8 left-20 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse delay-1000"></div>
+
+  <section class="w-full max-w-md bg-white rounded-[2rem] shadow-2xl shadow-blue-500/10 border border-slate-200 p-10 z-10">
+    <div class="flex items-center gap-5 mb-10">
+      <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-200 rotate-3">IM</div>
       <div>
-        <h1>Intern Manager</h1>
-        <p>internship_db · {{ useMockData ? 'Mock data' : 'Live API' }}</p>
+        <h1 class="text-3xl font-black text-slate-900 tracking-tight leading-none">Intern Manager</h1>
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">{{ useMockData ? 'Mock data mode' : 'Live Production' }}</p>
       </div>
     </div>
 
-    <div class="auth-tabs" role="tablist">
+    <div class="flex p-1.5 bg-slate-100 rounded-2xl mb-10" role="tablist">
       <button
         type="button"
         role="tab"
-        class="auth-tab"
-        [class.active]="authMode === 'login'"
-        [attr.aria-selected]="authMode === 'login'"
+        class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
+        [class.bg-white]="authMode === 'login'"
+        [class.text-blue-600]="authMode === 'login'"
+        [class.shadow-md]="authMode === 'login'"
+        [class.text-slate-500]="authMode !== 'login'"
         (click)="setAuthMode('login')"
       >
         เข้าสู่ระบบ
@@ -22,528 +42,762 @@
       <button
         type="button"
         role="tab"
-        class="auth-tab"
-        [class.active]="authMode === 'register'"
-        [attr.aria-selected]="authMode === 'register'"
+        class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
+        [class.bg-white]="authMode === 'register'"
+        [class.text-blue-600]="authMode === 'register'"
+        [class.shadow-md]="authMode === 'register'"
+        [class.text-slate-500]="authMode !== 'register'"
         (click)="setAuthMode('register')"
       >
         สมัครสมาชิก
       </button>
     </div>
 
-    <form *ngIf="authMode === 'login'" class="login-form" (ngSubmit)="login()">
-      <label class="field">
-        <span>Email</span>
-        <input name="loginEmail" type="email" [(ngModel)]="loginForm.email" placeholder="email@example.com" autocomplete="username">
-      </label>
-      <label class="field">
-        <span>Password</span>
-        <input name="loginPassword" type="password" [(ngModel)]="loginForm.password" placeholder="password" autocomplete="current-password">
-      </label>
-      <p *ngIf="loginError" class="error-text">{{ loginError }}</p>
-      <button type="submit">Login</button>
-      <p class="auth-switch">
+    <!-- Login Form -->
+    <form *ngIf="authMode === 'login'" class="space-y-6" (ngSubmit)="login()">
+      <div class="space-y-2">
+        <label class="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+        <input name="loginEmail" type="email" [(ngModel)]="loginForm.email" placeholder="email@example.com" 
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+      </div>
+      <div class="space-y-2">
+        <label class="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
+        <input name="loginPassword" type="password" [(ngModel)]="loginForm.password" placeholder="••••••••" 
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+      </div>
+      <p *ngIf="loginError" class="text-xs font-black text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">{{ loginError }}</p>
+      <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-1 active:translate-y-0 active:scale-95">
+        Login
+      </button>
+      <p class="text-center text-xs font-bold text-slate-400 pt-4 uppercase tracking-widest">
         ยังไม่มีบัญชี?
-        <button type="button" class="link-button" (click)="setAuthMode('register')">สมัครสมาชิก</button>
+        <button type="button" class="text-blue-600 hover:underline ml-1" (click)="setAuthMode('register')">สมัครสมาชิกใหม่</button>
       </p>
     </form>
 
-    <form *ngIf="authMode === 'register'" class="login-form register-form" (ngSubmit)="register()">
-      <label class="field">
-        <span>ประเภทบัญชี</span>
-        <select name="registerRole" [(ngModel)]="registerForm.role">
+    <!-- Register Form -->
+    <form *ngIf="authMode === 'register'" class="space-y-5 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin" (ngSubmit)="register()">
+      <div class="space-y-2">
+        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทบัญชี</label>
+        <select name="registerRole" [(ngModel)]="registerForm.role" 
+                class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-black">
           <option *ngFor="let option of registerRoleOptions" [ngValue]="option.value">{{ option.label }}</option>
         </select>
-      </label>
-      <label class="field">
-        <span>ชื่อ-นามสกุล / ชื่อผู้ติดต่อ</span>
-        <input name="registerName" [(ngModel)]="registerForm.name" placeholder="ชื่อเต็ม" autocomplete="name">
-      </label>
-      <label class="field">
-        <span>Email</span>
-        <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com" autocomplete="email">
-      </label>
-      <label class="field">
-        <span>เบอร์โทร (ไม่บังคับ)</span>
-        <input name="registerPhone" [(ngModel)]="registerForm.phone" placeholder="081-xxx-xxxx" autocomplete="tel">
-      </label>
-      <label class="field" *ngIf="registerForm.role === 'student' || registerForm.role === 'advisor'">
-        <span>สถานศึกษา / สังกัด</span>
-        <input name="registerSchool" [(ngModel)]="registerForm.school" placeholder="ชื่อโรงเรียน/มหาวิทยาลัย">
-      </label>
-      <label class="field">
-        <span>รหัสผ่าน</span>
-        <input name="registerPassword" type="password" [(ngModel)]="registerForm.password" placeholder="อย่างน้อย 6 ตัว" autocomplete="new-password">
-      </label>
-      <label class="field">
-        <span>ยืนยันรหัสผ่าน</span>
-        <input name="registerConfirm" type="password" [(ngModel)]="registerForm.confirmPassword" placeholder="พิมพ์รหัสผ่านอีกครั้ง" autocomplete="new-password">
-      </label>
+      </div>
+      <div class="space-y-2">
+        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
+        <input name="registerName" [(ngModel)]="registerForm.name" placeholder="Full Name" 
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+      </div>
+      <div class="space-y-2">
+        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
+        <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com" 
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+      </div>
+      <div class="space-y-2" *ngIf="registerForm.role === 'student' || registerForm.role === 'advisor'">
+        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">สถานศึกษา / สังกัด</label>
+        <input name="registerSchool" [(ngModel)]="registerForm.school" placeholder="School/University" 
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสผ่าน</label>
+          <input name="registerPassword" type="password" [(ngModel)]="registerForm.password" placeholder="••••••" 
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ยืนยันรหัสผ่าน</label>
+          <input name="registerConfirm" type="password" [(ngModel)]="registerForm.confirmPassword" placeholder="••••••" 
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+        </div>
+      </div>
 
-      <ng-container *ngIf="isRegisterCompany">
-        <label class="field">
-          <span>ชื่อบริษัท (company_name)</span>
-          <input name="companyName" [(ngModel)]="registerForm.companyName" placeholder="ชื่อบริษัท">
-        </label>
-        <label class="field">
-          <span>รายละเอียด (description)</span>
-          <input name="companyDescription" [(ngModel)]="registerForm.description" placeholder="เกี่ยวกับบริษัท">
-        </label>
-        <label class="field">
-          <span>ที่อยู่ (address)</span>
-          <input name="companyAddress" [(ngModel)]="registerForm.address" placeholder="ที่อยู่">
-        </label>
-        <label class="field">
-          <span>อีเมลติดต่อ (contact_email)</span>
-          <input name="contactEmail" type="email" [(ngModel)]="registerForm.contactEmail" placeholder="hr@company.com">
-        </label>
-      </ng-container>
+      <div *ngIf="isRegisterCompany" class="pt-6 space-y-5 border-t border-slate-100 mt-6">
+        <div class="space-y-2">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อบริษัท</label>
+          <input name="companyName" [(ngModel)]="registerForm.companyName" placeholder="Company Name" 
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+        </div>
+        <div class="space-y-2">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">อีเมลติดต่อ (HR)</label>
+          <input name="contactEmail" type="email" [(ngModel)]="registerForm.contactEmail" placeholder="hr@company.com" 
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+        </div>
+      </div>
 
-      <p *ngIf="registerError" class="error-text">{{ registerError }}</p>
-      <button type="submit" [disabled]="registerLoading">{{ registerLoading ? 'กำลังสมัคร...' : 'สมัครสมาชิก' }}</button>
-      <p class="auth-switch">
-        มีบัญชีแล้ว?
-        <button type="button" class="link-button" (click)="setAuthMode('login')">เข้าสู่ระบบ</button>
+      <p *ngIf="registerError" class="text-xs font-black text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">{{ registerError }}</p>
+      <button type="submit" [disabled]="registerLoading" 
+              class="w-full py-5 bg-slate-900 hover:bg-blue-600 disabled:opacity-50 text-white rounded-2xl font-black text-lg shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-1 active:translate-y-0 active:scale-95 mt-6">
+        {{ registerLoading ? 'กำลังสร้างบัญชี...' : 'ยืนยันการสมัคร' }}
+      </button>
+      <p class="text-center text-xs font-bold text-slate-400 pt-4 pb-6 uppercase tracking-widest">
+        มีบัญชีอยู่แล้ว?
+        <button type="button" class="text-blue-600 hover:underline ml-1" (click)="setAuthMode('login')">เข้าสู่ระบบ</button>
       </p>
     </form>
-
-    <div class="demo-list" *ngIf="authMode === 'login'">
-      <p>บัญชีทดสอบ (ตรง schema users)</p>
-      <button type="button" class="demo-account" *ngFor="let user of demoUsers" (click)="useDemoAccount(user)">
-        <span>{{ user.name }}</span>
-        <small>{{ roleName(user.role) }} · {{ user.email }}</small>
-      </button>
-      <button type="button" class="reset-demo" (click)="resetDemoData()">Reset demo data</button>
-    </div>
   </section>
 </main>
 
-<main *ngIf="isAuthenticated" class="app-shell" [class.sidebar-open]="sidebarOpen">
-  <button
-    type="button"
-    class="sidebar-backdrop"
-    *ngIf="sidebarOpen"
-    aria-label="ปิดเมนู"
-    (click)="closeSidebar()"
-  ></button>
-
-  <section class="content">
-    <nav class="navbar" aria-label="Main navigation">
-      <button type="button" class="navbar-brand" (click)="setActiveView('dashboard')">
-        <span class="navbar-brand-mark">IM</span>
-        <span class="navbar-brand-text">Intern Manager</span>
+<main *ngIf="initialized && isAuthenticated" class="min-h-screen bg-slate-50 flex flex-col font-sans">
+  <!-- Top Global Navbar -->
+  <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 px-8 h-20 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-12 h-full">
+      <button type="button" class="flex items-center gap-4 group" (click)="setActiveView('dashboard')">
+        <div class="w-11 h-11 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black text-lg transition-all group-hover:bg-blue-600 group-hover:rotate-3 shadow-lg shadow-slate-200">IM</div>
+        <span class="text-xl font-black text-slate-900 tracking-tighter hidden sm:block">InternManager</span>
       </button>
 
-      <div class="navbar-nav" role="navigation">
+      <div class="hidden lg:flex items-center gap-2 h-full">
         <button
           type="button"
           *ngFor="let view of availableViews"
-          class="navbar-link"
-          [class.active]="activeView === view"
+          class="px-5 flex flex-col items-center justify-center gap-1.5 h-full transition-all relative group"
+          [class.text-blue-600]="activeView === view"
+          [class.text-slate-400]="activeView !== view"
           (click)="setActiveView(view)"
         >
-          {{ viewLabels[view] }}
+          <ng-container [ngSwitch]="view">
+            <svg *ngSwitchCase="'dashboard'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
+            <svg *ngSwitchCase="'jobs'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="3" ry="3"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            <svg *ngSwitchCase="'applications'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <svg *ngSwitchCase="'internships'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
+            <svg *ngSwitchCase="'attendance'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <svg *ngSwitchCase="'logbooks'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <svg *ngSwitchCase="'evaluations'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <svg *ngSwitchCase="'edit'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <svg *ngSwitchCase="'schema'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
+          </ng-container>
+          <span class="text-[10px] font-black uppercase tracking-[0.1em] group-hover:text-blue-600">{{ viewLabels[view] }}</span>
+          <div class="absolute bottom-0 left-4 right-4 h-1 bg-blue-600 rounded-t-full transition-all" [class.opacity-100]="activeView === view" [class.opacity-0]="activeView !== view"></div>
         </button>
       </div>
+    </div>
 
-      <div class="navbar-end">
-        <div class="navbar-user" title="{{ currentUser.email }}">
-          <span class="navbar-user-badge">{{ roleLabel }}</span>
-          <span class="navbar-user-name">{{ currentUser.name }}</span>
-        </div>
-        <button type="button" class="navbar-logout" (click)="logout()">ออกจากระบบ</button>
-        <div class="notification-bell-wrap">
-          <button
-            type="button"
-            class="notification-bell"
-            [attr.aria-expanded]="notificationPanelOpen"
-            aria-label="การแจ้งเตือน"
-            (click)="toggleNotificationPanel()"
-          >
-            🔔
-            <span class="notification-badge" *ngIf="notifications.unreadCount() > 0">{{ notifications.unreadCount() }}</span>
-          </button>
-        </div>
-        <button
-          type="button"
-          class="menu-toggle"
-          [attr.aria-expanded]="sidebarOpen"
-          aria-controls="app-sidebar"
-          [attr.aria-label]="sidebarOpen ? 'ปิดเมนู' : 'เปิดเมนู'"
-          (click)="toggleSidebar()"
-        >
-          <span class="menu-toggle-bar"></span>
-          <span class="menu-toggle-bar"></span>
-          <span class="menu-toggle-bar"></span>
-        </button>
+    <div class="flex items-center gap-6">
+      <div class="hidden sm:flex flex-col items-end">
+        <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{{ roleLabel }}</span>
+        <span class="text-sm font-black text-slate-900">{{ currentUser?.name }}</span>
       </div>
-    </nav>
+      
+      <div class="w-px h-8 bg-slate-200 hidden sm:block"></div>
 
-    <header class="page-header">
-      <div class="page-header-main">
-        <p class="eyebrow">Role-based workflow · {{ useMockData ? 'mock' : 'API' }}</p>
-        <h2>{{ activeView === 'dashboard' ? 'ภาพรวมระบบ' : viewLabels[activeView] }}</h2>
+      <button
+        type="button"
+        class="relative w-12 h-11 flex items-center justify-center bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-2xl text-slate-500 transition-all border border-transparent hover:border-blue-100"
+        (click)="toggleNotificationPanel()"
+      >
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span class="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 text-white text-xs font-black rounded-full flex items-center justify-center border-4 border-white" *ngIf="notifications.unreadCount() > 0">
+          {{ notifications.unreadCount() }}
+        </span>
+      </button>
+
+      <button type="button" class="px-5 py-3 bg-white border border-rose-100 text-rose-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-rose-50 transition-all shadow-sm shadow-rose-100 hidden sm:block" (click)="logout()">
+        Logout
+      </button>
+
+      <button type="button" class="lg:hidden p-3 bg-slate-100 rounded-2xl text-slate-900" (click)="toggleSidebar()">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Page Body -->
+  <div class="flex-1 overflow-auto p-8 sm:p-12 max-w-[1440px] mx-auto w-full">
+    <!-- Header -->
+    <header class="mb-14 flex flex-col md:flex-row md:items-end justify-between gap-8">
+      <div>
+        <p class="text-xs font-black text-blue-600 uppercase tracking-[0.4em] mb-4 flex items-center gap-3">
+          <span class="w-10 h-0.5 bg-blue-600"></span>
+          Overview
+        </p>
+        <h2 class="text-5xl font-black text-slate-900 tracking-tight leading-none">{{ activeView === 'dashboard' ? 'Dashboard' : viewLabels[activeView] }}</h2>
       </div>
-      <div class="top-actions">
-        <span *ngFor="let item of topSummary">{{ item }}</span>
+      <div class="flex flex-wrap gap-3">
+        <span *ngFor="let item of topSummary" class="px-5 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-black text-slate-500 shadow-sm flex items-center gap-2">
+          <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+          {{ item }}
+        </span>
       </div>
     </header>
 
-    <div class="page-body">
-    <section *ngIf="activeView === 'dashboard'" class="view-grid">
-      <div *ngIf="currentUser.role === 'student' && currentUser.status === 'pending'" class="panel wide" style="background: #fffbeb; border-color: #f5dfa0;">
-        <h3 style="color: #8a5a00;">รอการอนุมัติบัญชี</h3>
-        <p>บัญชีของคุณกำลังรอการตรวจสอบจากอาจารย์ที่ปรึกษาในสังกัด {{ currentUser.school }}</p>
-      </div>
-
-      <article class="metric" *ngFor="let metric of dashboardMetrics">
-        <span>{{ metric.label }}</span>
-        <strong>{{ metric.value }}</strong>
-        <small>{{ metric.helper }}</small>
-      </article>
-
-      <article *ngIf="currentUser.role === 'advisor'" class="panel wide">
-        <div class="panel-title">
-          <h3>จัดการนักศึกษาในสังกัด ({{ currentUser.school }})</h3>
-          <p>อนุมัติ หรือแก้ไขข้อมูลโรงเรียนให้นักศึกษาที่พิมพ์ผิด</p>
+    <!-- Content Router -->
+    <div class="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      <!-- DASHBOARD -->
+      <section *ngIf="activeView === 'dashboard'" class="space-y-12">
+        <div *ngIf="currentUser?.role === 'student' && currentUser?.status === 'pending'" class="bg-amber-50 border border-amber-200 rounded-[2rem] p-10 flex items-start gap-8 shadow-lg shadow-amber-500/5">
+          <div class="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-amber-500 shrink-0 shadow-xl shadow-amber-200 border border-amber-100">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+          <div>
+            <h3 class="text-2xl font-black text-amber-900 mb-2">Pending Account Approval</h3>
+            <p class="text-lg text-amber-800 font-medium max-w-2xl leading-relaxed">
+              Your account is currently being reviewed by your advisor at 
+              <span class="font-black text-amber-950 underline decoration-amber-500/50 underline-offset-4">{{ currentUser?.school }}</span>. 
+              Please check back soon.
+            </p>
+          </div>
         </div>
-        
-        <div class="stack">
-          <div class="table-card">
-            <div class="table-row header" style="grid-template-columns: 1.2fr 1fr 1fr 0.8fr 1.2fr;">
-              <span>ชื่อ-นามสกุล</span>
-              <span>อีเมล</span>
-              <span>โรงเรียน (ที่ระบุ)</span>
-              <span>สถานะ</span>
-              <span>จัดการ</span>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <article class="bg-white p-10 rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 relative overflow-hidden group hover:scale-[1.03] transition-all duration-500" *ngFor="let metric of dashboardMetrics; let i = index">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r" [ngClass]="['from-blue-500 to-blue-600', 'from-purple-500 to-purple-600', 'from-emerald-500 to-emerald-600', 'from-amber-500 to-amber-600'][i % 4]"></div>
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{{ metric.label }}</span>
+            <div class="flex items-baseline gap-2 mt-4 mb-2">
+              <strong class="text-6xl font-black text-slate-900 leading-none tracking-tighter group-hover:text-blue-600 transition-colors">{{ metric.value }}</strong>
             </div>
-            <div class="table-row" *ngFor="let student of managedStudents" style="grid-template-columns: 1.2fr 1fr 1fr 0.8fr 1.2fr;">
-              <span><strong>{{ student.name }}</strong></span>
-              <span>{{ student.email }}</span>
-              <span>{{ student.school }}</span>
-              <span><mark [class.good]="student.status === 'active'" [class.danger]="student.status === 'rejected'">{{ student.status }}</mark></span>
-              <span class="inline-actions">
-                <button class="small" *ngIf="student.status === 'pending'" (click)="approveStudent(student)">อนุมัติ</button>
-                <button class="small secondary" *ngIf="student.status === 'pending'" (click)="rejectStudent(student)">ปฏิเสธ</button>
-                <span *ngIf="student.status === 'active'">-</span>
-              </span>
-            </div>
-            <div class="empty-row" *ngIf="managedStudents.length === 0">
-              ไม่พบนักศึกษาในสังกัดปัจจุบัน
+            <small class="text-xs font-black text-slate-500 uppercase tracking-widest">{{ metric.helper }}</small>
+          </article>
+        </div>
+
+        <!-- Advisor Management -->
+        <article *ngIf="currentUser?.role === 'advisor'" class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+          <div class="p-10 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <h3 class="text-3xl font-black text-slate-900 tracking-tight">Student Roster</h3>
+              <p class="text-sm font-black text-blue-600 uppercase tracking-widest mt-2">{{ currentUser?.school }}</p>
             </div>
           </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50/50">
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Name</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Email</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Affiliation</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let student of managedStudents" class="hover:bg-blue-50/20 transition-colors">
+                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ student.name }}</td>
+                  <td class="px-10 py-6 font-bold text-slate-500">{{ student.email }}</td>
+                  <td class="px-10 py-6 font-bold text-slate-500">{{ student.school }}</td>
+                  <td class="px-10 py-6">
+                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
+                          [class.bg-emerald-50]="student.status === 'active'" [class.text-emerald-600]="student.status === 'active'" [class.border-emerald-100]="student.status === 'active'"
+                          [class.bg-rose-50]="student.status === 'rejected'" [class.text-rose-600]="student.status === 'rejected'" [class.border-rose-100]="student.status === 'rejected'"
+                          [class.bg-amber-50]="student.status === 'pending'" [class.text-amber-600]="student.status === 'pending'" [class.border-amber-100]="student.status === 'pending'">
+                      {{ student.status }}
+                    </span>
+                  </td>
+                  <td class="px-10 py-6 text-right">
+                    <div class="flex gap-2" *ngIf="student.status === 'pending'">
+                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="approveStudent(student)">Approve</button>
+                      <button class="px-5 py-2.5 bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="rejectStudent(student)">Reject</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
 
-          <div class="panel" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
-            <div class="panel-title">
-              <h4>ค้นหานักศึกษาจากโรงเรียนอื่น (กรณีพิมพ์ชื่อโรงเรียนผิด)</h4>
-              <p>ครูอาจารย์สามารถแก้ไขชื่อโรงเรียนของนักศึกษาให้มาอยู่ในสังกัดตัวเองได้</p>
+      <!-- JOBS -->
+      <section *ngIf="activeView === 'jobs'" class="space-y-12">
+        <article *ngIf="currentUser?.role === 'company'" class="bg-white rounded-[2.5rem] p-12 text-slate-900 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
+          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-4">
+              <h3 class="text-4xl font-black mb-4 tracking-tight">Open a new position</h3>
+              <p class="text-slate-500 font-medium text-lg leading-relaxed">Start finding the next generation of talent for your organization today.</p>
             </div>
-            <div class="field" style="margin-bottom: 15px;">
-              <input [(ngModel)]="studentSearchQuery" placeholder="ค้นหาด้วยชื่อ, อีเมล หรือชื่อโรงเรียนที่พิมพ์ผิด...">
-            </div>
-            <div class="table-card" *ngIf="studentSearchQuery.trim()">
-              <div class="table-row header" style="grid-template-columns: 1.2fr 1fr 1fr 1.2fr;">
-                <span>ชื่อ-นามสกุล</span>
-                <span>อีเมล</span>
-                <span>โรงเรียนที่นักศึกษาพิมพ์</span>
-                <span>จัดการ</span>
+            <form class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-5" (ngSubmit)="addJob()">
+              <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+              <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+              
+              <div class="grid grid-cols-4 gap-3 md:col-span-2">
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Work Days</label>
+                  <input name="jobWorkDays" [(ngModel)]="newJob.workDays" placeholder="Mon-Fri" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-in</label>
+                  <input name="jobCheckin" type="time" [(ngModel)]="newJob.checkinTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-out</label>
+                  <input name="jobCheckout" type="time" [(ngModel)]="newJob.checkoutTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Late After</label>
+                  <input name="jobLated" type="time" [(ngModel)]="newJob.latedTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                </div>
               </div>
-              <div class="table-row" *ngFor="let student of otherStudents" style="grid-template-columns: 1.2fr 1fr 1fr 1.2fr;">
-                <span><strong>{{ student.name }}</strong></span>
-                <span>{{ student.email }}</span>
-                <span style="color: #e11d48;">{{ student.school || '(ว่าง)' }}</span>
-                <span class="inline-actions">
-                  <button class="small secondary" (click)="claimStudent(student)">ย้ายเข้าสังกัด {{ currentUser.school }}</button>
+
+              <textarea name="jobDescription" [(ngModel)]="newJob.description" rows="1" placeholder="Short Summary" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <button type="submit" class="md:col-span-2 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/30">
+                Create Posting
+              </button>
+            </form>
+          </div>
+        </article>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <article *ngFor="let job of visibleJobs" class="bg-white rounded-[2.5rem] border border-slate-200/80 p-10 shadow-xl shadow-slate-200/20 hover:shadow-2xl hover:border-blue-300 transition-all group flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                  <span class="px-5 py-2 bg-blue-50 text-blue-600 rounded-full text-[11px] font-black uppercase tracking-[0.2em] border border-blue-100 shadow-sm">
+                    {{ job.status }}
+                  </span>
+                  <button *ngIf="currentUser?.role === 'company' && job.companyId === currentCompanyId" 
+                          type="button" 
+                          (click)="deleteJob(job)" 
+                          class="p-2 text-rose-500 hover:bg-rose-50 hover:text-rose-700 rounded-xl transition-all"
+                          title="ลบประกาศรับสมัครงาน">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+                <span class="text-xs font-black text-slate-300 uppercase tracking-widest">{{ job.slots }} Openings</span>
+              </div>
+              <h3 class="text-3xl font-black text-slate-900 mb-3 group-hover:text-blue-600 transition-colors tracking-tight">{{ job.title }}</h3>
+              <p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-3">
+                <span class="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"></path></svg>
+                </span>
+                {{ job.companyName || companyName(job.companyId) }}
+              </p>
+              
+              <!-- Work Schedule Summary -->
+              <div class="flex flex-wrap gap-4 mb-8">
+                <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                  <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  <span class="text-[10px] font-black text-slate-600 uppercase tracking-tighter">{{ job.workDays || 'Mon-Fri' }}</span>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                  <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span class="text-[10px] font-black text-slate-600 uppercase tracking-tighter">{{ job.checkinTime?.slice(0,5) }} - {{ job.checkoutTime?.slice(0,5) }}</span>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 rounded-3xl p-8 mb-10 border border-slate-100">
+                <p class="text-slate-600 font-medium italic leading-relaxed text-lg line-clamp-3">"{{ jobSummary(job) }}"</p>
+              </div>
+            </div>
+            <button *ngIf="canApply(job)" (click)="applyJob(job)" 
+                    class="w-full py-5 bg-slate-900 group-hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
+              Apply Now
+            </button>
+            <div *ngIf="!canApply(job) && currentUser?.role === 'student'" class="w-full py-5 bg-slate-100 text-slate-300 rounded-2xl font-black text-center text-xs uppercase tracking-[0.3em] border border-slate-200">
+              Already Applied / Closed
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- APPLICATIONS -->
+      <section *ngIf="activeView === 'applications'" class="space-y-6">
+        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50/50">
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Student</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Position</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Applied Date</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let app of visibleApplications" class="hover:bg-blue-50/20 transition-colors">
+                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(app.studentId) }}</td>
+                  <td class="px-10 py-6 font-black text-blue-600 text-lg">{{ jobName(app.jobPostingId) }}</td>
+                  <td class="px-10 py-6 font-bold text-slate-500">{{ formatDateTime(app.appliedAt) }}</td>
+                  <td class="px-10 py-6">
+                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
+                          [class.bg-emerald-50]="app.status === 'approved'" [class.text-emerald-600]="app.status === 'approved'" [class.border-emerald-100]="app.status === 'approved'"
+                          [class.bg-rose-50]="app.status === 'rejected'" [class.text-rose-600]="app.status === 'rejected'" [class.border-rose-100]="app.status === 'rejected'"
+                          [class.bg-blue-50]="app.status === 'interview'" [class.text-blue-600]="app.status === 'interview'" [class.border-blue-100]="app.status === 'interview'"
+                          [class.bg-slate-50]="app.status === 'pending'" [class.text-slate-600]="app.status === 'pending'" [class.border-slate-100]="app.status === 'pending'">
+                      {{ app.status }}
+                    </span>
+                  </td>
+                  <td class="px-10 py-6">
+                    <div class="flex gap-2" *ngIf="currentUser?.role === 'company' && (app.status === 'pending' || app.status === 'interview')">
+                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="updateApplication(app, 'approved')">Approve</button>
+                      <button class="px-5 py-2.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="updateApplication(app, 'interview')">Interview</button>
+                      <button class="px-5 py-2.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="updateApplication(app, 'rejected')">Reject</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- INTERNSHIPS -->
+      <section *ngIf="activeView === 'internships'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <article *ngFor="let internship of visibleInternships" class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 hover:shadow-2xl transition-all relative group overflow-hidden">
+          <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+          <div class="mb-10">
+            <h3 class="text-3xl font-black text-slate-900 group-hover:text-blue-600 transition-colors mb-2 tracking-tight">{{ internshipJobTitle(internship) }}</h3>
+            <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">{{ companyName(internship.companyId) }}</p>
+          </div>
+          <div class="space-y-6 pt-10 border-t border-slate-100">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</span>
+              <span class="text-lg font-black text-slate-900">{{ userName(internship.studentId) }}</span>
+            </div>
+            <div class="space-y-3 pt-3 border-t border-slate-100/50">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Term</span>
+                <span class="text-sm font-black text-slate-700">
+                  {{ formatTermDate(internship.startDate) }} — {{ formatTermDate(internship.endDate) }}
                 </span>
               </div>
-              <div class="empty-row" *ngIf="otherStudents.length === 0">
-                ไม่พบนักศึกษาที่ตรงกับการค้นหา
+              
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-inner">
+                <div class="bg-gradient-to-r from-blue-600 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                     [style.width.%]="getInternshipProgress(internship).percent">
+                </div>
+              </div>
+              <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                <span>{{ getInternshipProgress(internship).label }}</span>
               </div>
             </div>
+            <div class="flex justify-between items-center pt-4">
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contract</span>
+              <span class="px-5 py-2 bg-slate-900 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-slate-200">
+                {{ internship.status }}
+              </span>
+            </div>
           </div>
-        </div>
-      </article>
-    </section>
-
-    <section *ngIf="activeView === 'edit'" class="stack">
-      <article class="panel">
-        <div class="panel-title">
-          <h3>แก้ไขข้อมูลโปรไฟล์</h3>
-          <p>ปรับปรุงข้อมูลส่วนตัวของคุณให้เป็นปัจจุบัน</p>
-        </div>
-        <form class="login-form" (ngSubmit)="saveProfile()" style="max-width: 600px;">
-          <label class="field">
-            <span>ชื่อ-นามสกุล</span>
-            <input name="editName" [(ngModel)]="profileDraft.name">
-          </label>
-          <label class="field">
-            <span>Email</span>
-            <input name="editEmail" type="email" [(ngModel)]="profileDraft.email">
-          </label>
-          <label class="field">
-            <span>เบอร์โทรศัพท์</span>
-            <input name="editPhone" [(ngModel)]="profileDraft.phone">
-          </label>
-          <label class="field" *ngIf="currentUser.role === 'student' || currentUser.role === 'advisor'">
-            <span>สถานศึกษา / สังกัด</span>
-            <input name="editSchool" [(ngModel)]="profileDraft.school" [disabled]="currentUser.role === 'student' && currentUser.status === 'active'">
-            <small *ngIf="currentUser.role === 'student' && currentUser.status === 'active'" class="eyebrow" style="color: #8a5a00; margin-top: 4px;">* หากต้องการแก้ไขโรงเรียนหลังจากอนุมัติแล้ว กรุณาติดต่ออาจารย์ที่ปรึกษา</small>
-          </label>
-          <label class="field" *ngIf="currentUser.role === 'student'">
-            <span>Resume URL (Link)</span>
-            <input name="editResume" [(ngModel)]="profileDraft.resumeUrl">
-          </label>
-          <div style="margin-top: 10px;">
-            <button type="submit">บันทึกการเปลี่ยนแปลง</button>
-          </div>
-        </form>
-      </article>
-    </section>
-
-    <section *ngIf="activeView === 'jobs'" class="stack">
-      <article *ngIf="currentUser.role === 'company'" class="panel">
-        <div class="panel-title">
-          <h3>โพสต์ตำแหน่งงาน</h3>
-          <p>job_postings: title, description, requirements, benefits, slots</p>
-        </div>
-        <form class="form-grid" (ngSubmit)="addJob()">
-          <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="title">
-          <input name="jobDescription" [(ngModel)]="newJob.description" placeholder="description">
-          <input name="jobRequirements" [(ngModel)]="newJob.requirements" placeholder="requirements">
-          <input name="jobBenefits" [(ngModel)]="newJob.benefits" placeholder="benefits">
-          <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="slots">
-          <button type="submit">โพสต์งาน</button>
-        </form>
-      </article>
-
-      <div class="table-card">
-        <div class="table-row header">
-          <span>ตำแหน่ง</span>
-          <span>บริษัท</span>
-          <span>รายละเอียด</span>
-          <span>สถานะ</span>
-          <span>Action</span>
-        </div>
-        <div class="table-row" *ngFor="let job of visibleJobs">
-          <span><strong>{{ job.title }}</strong></span>
-          <span>{{ companyName(job.companyId) }}</span>
-          <span>{{ jobSummary(job) }} · {{ job.slots }} อัตรา</span>
-          <span><mark>{{ job.status }}</mark></span>
-          <span>
-            <button class="small" *ngIf="canApply(job)" (click)="applyJob(job)">สมัคร</button>
-            <small *ngIf="!canApply(job) && currentUser.role === 'student'">สมัครแล้ว/ไม่เปิดรับ</small>
-          </span>
-        </div>
-        <div class="empty-row" *ngIf="visibleJobs.length === 0">
-          ยังไม่มีตำแหน่งงานที่มองเห็นได้สำหรับสิทธิ์นี้
-        </div>
-      </div>
-    </section>
-
-    <section *ngIf="activeView === 'applications'" class="stack">
-      <div class="table-card">
-        <div class="table-row header">
-          <span>นักศึกษา</span>
-          <span>ตำแหน่ง</span>
-          <span>วันที่สมัคร</span>
-          <span>สถานะ</span>
-          <span>Action</span>
-        </div>
-        <div class="table-row" *ngFor="let application of visibleApplications">
-          <span>{{ userName(application.studentId) }}</span>
-          <span>{{ jobName(application.jobPostingId) }}</span>
-          <span>{{ formatDateTime(application.appliedAt) }}</span>
-          <span><mark [class.good]="application.status === 'approved'" [class.danger]="application.status === 'rejected'">{{ application.status }}</mark></span>
-          <span class="inline-actions">
-            <ng-container *ngIf="currentUser.role === 'company' && (application.status === 'pending' || application.status === 'interview')">
-              <button class="small" (click)="updateApplication(application, 'interview')">Interview</button>
-              <button class="small" (click)="updateApplication(application, 'approved')">Approve</button>
-              <button class="small secondary" (click)="updateApplication(application, 'rejected')">Reject</button>
-            </ng-container>
-          </span>
-        </div>
-        <div class="empty-row" *ngIf="visibleApplications.length === 0">
-          ยังไม่มีประวัติการสมัครในขอบเขตสิทธิ์นี้
-        </div>
-      </div>
-    </section>
-
-    <section *ngIf="activeView === 'internships'" class="stack">
-      <div class="cards-grid">
-        <article class="panel" *ngFor="let internship of visibleInternships">
-          <div class="panel-title">
-            <h3>{{ internshipJobTitle(internship) }}</h3>
-            <p>{{ userName(internship.studentId) }} · {{ companyName(internship.companyId) }}</p>
-          </div>
-          <dl class="details">
-            <div><dt>ช่วงเวลา</dt><dd>{{ internship.startDate }} ถึง {{ internship.endDate }}</dd></div>
-            <div><dt>job_posting_id</dt><dd>{{ internship.jobPostingId }}</dd></div>
-            <div><dt>สถานะ</dt><dd>{{ internship.status }}</dd></div>
-          </dl>
         </article>
-      </div>
-      <div class="empty-card" *ngIf="visibleInternships.length === 0">
-        ยังไม่มี internship
-      </div>
-    </section>
+      </section>
 
-    <section *ngIf="activeView === 'attendance'" class="stack">
-      <article *ngIf="currentUser.role === 'student' && activeInternship" class="panel">
-        <div class="panel-title">
-          <h3>Check in / Check out</h3>
-          <p>{{ internshipJobTitle(activeInternship) }} · status: present / late / absent</p>
-        </div>
-        <div class="button-row">
-          <button (click)="checkIn()" [disabled]="hasOpenAttendance()">Check in</button>
-          <button class="secondary" (click)="checkOut()" [disabled]="!hasOpenAttendance()">Check out</button>
-        </div>
-      </article>
-
-      <div class="table-card">
-        <div class="table-row header">
-          <span>นักศึกษา</span>
-          <span>Check in</span>
-          <span>Check out</span>
-          <span>สถานะ</span>
-          <span>Action</span>
-        </div>
-        <div class="table-row" *ngFor="let attendance of visibleAttendances">
-          <span>{{ userName(attendance.studentId) }}</span>
-          <span>{{ formatDateTime(attendance.checkInTime) }}</span>
-          <span>{{ attendance.checkOutTime ? formatDateTime(attendance.checkOutTime) : 'ยังไม่ออก' }}</span>
-          <span><mark>{{ attendance.status }}</mark></span>
-          <span class="inline-actions">
-            <ng-container *ngIf="currentUser.role === 'company'">
-              <button class="small" (click)="setAttendanceStatus(attendance, 'present')">Present</button>
-              <button class="small" (click)="setAttendanceStatus(attendance, 'late')">Late</button>
-              <button class="small secondary" (click)="setAttendanceStatus(attendance, 'absent')">Absent</button>
-            </ng-container>
-          </span>
-        </div>
-        <div class="empty-row" *ngIf="visibleAttendances.length === 0">
-          ยังไม่มีประวัติการลงเวลา
-        </div>
-      </div>
-    </section>
-
-    <section *ngIf="activeView === 'logbooks'" class="stack">
-      <article *ngIf="currentUser.role === 'student' && activeInternship" class="panel">
-        <div class="panel-title">
-          <h3>ส่งบันทึก</h3>
-          <p>หัวข้อ, เนื้อหา · สถานะ รออนุมัติ / อนุมัติ / ปฏิเสธ</p>
-        </div>
-        <form class="log-form" (ngSubmit)="addLogbook()">
-          <input name="logbookTitle" [(ngModel)]="logbookTitle" placeholder="หัวข้อ">
-          <textarea name="logbookText" [(ngModel)]="logbookText" rows="4" placeholder="เนื้อหา"></textarea>
-          <button type="submit">ส่งบันทึก</button>
-        </form>
-      </article>
-
-      <div class="table-card">
-        <div class="table-row header">
-          <span>นักศึกษา</span>
-          <span>หัวข้อ</span>
-          <span>เนื้อหา</span>
-          <span>สถานะ</span>
-          <span>Action</span>
-        </div>
-        <div class="table-row" *ngFor="let logbook of visibleLogbooks">
-          <span>{{ userName(internshipFor(logbook.internshipId)?.studentId || 0) }}</span>
-          <span>{{ logbook.title }}</span>
-          <span>{{ logbook.content }}</span>
-          <span><mark [class.good]="logbook.status === 'approved'" [class.danger]="logbook.status === 'rejected'">{{ logbook.status }}</mark></span>
-          <span class="inline-actions">
-            <ng-container *ngIf="currentUser.role === 'company' && logbook.status === 'pending'">
-              <button class="small" (click)="reviewLogbook(logbook, 'approved')">Approve</button>
-              <button class="small secondary" (click)="reviewLogbook(logbook, 'rejected')">Reject</button>
-            </ng-container>
-          </span>
-        </div>
-        <div class="empty-row" *ngIf="visibleLogbooks.length === 0">
-          ยังไม่มีบันทึกในขอบเขตสิทธิ์นี้
-        </div>
-      </div>
-    </section>
-
-    <section *ngIf="activeView === 'evaluations'" class="stack">
-      <article *ngIf="(currentUser.role === 'company' || currentUser.role === 'advisor') && visibleInternships[0]" class="panel">
-        <div class="panel-title">
-          <h3>ประเมินนักศึกษา</h3>
-          <p>evaluations: evaluator_id, score, feedback, evaluation_type (mentor | advisor)</p>
-        </div>
-        <form class="form-grid evaluation-form" (ngSubmit)="addEvaluation()">
-          <select name="evaluationInternship" [(ngModel)]="selectedEvaluationInternshipId">
-            <option [ngValue]="null" disabled>เลือกนักศึกษา</option>
-            <option *ngFor="let internship of visibleInternships" [ngValue]="internship.id">
-              {{ userName(internship.studentId) }} - {{ internshipJobTitle(internship) }}
-            </option>
+      <!-- ATTENDANCE -->
+      <section *ngIf="activeView === 'attendance'" class="space-y-12">
+        <!-- Student Selector for Company/Advisor -->
+        <div *ngIf="currentUser?.role === 'company' || currentUser?.role === 'advisor'" 
+             class="flex items-center gap-4 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+          <label class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Filter by Student:</label>
+          <select [(ngModel)]="attendanceStudentFilterId" 
+                  class="px-6 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold min-w-[240px]">
+            <option [ngValue]="null">All Students</option>
+            <option *ngFor="let student of attendanceStudents" [value]="student.id">{{ student.name }}</option>
           </select>
-          <select name="evaluationType" [(ngModel)]="evaluationType">
-            <option value="mentor">mentor</option>
-            <option value="advisor">advisor</option>
-          </select>
-          <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore">
-          <input name="evaluationFeedback" [(ngModel)]="evaluationFeedback" placeholder="feedback">
-          <button type="submit" [disabled]="!selectedEvaluationInternshipId">บันทึกประเมิน</button>
-        </form>
-      </article>
+        </div>
 
-      <div class="table-card">
-        <div class="table-row header">
-          <span>นักศึกษา</span>
-          <span>ผู้ประเมิน</span>
-          <span>คะแนน</span>
-          <span>feedback</span>
+        <article *ngIf="currentUser?.role === 'student' && activeInternship" class="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[3rem] p-16 text-white shadow-2xl relative overflow-hidden">
+          <div class="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"></div>
+          <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12 text-center lg:text-left">
+            <div>
+              <p class="text-blue-200 font-black uppercase tracking-[0.4em] mb-6 flex items-center justify-center lg:justify-start gap-4">
+                <span class="w-12 h-1 bg-blue-400"></span>
+                Time Management
+              </p>
+              <h3 class="text-6xl font-black mb-4 tracking-tighter leading-none">{{ internshipJobTitle(activeInternship) }}</h3>
+              <p class="text-xl text-blue-100/60 font-bold tracking-tight">Clock in and out accurately to track your progress.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-6 shrink-0">
+              <button (click)="checkIn()" [disabled]="hasOpenAttendance()" 
+                      class="px-14 py-8 bg-white text-blue-600 rounded-[2rem] font-black text-2xl shadow-[0_20px_50px_rgba(255,255,255,0.1)] disabled:opacity-50 transition-all hover:scale-110 active:scale-95">
+                Check In
+              </button>
+              <button (click)="checkOut()" [disabled]="!hasOpenAttendance()" 
+                      class="px-14 py-8 bg-blue-500/20 border-2 border-white/20 text-white rounded-[2rem] font-black text-2xl hover:bg-white/10 disabled:opacity-50 transition-all hover:scale-110 active:scale-95">
+                Check Out
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50/50 border-b border-slate-100">
+                  <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Student</th>
+                  <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Clock In</th>
+                  <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Clock Out</th>
+                  <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                  <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Verification</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let att of visibleAttendances" class="hover:bg-blue-50/20 transition-colors group">
+                  <td class="px-10 py-8 font-black text-slate-900 text-lg">{{ userName(att.studentId) }}</td>
+                  <td class="px-10 py-8 font-black text-slate-700">{{ formatDateTime(att.checkInTime) }}</td>
+                  <td class="px-10 py-8 font-bold text-slate-400">{{ att.checkOutTime ? formatDateTime(att.checkOutTime) : '—' }}</td>
+                  <td class="px-10 py-8">
+                    <span class="inline-flex px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm"
+                          [class.bg-emerald-500]="att.status === 'present'" [class.text-white]="att.status === 'present'"
+                          [class.bg-amber-500]="att.status === 'late'" [class.text-white]="att.status === 'late'"
+                          [class.bg-rose-500]="att.status === 'absent'" [class.text-white]="att.status === 'absent'"
+                          [class.bg-blue-400]="att.status === 'early_leave'" [class.text-white]="att.status === 'early_leave'">
+                      {{ att.status }}
+                    </span>
+                  </td>
+                  <td class="px-10 py-8">
+                    <div *ngIf="att.verificationStatus === 'pending' && (currentUser?.role === 'company' || currentUser?.role === 'advisor')" 
+                         class="flex gap-2">
+                      <button title="Approve" 
+                              class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest shadow-sm" 
+                              (click)="setAttendanceVerification(att, 'approved')">Approve</button>
+                      <button title="Reject" 
+                              class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest shadow-sm" 
+                              (click)="setAttendanceVerification(att, 'rejected')">Reject</button>
+                    </div>
+                    <span *ngIf="att.verificationStatus !== 'pending' || (currentUser?.role !== 'company' && currentUser?.role !== 'advisor')"
+                          class="text-xs font-black uppercase tracking-widest"
+                          [class.text-emerald-600]="att.verificationStatus === 'approved'"
+                          [class.text-rose-600]="att.verificationStatus === 'rejected'"
+                          [class.text-slate-400]="att.verificationStatus === 'pending'">
+                      {{ verificationStatusLabel(att.verificationStatus) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="table-row compact" *ngFor="let evaluation of visibleEvaluations">
-          <span>{{ userName(internshipFor(evaluation.internshipId)?.studentId || 0) }}</span>
-          <span>{{ evaluatorLabel(evaluation) }}</span>
-          <span>{{ evaluation.score }}/100</span>
-          <span>{{ evaluation.feedback }}</span>
+      </section>
+
+      <!-- LOGBOOKS -->
+      <section *ngIf="activeView === 'logbooks'" class="space-y-12">
+        <article *ngIf="currentUser?.role === 'student' && activeInternship" class="bg-white rounded-[2.5rem] p-12 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
+          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-4">
+              <h3 class="text-4xl font-black mb-4 tracking-tight">ส่งบันทึกการฝึกงาน</h3>
+              <p class="text-slate-500 font-medium text-lg leading-relaxed">บันทึกการเรียนรู้และการปฏิบัติงานประจำวันของคุณ เพื่อส่งให้ทางพี่เลี้ยงตรวจสอบและประเมินผล</p>
+            </div>
+            <form class="lg:col-span-8 space-y-5" (ngSubmit)="addLogbook()">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อบันทึก / งานที่ทำ</label>
+                <input name="logbookTitle" [(ngModel)]="logbookTitle" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard" 
+                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดการปฏิบัติงาน</label>
+                <textarea name="logbookText" [(ngModel)]="logbookText" rows="4" placeholder="ระบุรายละเอียดงานที่ทำ ความรู้ที่ได้รับ และอุปสรรคปัญหาในการทำงาน..." 
+                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+              </div>
+              <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
+                ส่งบันทึกประจำวัน
+              </button>
+            </form>
+          </div>
+        </article>
+
+        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50/50">
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">นักศึกษา</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">หัวข้อ</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รายละเอียด</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let logbook of visibleLogbooks" class="hover:bg-blue-50/20 transition-colors">
+                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(internshipFor(logbook.internshipId)?.studentId || 0) }}</td>
+                  <td class="px-10 py-6 font-bold text-slate-700">{{ logbook.title }}</td>
+                  <td class="px-10 py-6 font-medium text-slate-500 max-w-xs truncate" title="{{ logbook.content }}">{{ logbook.content }}</td>
+                  <td class="px-10 py-6">
+                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
+                          [class.bg-emerald-50]="logbook.status === 'approved'" [class.text-emerald-600]="logbook.status === 'approved'" [class.border-emerald-100]="logbook.status === 'approved'"
+                          [class.bg-rose-50]="logbook.status === 'rejected'" [class.text-rose-600]="logbook.status === 'rejected'" [class.border-rose-100]="logbook.status === 'rejected'"
+                          [class.bg-slate-50]="logbook.status === 'pending'" [class.text-slate-600]="logbook.status === 'pending'" [class.border-slate-100]="logbook.status === 'pending'">
+                      {{ logbookStatusLabel(logbook.status) }}
+                    </span>
+                  </td>
+                  <td class="px-10 py-6">
+                    <div class="flex gap-2" *ngIf="currentUser?.role === 'company' && logbook.status === 'pending'">
+                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="reviewLogbook(logbook, 'approved')">Approve</button>
+                      <button class="px-5 py-2.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="reviewLogbook(logbook, 'rejected')">Reject</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="visibleLogbooks.length === 0">
+                  <td colspan="5" class="px-10 py-8 text-center text-sm font-bold text-slate-400">ยังไม่มีบันทึกในขอบเขตสิทธิ์นี้</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="empty-row" *ngIf="visibleEvaluations.length === 0">
-          ยังไม่มีผลประเมิน
+      </section>
+
+      <!-- EVALUATIONS -->
+      <section *ngIf="activeView === 'evaluations'" class="space-y-12">
+        <article *ngIf="(currentUser?.role === 'company' || currentUser?.role === 'advisor') && visibleInternships[0]" 
+                 class="bg-white rounded-[2.5rem] p-12 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
+          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-4">
+              <h3 class="text-4xl font-black mb-4 tracking-tight">ประเมินผลการฝึกงาน</h3>
+              <p class="text-slate-500 font-medium text-lg leading-relaxed">ให้คะแนนและข้อเสนอแนะต่อนักศึกษาในความดูแล เพื่อพัฒนาทักษะและติดตามความก้าวหน้า</p>
+            </div>
+            <form class="lg:col-span-8 space-y-5" (ngSubmit)="addEvaluation()">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">นักศึกษาฝึกงาน</label>
+                  <select name="evaluationInternship" [(ngModel)]="selectedEvaluationInternshipId" 
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                    <option [ngValue]="null" disabled>เลือกนักศึกษา</option>
+                    <option *ngFor="let internship of visibleInternships" [ngValue]="internship.id">
+                      {{ userName(internship.studentId) }} - {{ internshipJobTitle(internship) }}
+                    </option>
+                  </select>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทการประเมิน</label>
+                  <select name="evaluationType" [(ngModel)]="evaluationType" 
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                    <option value="mentor">พี่เลี้ยง (mentor)</option>
+                    <option value="advisor">อาจารย์ที่ปรึกษา (advisor)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                <div class="md:col-span-1 space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คะแนน (0-100)</label>
+                  <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore" 
+                         class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+                <div class="md:col-span-3 space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ข้อเสนอแนะ / ความเห็นเพิ่มเติม</label>
+                  <input name="evaluationFeedback" [(ngModel)]="evaluationFeedback" placeholder="ความรับผิดชอบดีมาก เรียนรู้เร็ว ควรพัฒนาทักษะภาษาอังกฤษเพิ่มเติม..." 
+                         class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                </div>
+              </div>
+              <button type="submit" [disabled]="!selectedEvaluationInternshipId" 
+                      class="w-full py-5 bg-slate-900 hover:bg-blue-600 disabled:opacity-50 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
+                บันทึกผลการประเมิน
+              </button>
+            </form>
+          </div>
+        </article>
+
+        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50/50">
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">นักศึกษา</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ผู้ประเมิน</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">คะแนน</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ข้อเสนอแนะ / Feedback</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let evaluation of visibleEvaluations" class="hover:bg-blue-50/20 transition-colors">
+                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(internshipFor(evaluation.internshipId)?.studentId || 0) }}</td>
+                  <td class="px-10 py-6 font-bold text-slate-700">{{ evaluatorLabel(evaluation) }}</td>
+                  <td class="px-10 py-6">
+                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">
+                      {{ evaluation.score }} / 100
+                    </span>
+                  </td>
+                  <td class="px-10 py-6 font-medium text-slate-500 max-w-sm truncate" title="{{ evaluation.feedback }}">{{ evaluation.feedback }}</td>
+                </tr>
+                <tr *ngIf="visibleEvaluations.length === 0">
+                  <td colspan="4" class="px-10 py-8 text-center text-sm font-bold text-slate-400">ยังไม่มีผลการประเมิน</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+      </section>
+
+      <!-- EDIT PROFILE -->
+      <section *ngIf="activeView === 'edit'" class="space-y-12">
+        <article class="bg-white rounded-[2.5rem] p-12 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
+          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-4">
+              <h3 class="text-4xl font-black mb-4 tracking-tight">แก้ไขข้อมูลส่วนตัว</h3>
+              <p class="text-slate-500 font-medium text-lg leading-relaxed">ปรับปรุงข้อมูลบัญชี ชื่อผู้ใช้งาน ข้อมูลการติดต่อ และเอกสารแนะนำตัวให้เป็นปัจจุบัน</p>
+            </div>
+            <form class="lg:col-span-8 space-y-6" (ngSubmit)="saveProfile()">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
+                  <input name="profileName" [(ngModel)]="profileDraft.name" placeholder="Full Name" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                  <input name="profileEmail" type="email" [(ngModel)]="profileDraft.email" placeholder="email@example.com" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เบอร์โทรศัพท์</label>
+                  <input name="profilePhone" [(ngModel)]="profileDraft.phone" placeholder="เช่น 0891234567" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+                <div class="space-y-2" *ngIf="currentUser?.role === 'student' || currentUser?.role === 'advisor'">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">โรงเรียน / สถานศึกษา</label>
+                  <input name="profileSchool" [(ngModel)]="profileDraft.school" placeholder="School/University Name" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+              </div>
+              <div class="space-y-2" *ngIf="currentUser?.role === 'student'">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Resume / Portfolio URL</label>
+                <input name="profileResume" [(ngModel)]="profileDraft.resumeUrl" placeholder="https://drive.google.com/..." 
+                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+              </div>
+              <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
+                บันทึกการแก้ไขข้อมูล
+              </button>
+            </form>
+          </div>
+        </article>
+      </section>
+
+      <!-- SCHEMA / ADMIN -->
+      <section *ngIf="activeView === 'schema' && currentUser?.role === 'admin'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <article *ngFor="let table of schemaTables" class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 hover:shadow-2xl transition-all group overflow-hidden">
+          <div class="flex items-center gap-5 mb-8">
+            <div class="w-14 h-14 bg-slate-900 text-white rounded-[1.25rem] flex items-center justify-center font-black text-2xl shadow-xl shadow-slate-200 group-hover:bg-blue-600 group-hover:rotate-6 transition-all duration-500">#</div>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{{ table.name }}</h3>
+          </div>
+          <div class="bg-slate-50/80 rounded-[1.5rem] p-8 border border-slate-100">
+            <p class="text-xs font-mono font-bold text-slate-500 leading-relaxed">{{ table.columns }}</p>
+          </div>
+        </article>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Mobile Nav Overlay -->
+  <aside id="app-sidebar" *ngIf="sidebarOpen" class="fixed inset-0 z-50 lg:hidden">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md" (click)="closeSidebar()"></div>
+    <div class="absolute inset-y-0 right-0 w-80 bg-white shadow-2xl p-10 flex flex-col">
+      <div class="flex items-center justify-between mb-12">
+        <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black text-xl">IM</div>
+        <button class="p-3 text-slate-300 hover:text-slate-900 transition-colors" (click)="closeSidebar()">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
       </div>
-    </section>
-
-    <section *ngIf="activeView === 'schema' && currentUser.role === 'admin'" class="schema-grid">
-      <article class="schema-card" *ngFor="let table of schemaTables">
-        <strong>{{ table.name }}</strong>
-        <p class="schema-cols">{{ table.columns }}</p>
-      </article>
-    </section>
-    </div>
-  </section>
-
-  <aside id="app-sidebar" class="sidebar" [class.open]="sidebarOpen">
-    <div class="sidebar-header">
-      <div class="brand">
-        <div class="brand-mark">IM</div>
-        <div>
-          <h1>Intern Manager</h1>
-          <p>internship_db</p>
-        </div>
-      </div>
-      <button type="button" class="sidebar-close" aria-label="ปิดเมนู" (click)="closeSidebar()">×</button>
-    </div>
-
-    <div class="session-card">
-      <span class="badge">{{ roleLabel }}</span>
-      <strong>{{ currentUser.name }}</strong>
-      <small>{{ currentUser.email }}</small>
-      <small *ngIf="currentUser.school">{{ currentUser.school }}</small>
-      <small *ngIf="currentCompany">{{ currentCompany.companyName }}</small>
-      <small *ngIf="!useMockData && data.apiConnected" class="api-ok">API connected</small>
-      <small *ngIf="!useMockData && data.apiLoadError" class="error-text">{{ data.apiLoadError }}</small>
-    </div>
-
-    <nav class="nav">
-      <button *ngFor="let view of availableViews" [class.active]="activeView === view" (click)="setActiveView(view)">
-        {{ viewLabels[view] }}
+      <nav class="space-y-3 flex-1 overflow-y-auto pr-2">
+        <button *ngFor="let view of availableViews" (click)="setActiveView(view); closeSidebar()" 
+                class="w-full px-8 py-5 flex items-center gap-4 rounded-2xl font-black text-lg transition-all"
+                [class.bg-blue-50]="activeView === view" [class.text-blue-600]="activeView === view"
+                [class.text-slate-400]="activeView !== view" [class.hover:bg-slate-50]="activeView !== view">
+          <span>{{ viewLabels[view] }}</span>
+        </button>
+      </nav>
+      <button class="w-full py-6 mt-10 bg-rose-50 text-rose-600 font-black rounded-[1.5rem] hover:bg-rose-100 transition-all uppercase tracking-widest text-sm" (click)="logout()">
+        Logout System
       </button>
-      <button class="logout-button" (click)="logout()">ออกจากระบบ</button>
-    </nav>
+    </div>
   </aside>
 </main>
 

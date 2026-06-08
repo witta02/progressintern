@@ -17,7 +17,9 @@ export type ApiUser = {
   email: string;
   password?: string;
   role: User['role'];
+  status?: User['status'];
   phone?: string | null;
+  school?: string | null;
   profile_image?: string | null;
   resume_url?: string | null;
   created_at?: string;
@@ -40,11 +42,17 @@ export type ApiJobPosting = {
   id: number;
   company_id: number;
   title: string;
+  company_name?: string | null;
   description?: string | null;
   requirements?: string | null;
   benefits?: string | null;
+  checkin_time?: string | null;
+  checkout_time?: string | null;
+  lated_time?: string | null;
+  work_days?: string | null;
   slots: number;
   status: JobPosting['status'];
+  is_deleted?: boolean | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -79,6 +87,7 @@ export type ApiAttendance = {
   latitude?: number | null;
   longitude?: number | null;
   status: Attendance['status'];
+  verification_status: Attendance['verificationStatus'];
   created_at?: string;
 };
 
@@ -112,7 +121,9 @@ export function mapUser(dto: ApiUser): User {
     email: dto.email,
     password: dto.password,
     role: dto.role,
+    status: dto.status,
     phone: dto.phone ?? undefined,
+    school: dto.school ?? undefined,
     profileImage: dto.profile_image ?? undefined,
     resumeUrl: dto.resume_url ?? undefined,
     createdAt: dto.created_at,
@@ -139,11 +150,17 @@ export function mapJobPosting(dto: ApiJobPosting): JobPosting {
     id: dto.id,
     companyId: dto.company_id,
     title: dto.title,
+    companyName: dto.company_name ?? undefined,
     description: dto.description ?? undefined,
     requirements: dto.requirements ?? undefined,
     benefits: dto.benefits ?? undefined,
+    checkinTime: dto.checkin_time ?? undefined,
+    checkoutTime: dto.checkout_time ?? undefined,
+    latedTime: dto.lated_time ?? undefined,
+    workDays: dto.work_days ?? undefined,
     slots: dto.slots,
     status: dto.status,
+    isDeleted: dto.is_deleted ?? false,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };
@@ -184,6 +201,7 @@ export function mapAttendance(dto: ApiAttendance): Attendance {
     latitude: dto.latitude ?? undefined,
     longitude: dto.longitude ?? undefined,
     status: dto.status,
+    verificationStatus: dto.verification_status,
     createdAt: dto.created_at
   };
 }

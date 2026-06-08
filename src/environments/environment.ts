@@ -7,5 +7,5 @@ export const environment = {
   /** Base URL for REST API (no trailing slash). Example: https://api.example.com/api */
   apiUrl: '/api',
   /** When true, data stays in browser memory + localStorage (no HTTP). */
-  useMockData: true
+  useMockData: false
 };

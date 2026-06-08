@@ -21,7 +21,8 @@ export interface RegisterInput {
 export type ApplicationStatus = 'pending' | 'interview' | 'approved' | 'rejected';
 export type JobPostingStatus = 'open' | 'closed';
 export type InternshipStatus = 'active' | 'completed' | 'terminated';
-export type AttendanceStatus = 'present' | 'late' | 'absent';
+export type AttendanceStatus = 'present' | 'late' | 'absent' | 'early_leave';
+export type VerificationStatus = 'pending' | 'approved' | 'rejected';
 export type LogbookStatus = 'pending' | 'approved' | 'rejected';
 export type EvaluationType = 'mentor' | 'advisor';
 
@@ -60,11 +61,17 @@ export interface JobPosting {
   id: number;
   companyId: number;
   title: string;
+  companyName?: string;
   description?: string;
   requirements?: string;
   benefits?: string;
+  checkinTime?: string;
+  checkoutTime?: string;
+  latedTime?: string;
+  workDays?: string;
   slots: number;
   status: JobPostingStatus;
+  isDeleted?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -99,6 +106,7 @@ export interface Attendance {
   latitude?: number;
   longitude?: number;
   status: AttendanceStatus;
+  verificationStatus: VerificationStatus;
   createdAt?: string;
 }
 

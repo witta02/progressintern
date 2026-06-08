@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../environments/environment';
 import { InternshipDataService } from './internship-data.service';
@@ -31,39 +31,65 @@ import {
 export class App {
   protected readonly data = inject(InternshipDataService);
   protected readonly notifications = inject(NotificationService);
+  private readonly cdr = inject(ChangeDetectorRef);
   protected readonly useMockData = environment.useMockData;
   protected readonly schemaTables = DB_SCHEMA_TABLES;
 
   private readonly sessionKey = 'intern-manager-session-v1';
 
   protected currentUserId: number | null = null;
+  protected initialized = false;
 
   constructor() {
-    this.loadSession();
+    this.initSession();
     setTimeout(() => {
       this.notifications.info('ยินดีต้อนรับเข้าสู่ระบบจัดการฝึกงาน', 'ระบบพร้อมใช้งาน');
     }, 1000);
   }
 
-  private loadSession(): void {
-    if (typeof localStorage === 'undefined') return;
+  private async initSession(): Promise<void> {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    // 1. Synchronously read local session immediately so isAuthenticated is set instantly on client
     const saved = localStorage.getItem(this.sessionKey);
     if (saved) {
       const id = parseInt(saved, 10);
       if (!isNaN(id)) {
         this.currentUserId = id;
-        setTimeout(() => {
-          const user = this.users.find((u) => u.id === id);
-          if (user) {
-            this.finishLogin(user, false);
-          } else {
-            this.logout();
-          }
-        }, 200);
+        
+        // Also restore activeView pre-emptively to avoid dashboard tab flicker
+        const savedView = localStorage.getItem('intern-manager-active-view-v1');
+        if (savedView) {
+          this.activeView = savedView;
+        }
       }
     }
+
+    // 2. Load API data in the background
+    if (!this.useMockData) {
+      try {
+        await this.data.refreshFromApi();
+      } catch (err) {
+        console.error('[App] Failed to load initial data from API', err);
+      }
+    }
+
+    // 3. Re-verify the session with the loaded user list from API
+    if (this.currentUserId) {
+      const user = this.users.find((u) => u.id === this.currentUserId);
+      if (user) {
+        this.finishLogin(user, false);
+      } else {
+        this.logout();
+      }
+    }
+
+    this.initialized = true;
+    this.cdr.markForCheck();
   }
-  protected sidebarOpen = true;
+  protected sidebarOpen = false;
   protected activeView = 'dashboard';
   protected authMode: 'login' | 'register' = 'login';
   protected loginError = '';
@@ -74,8 +100,8 @@ export class App {
   protected studentSearchQuery = '';
 
   protected loginForm = {
-    email: 'student@demo.ac.th',
-    password: 'student123'
+    email: '',
+    password: ''
   };
 
   protected registerForm = {
@@ -117,6 +143,10 @@ export class App {
     description: '',
     requirements: '',
     benefits: '',
+    checkinTime: '09:00',
+    checkoutTime: '17:00',
+    latedTime: '09:15',
+    workDays: 'Monday - Friday',
     slots: 1
   };
 
@@ -163,20 +193,16 @@ export class App {
     return this.data.attendances;
   }
 
-  protected get currentUser(): User {
-    return this.users.find((user) => user.id === this.currentUserId) ?? this.users[0];
+  protected get currentUser(): User | undefined {
+    return this.users.find((user) => user.id === this.currentUserId);
   }
 
   protected get isAuthenticated(): boolean {
     return this.currentUserId !== null;
   }
 
-  protected get demoUsers(): User[] {
-    return this.users.filter((user) => user.password);
-  }
-
   protected get roleLabel(): string {
-    return this.roleName(this.currentUser.role);
+    return this.currentUser ? this.roleName(this.currentUser.role) : '';
   }
 
   protected get openAttendanceCount(): number {
@@ -184,15 +210,15 @@ export class App {
   }
 
   protected get topSummary(): string[] {
-    if (this.currentUser.role === 'student') {
+    if (this.currentUser?.role === 'student') {
       return [`สถานะ: ${this.currentUser.status}`, `${this.visibleInternships.length} internship ของฉัน`];
     }
 
-    if (this.currentUser.role === 'company') {
+    if (this.currentUser?.role === 'company') {
       return [`${this.visibleInternships.length} นักศึกษาฝึกงาน`, `${this.visibleApplications.length} ใบสมัคร`];
     }
 
-    if (this.currentUser.role === 'advisor') {
+    if (this.currentUser?.role === 'advisor') {
       return [`สังกัด: ${this.currentUser.school}`, `${this.managedStudents.length} นักศึกษาในสังกัด`];
     }
 
@@ -207,11 +233,12 @@ export class App {
       company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit']
     };
 
-    return viewsByRole[this.currentUser.role];
+    if (!this.currentUser) return [];
+    return viewsByRole[this.currentUser.role] || [];
   }
 
   protected get dashboardMetrics() {
-    if (this.currentUser.role === 'admin') {
+    if (this.currentUser?.role === 'admin') {
       return [
         { label: 'ผู้ใช้ทั้งหมด', value: this.users.length, helper: 'ทุก role ในระบบ' },
         { label: 'บริษัททั้งหมด', value: this.companies.length, helper: 'สถานประกอบการที่ลงทะเบียน' },
@@ -220,7 +247,7 @@ export class App {
       ];
     }
 
-    if (this.currentUser.role === 'advisor') {
+    if (this.currentUser?.role === 'advisor') {
       return [
         { label: 'นักศึกษาในสังกัด', value: this.managedStudents.length, helper: 'นักศึกษาที่โรงเรียนเดียวกัน' },
         { label: 'ใบสมัครของนักศึกษา', value: this.visibleApplications.length, helper: 'ติดตามผลสมัครงาน' },
@@ -229,7 +256,7 @@ export class App {
       ];
     }
 
-    if (this.currentUser.role === 'company') {
+    if (this.currentUser?.role === 'company') {
       return [
         { label: 'งานที่บริษัทโพสต์', value: this.visibleJobs.length, helper: 'ตำแหน่งของบริษัทนี้' },
         { label: 'ใบสมัครที่ได้รับ', value: this.visibleApplications.length, helper: 'pending / interview / approved' },
@@ -247,68 +274,78 @@ export class App {
   }
 
   protected get currentCompany(): Company | undefined {
-    return this.data.companyForUser(this.currentUser.id);
+    return this.currentUser ? this.data.companyForUser(this.currentUser.id) : undefined;
   }
 
   protected get currentCompanyId(): number | undefined {
-    return this.data.companyIdForUser(this.currentUser.id);
+    return this.currentUser ? this.data.companyIdForUser(this.currentUser.id) : undefined;
   }
 
   protected get managedStudents(): User[] {
-    if (this.currentUser.role === 'admin') {
+    if (this.currentUser?.role === 'admin') {
       return this.users.filter((user) => user.role === 'student');
     }
 
-    if (this.currentUser.role !== 'advisor') {
+    if (this.currentUser?.role !== 'advisor') {
       return [];
     }
 
     // Advisor can see students with the same school name
     if (this.currentUser.school) {
       return this.users.filter(
-        (user) => user.role === 'student' && user.school === this.currentUser.school
+        (user) => user.role === 'student' && user.school === this.currentUser?.school
       );
     }
 
     return this.users.filter(
-      (user) => user.role === 'student' && user.advisorId === this.currentUser.id
+      (user) => user.role === 'student' && user.advisorId === this.currentUser?.id
     );
   }
   
   protected get otherStudents(): User[] {
-    if (this.currentUser.role !== 'advisor') return [];
+    const user = this.currentUser;
+    if (user?.role !== 'advisor') return [];
     
     const query = this.studentSearchQuery.trim().toLowerCase();
     
-    return this.users.filter(user => 
-      user.role === 'student' && 
-      user.school !== this.currentUser.school &&
-      (user.school?.toLowerCase().includes(query) || user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query))
+    return this.users.filter(u => 
+      u.role === 'student' && 
+      u.school !== user.school &&
+      (u.school?.toLowerCase().includes(query) || u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query))
     );
   }
 
   protected get visibleJobs(): JobPosting[] {
-    if (this.currentUser.role === 'admin') {
-      return this.jobPostings;
+    const list = this.jobPostings.filter((job) => !job.isDeleted);
+
+    if (this.currentUser?.role === 'admin') {
+      return list;
     }
 
-    if (this.currentUser.role === 'company' && this.currentCompanyId) {
-      return this.jobPostings.filter((job) => job.companyId === this.currentCompanyId);
+    if (this.currentUser?.role === 'company' && this.currentCompanyId) {
+      return list.filter((job) => job.companyId === this.currentCompanyId);
     }
 
-    return this.jobPostings;
+    // For students, advisors, and others, filter out filled jobs
+    return list.filter((job) => {
+      const filledCount = this.internships.filter(
+        (internship) => internship.jobPostingId === job.id && (internship.status === 'active' || internship.status === 'completed')
+      ).length;
+      return filledCount < job.slots;
+    });
   }
 
   protected get visibleApplications(): Application[] {
-    if (this.currentUser.role === 'admin') {
+    const user = this.currentUser;
+    if (user?.role === 'admin') {
       return this.applications;
     }
 
-    if (this.currentUser.role === 'student') {
-      return this.applications.filter((application) => application.studentId === this.currentUser.id);
+    if (user?.role === 'student') {
+      return this.applications.filter((application) => application.studentId === user.id);
     }
 
-    if (this.currentUser.role === 'company' && this.currentCompanyId) {
+    if (user?.role === 'company' && this.currentCompanyId) {
       const companyJobIds = this.jobPostings
         .filter((job) => job.companyId === this.currentCompanyId)
         .map((job) => job.id);
@@ -323,15 +360,16 @@ export class App {
   }
 
   protected get visibleInternships(): Internship[] {
-    if (this.currentUser.role === 'admin') {
+    const user = this.currentUser;
+    if (user?.role === 'admin') {
       return this.internships;
     }
 
-    if (this.currentUser.role === 'student') {
-      return this.internships.filter((internship) => internship.studentId === this.currentUser.id);
+    if (user?.role === 'student') {
+      return this.internships.filter((internship) => internship.studentId === user.id);
     }
 
-    if (this.currentUser.role === 'company' && this.currentCompanyId) {
+    if (user?.role === 'company' && this.currentCompanyId) {
       return this.internships.filter((internship) => internship.companyId === this.currentCompanyId);
     }
 
@@ -339,9 +377,22 @@ export class App {
     return this.internships.filter((internship) => studentIds.includes(internship.studentId));
   }
 
+  protected attendanceStudentFilterId: number | null = null;
+
+  protected get attendanceStudents(): User[] {
+    const studentIds = new Set(this.visibleInternships.map((i) => i.studentId));
+    return this.users.filter((u) => studentIds.has(u.id));
+  }
+
   protected get visibleAttendances(): Attendance[] {
     const internshipIds = this.visibleInternships.map((internship) => internship.id);
-    return this.attendances.filter((attendance) => internshipIds.includes(attendance.internshipId));
+    let list = this.attendances.filter((attendance) => internshipIds.includes(attendance.internshipId));
+
+    if (this.attendanceStudentFilterId) {
+      list = list.filter((a) => a.studentId === Number(this.attendanceStudentFilterId));
+    }
+
+    return list;
   }
 
   protected get activeInternship(): Internship | undefined {
@@ -425,18 +476,12 @@ export class App {
     this.notifications.success(`ยินดีต้อนรับ ${result.user.name}`, 'สมัครสมาชิกสำเร็จ');
   }
 
-  protected useDemoAccount(user: User): void {
-    this.loginForm = {
-      email: user.email,
-      password: user.password ?? ''
-    };
-    this.notifications.info(`เลือกบัญชี ${user.name} แล้ว กด Login เพื่อเข้าสู่ระบบ`, 'บัญชีทดสอบ');
-  }
-
   protected logout(): void {
     this.currentUserId = null;
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(this.sessionKey);
+      localStorage.removeItem('intern-manager-api-token-v1');
+      localStorage.removeItem('intern-manager-active-view-v1');
     }
     this.sidebarOpen = true;
     this.activeView = 'dashboard';
@@ -458,21 +503,38 @@ export class App {
   }
 
   protected setActiveView(view: string): void {
+    const user = this.currentUser;
     this.activeView = this.availableViews.includes(view) ? view : 'dashboard';
     this.notificationPanelOpen = false;
 
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('intern-manager-active-view-v1', this.activeView);
+    }
+
+    if (this.activeView === 'jobs' && user?.role === 'student') {
+      const hasActiveInternship = this.internships.some(
+        (internship) => internship.studentId === user.id && internship.status === 'active'
+      );
+      if (hasActiveInternship) {
+        alert('คุณมีสถานที่ฝึกงานแล้ว ไม่สามารถดูหรือสมัครตำแหน่งงานเพิ่มได้');
+        this.notifications.warning('คุณมีสถานที่ฝึกงานแล้ว ไม่สามารถดูหรือสมัครตำแหน่งงานเพิ่มได้', 'ตำแหน่งงาน');
+        this.activeView = 'dashboard';
+        return;
+      }
+    }
+
     if (this.activeView === 'evaluations') {
       this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
-      this.evaluationType = this.currentUser.role === 'advisor' ? 'advisor' : 'mentor';
+      this.evaluationType = user?.role === 'advisor' ? 'advisor' : 'mentor';
     }
     
-    if (this.activeView === 'edit') {
+    if (this.activeView === 'edit' && user) {
       this.profileDraft = {
-        name: this.currentUser.name,
-        email: this.currentUser.email,
-        phone: this.currentUser.phone ?? '',
-        school: this.currentUser.school ?? '',
-        resumeUrl: this.currentUser.resumeUrl ?? ''
+        name: user.name,
+        email: user.email,
+        phone: user.phone ?? '',
+        school: user.school ?? '',
+        resumeUrl: user.resumeUrl ?? ''
       };
     }
 
@@ -531,25 +593,36 @@ export class App {
   }
 
   protected canApply(job: JobPosting): boolean {
+    const user = this.currentUser;
+    if (!user || user.role !== 'student') return false;
+
+    // Check if student already has an active internship
+    const hasActiveInternship = this.internships.some(
+      (internship) => internship.studentId === user.id && internship.status === 'active'
+    );
+    if (hasActiveInternship) {
+      return false;
+    }
+
     return (
-      this.currentUser.role === 'student' &&
-      this.currentUser.status === 'active' &&
+      user?.status === 'active' &&
       job.status === 'open' &&
       !this.applications.some(
         (application) =>
-          application.studentId === this.currentUser.id && application.jobPostingId === job.id
+          application.studentId === user?.id && application.jobPostingId === job.id
       )
     );
   }
 
   protected applyJob(job: JobPosting): void {
-    if (this.currentUser.status !== 'active') {
+    const user = this.currentUser;
+    if (user?.status !== 'active') {
       this.notifications.warning('บัญชีของคุณยังไม่ได้รับการอนุมัติ', 'สมัครงาน');
       return;
     }
     
     if (!this.canApply(job)) {
-      if (this.currentUser.role !== 'student') {
+      if (user?.role !== 'student') {
         this.notifications.warning('เฉพาะนักศึกษาจึงสมัครงานได้', 'สมัครงาน');
       } else if (job.status !== 'open') {
         this.notifications.warning('ตำแหน่งนี้ปิดรับสมัครแล้ว', 'สมัครงาน');
@@ -560,7 +633,7 @@ export class App {
     }
 
     this.data.addApplication({
-      studentId: this.currentUser.id,
+      studentId: user.id,
       jobPostingId: job.id,
       status: 'pending',
       appliedAt: new Date().toISOString()
@@ -573,8 +646,21 @@ export class App {
   }
 
   protected updateApplication(application: Application, status: ApplicationStatus): void {
-    this.data.updateApplicationStatus(application, status);
     const student = this.userName(application.studentId);
+
+    if (status === 'approved') {
+      const hasActiveInternship = this.internships.some(
+        (internship) => internship.studentId === application.studentId && internship.status === 'active'
+      );
+      if (hasActiveInternship) {
+        alert('นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว');
+        this.notifications.error('นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว', 'แจ้งเตือน');
+        this.data.updateApplicationStatus(application, 'rejected');
+        return;
+      }
+    }
+
+    this.data.updateApplicationStatus(application, status);
     const label = this.applicationStatusLabel(status);
 
     if (status === 'rejected') {
@@ -587,6 +673,7 @@ export class App {
 
     if (
       status !== 'approved' ||
+      !this.useMockData ||
       this.internships.some((internship) => internship.studentId === application.studentId)
     ) {
       return;
@@ -613,12 +700,14 @@ export class App {
   }
 
   protected addStudent(): void {
+    const user = this.currentUser;
+    if (!user) return;
     if (!this.newStudent.name.trim() || !this.newStudent.email.trim()) {
       this.notifications.warning('กรุณากรอกชื่อนักศึกษาและอีเมล', 'เพิ่มนักศึกษา');
       return;
     }
 
-    if (this.users.some((user) => user.email.toLowerCase() === this.newStudent.email.trim().toLowerCase())) {
+    if (this.users.some((u) => u.email.toLowerCase() === this.newStudent.email.trim().toLowerCase())) {
       this.notifications.error('อีเมลนี้มีอยู่ในระบบแล้ว', 'เพิ่มนักศึกษา');
       return;
     }
@@ -633,15 +722,17 @@ export class App {
       name,
       email: this.newStudent.email.trim(),
       password: this.newStudent.password.trim(),
-      advisorId: this.currentUser.id,
-      school: this.currentUser.school
+      advisorId: user.id,
+      school: user.school
     });
     this.notifications.success(`สร้างบัญชีนักศึกษา ${name} แล้ว`, 'เพิ่มนักศึกษา');
     this.newStudent = { name: '', email: '', password: 'student123' };
   }
   
   protected approveStudent(student: User): void {
-    this.data.updateUser(student.id, { status: 'active', school: this.currentUser.school });
+    const user = this.currentUser;
+    if (!user) return;
+    this.data.updateUser(student.id, { status: 'active', school: user.school });
     this.notifications.success(`อนุมัติและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
   }
   
@@ -651,12 +742,16 @@ export class App {
   }
   
   protected claimStudent(student: User): void {
-    this.data.updateUser(student.id, { school: this.currentUser.school, status: 'active' });
+    const user = this.currentUser;
+    if (!user) return;
+    this.data.updateUser(student.id, { school: user.school, status: 'active' });
     this.notifications.success(`แก้ไขโรงเรียนและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
   }
 
   protected saveProfile(): void {
-    this.data.updateUser(this.currentUser.id, {
+    const user = this.currentUser;
+    if (!user) return;
+    this.data.updateUser(user.id, {
       name: this.profileDraft.name,
       email: this.profileDraft.email,
       phone: this.profileDraft.phone,
@@ -679,14 +774,31 @@ export class App {
       description: this.newJob.description.trim() || 'รายละเอียดงานฝึกงาน',
       requirements: this.newJob.requirements.trim() || 'พร้อมเรียนรู้งาน',
       benefits: this.newJob.benefits.trim() || undefined,
+      checkinTime: this.newJob.checkinTime + ':00',
+      checkoutTime: this.newJob.checkoutTime + ':00',
+      latedTime: this.newJob.latedTime + ':00',
+      workDays: this.newJob.workDays.trim() || 'Monday - Friday',
       slots: Number(this.newJob.slots) || 1
     });
-    this.newJob = { title: '', description: '', requirements: '', benefits: '', slots: 1 };
+    this.newJob = { 
+      title: '', description: '', requirements: '', benefits: '', 
+      checkinTime: '09:00', checkoutTime: '17:00', latedTime: '09:15', 
+      workDays: 'Monday - Friday',
+      slots: 1 
+    };
     this.notifications.success(`โพสต์ตำแหน่ง ${title} แล้ว`, 'ตำแหน่งงาน');
   }
 
+  protected deleteJob(job: JobPosting): void {
+    if (confirm(`คุณแน่ใจหรือไม่ที่จะลบประกาศรับสมัครงาน "${job.title}"?`)) {
+      this.data.deleteJob(job.id);
+      this.notifications.warning(`ลบประกาศรับสมัครงาน "${job.title}" แล้ว`, 'ตำแหน่งงาน');
+    }
+  }
+
   protected checkIn(): void {
-    if (!this.activeInternship) {
+    const user = this.currentUser;
+    if (!user || !this.activeInternship) {
       this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'ลงเวลา');
       return;
     }
@@ -697,14 +809,28 @@ export class App {
     }
 
     const now = new Date();
-    const hour = now.getHours();
-    const status: AttendanceStatus = hour > 9 ? 'late' : 'present';
+    const job = this.jobPostings.find(j => j.id === this.activeInternship?.jobPostingId);
+    let status: AttendanceStatus = 'present';
+    
+    if (job?.latedTime) {
+      const [h, m] = job.latedTime.split(':').map(Number);
+      const latedDate = new Date();
+      latedDate.setHours(h, m, 0, 0);
+      if (now > latedDate) {
+        status = 'late';
+      }
+    } else {
+      if (now.getHours() >= 9 && now.getMinutes() >= 15) {
+        status = 'late';
+      }
+    }
 
     this.data.addAttendance({
       internshipId: this.activeInternship.id,
-      studentId: this.currentUser.id,
+      studentId: user.id,
       checkInTime: now.toISOString(),
-      status
+      status,
+      verificationStatus: 'pending'
     });
     this.notifications.success(
       `Check in แล้ว (${this.attendanceStatusLabel(status)})`,
@@ -729,12 +855,14 @@ export class App {
     this.notifications.success('Check out แล้ว', 'ลงเวลา');
   }
 
-  protected setAttendanceStatus(attendance: Attendance, status: AttendanceStatus): void {
-    this.data.setAttendanceStatus(attendance, status);
-    this.notifications.success(
-      `${this.userName(attendance.studentId)} → ${this.attendanceStatusLabel(status)}`,
-      'อัปเดตการลงเวลา'
-    );
+  protected setAttendanceVerification(attendance: Attendance, status: 'approved' | 'rejected'): void {
+    this.data.setAttendanceVerification(attendance, status);
+    const student = this.userName(attendance.studentId);
+    if (status === 'approved') {
+      this.notifications.success(`อนุมัติการลงเวลาของ ${student} แล้ว`, 'อนุมัติ');
+    } else {
+      this.notifications.warning(`ปฏิเสธการลงเวลาของ ${student} แล้ว (เปลี่ยนเป็น ขาด)`, 'ปฏิเสธ');
+    }
   }
 
   protected addLogbook(): void {
@@ -775,7 +903,8 @@ export class App {
   }
 
   protected addEvaluation(): void {
-    if (!this.selectedEvaluationInternship) {
+    const user = this.currentUser;
+    if (!user || !this.selectedEvaluationInternship) {
       this.notifications.warning('กรุณาเลือกนักศึกษาที่ต้องการประเมิน', 'ประเมินผล');
       return;
     }
@@ -789,7 +918,7 @@ export class App {
     const score = Number(this.evaluationScore);
     this.data.addEvaluation({
       internshipId: this.selectedEvaluationInternship.id,
-      evaluatorId: this.currentUser.id,
+      evaluatorId: user.id,
       score,
       feedback: this.evaluationFeedback.trim(),
       evaluationType: this.evaluationType
@@ -812,11 +941,6 @@ export class App {
 
   protected evaluatorLabel(evaluation: { evaluatorId: number; evaluationType: string }): string {
     return `${this.userName(evaluation.evaluatorId)} (${evaluation.evaluationType})`;
-  }
-
-  protected resetDemoData(): void {
-    this.notifications.warning('กำลังรีเซ็ตข้อมูลทดสอบและโหลดหน้าใหม่', 'Demo data');
-    this.data.resetDemoData();
   }
 
   private resetRegisterForm(): void {
@@ -849,7 +973,14 @@ export class App {
       );
     }
     
-    this.setActiveView('dashboard');
+    let targetView = 'dashboard';
+    if (typeof localStorage !== 'undefined') {
+      const savedView = localStorage.getItem('intern-manager-active-view-v1');
+      if (savedView) {
+        targetView = savedView;
+      }
+    }
+    this.setActiveView(targetView);
     this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
     this.profileDraft = {
       name: user.name,
@@ -865,7 +996,50 @@ export class App {
     return new Date().toISOString().slice(0, 10);
   }
 
-  private applicationStatusLabel(status: ApplicationStatus): string {
+  protected formatTermDate(dateStr: string | undefined): string {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  }
+
+  protected getInternshipProgress(internship: Internship): { percent: number; label: string } {
+    const start = new Date(internship.startDate).getTime();
+    const end = new Date(internship.endDate).getTime();
+    const now = new Date().getTime();
+
+    if (isNaN(start) || isNaN(end) || start >= end) {
+      return { percent: 0, label: '-' };
+    }
+
+    const total = end - start;
+    const elapsed = now - start;
+
+    if (elapsed < 0) {
+      return { percent: 0, label: 'ยังไม่เริ่มฝึกงาน' };
+    }
+
+    let percent = Math.min(Math.round((elapsed / total) * 100), 100);
+    if (percent < 0) percent = 0;
+
+    const remainingDays = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
+    const totalDays = Math.ceil(total / (1000 * 60 * 60 * 24));
+
+    let label = `ผ่านไปแล้ว ${percent}%`;
+    if (remainingDays > 0) {
+      label += ` (เหลืออีก ${remainingDays} วัน จาก ${totalDays} วัน)`;
+    } else {
+      label = `สิ้นสุดการฝึกงานแล้ว (${totalDays} วัน)`;
+    }
+
+    return { percent, label };
+  }
+
+  protected applicationStatusLabel(status: ApplicationStatus): string {
     return {
       pending: 'รอดำเนินการ',
       interview: 'นัดสัมภาษณ์',
@@ -874,19 +1048,28 @@ export class App {
     }[status];
   }
 
-  private attendanceStatusLabel(status: AttendanceStatus): string {
+  protected attendanceStatusLabel(status: AttendanceStatus): string {
     return {
       present: 'มาตรงเวลา',
       late: 'สาย',
-      absent: 'ขาด'
+      absent: 'ขาด',
+      early_leave: 'กลับก่อนเวลา'
     }[status];
   }
 
-  private logbookStatusLabel(status: LogbookStatus): string {
+  protected logbookStatusLabel(status: LogbookStatus): string {
     return {
       pending: 'รออนุมัติ',
       approved: 'อนุมัติ',
       rejected: 'ปฏิเสธ'
+    }[status];
+  }
+
+  protected verificationStatusLabel(status: 'pending' | 'approved' | 'rejected'): string {
+    return {
+      pending: 'รอตรวจสอบ',
+      approved: 'อนุมัติแล้ว',
+      rejected: 'ปฏิเสธแล้ว'
     }[status];
   }
 }

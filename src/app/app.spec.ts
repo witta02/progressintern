@@ -1,5 +1,7 @@
+import '@angular/compiler';
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { describe, beforeEach, it, expect } from 'vitest';
 import { App } from './app';
 
 describe('App', () => {

@@ -15,7 +15,10 @@ import {
   Logbook,
   LogbookStatus,
   RegisterInput,
-  User
+  Role,
+  User,
+  UserStatus,
+  VerificationStatus
 } from './internship.models';
 
 @Injectable({ providedIn: 'root' })
@@ -41,7 +44,9 @@ export class InternshipDataService {
       this.seedDemoData();
       this.loadFromStorage();
     } else {
-      void this.refreshFromApi();
+      if (typeof window !== 'undefined') {
+        void this.refreshFromApi();
+      }
     }
   }
 
@@ -74,8 +79,21 @@ export class InternshipDataService {
     return this.companyForUser(userId)?.id;
   }
 
-  addStudent(student: Omit<User, 'id' | 'role' | 'status'> & { advisorId: number }): void {
-    this.users = [...this.users, { ...student, id: this.nextId(this.users), role: 'student', status: 'active' }];
+  addStudent(student: Omit<User, 'id' | 'role' | 'status' | 'password'> & { password?: string, advisorId: number }): void {
+    const payload = { ...student, role: 'student' as Role, status: 'active' as UserStatus };
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(this.api.registerWithoutLogin({
+        name: student.name,
+        email: student.email,
+        password: student.password || 'student123',
+        role: 'student',
+        school: student.school
+      })).then(() => {
+        void this.refreshFromApi();
+      });
+      return;
+    }
+    this.users = [...this.users, { ...payload, id: this.nextId(this.users), password: student.password || 'student123' }];
     this.persist();
   }
 
@@ -87,8 +105,15 @@ export class InternshipDataService {
   async login(email: string, password: string): Promise<User | null> {
     if (this.api.apiEnabled()) {
       const user = await firstValueFrom(this.api.login(email, password));
-      if (user && !this.users.some((item) => item.id === user.id)) {
-        this.users = [...this.users, user];
+      if (user) {
+        // Add to local array if not present
+        if (!this.users.some(u => u.id === user.id)) {
+          this.users = [...this.users, user];
+        } else {
+          this.users = this.users.map(u => u.id === user.id ? user : u);
+        }
+        // Refresh local data to ensure we have everything
+        void this.refreshFromApi();
       }
       return user;
     }
@@ -105,18 +130,6 @@ export class InternshipDataService {
 
     if (!name || !email || !password) {
       return { error: 'กรุณากรอกชื่อ อีเมล และรหัสผ่าน' };
-    }
-
-    if (password.length < (this.api.apiEnabled() ? 8 : 6)) {
-      return { error: this.api.apiEnabled() ? 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' : 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' };
-    }
-
-    if (this.emailExists(email)) {
-      return { error: 'อีเมลนี้ถูกใช้งานแล้ว' };
-    }
-
-    if (input.role === 'company' && !input.companyName?.trim()) {
-      return { error: 'กรุณากรอกชื่อบริษัท' };
     }
 
     if (this.api.apiEnabled()) {
@@ -136,13 +149,16 @@ export class InternshipDataService {
       );
 
       if (!created) {
-        return { error: 'ลงทะเบียนไม่สำเร็จ ตรวจสอบการเชื่อมต่อ API' };
+        return { error: 'ลงทะเบียนไม่สำเร็จ ตรวจสอบการเชื่อมต่อ API หรืออีเมลอาจซ้ำ' };
       }
 
-      this.users = [...this.users, created];
       await this.refreshFromApi();
       const user = this.users.find((u) => u.id === created.id) ?? created;
       return { user };
+    }
+
+    if (this.emailExists(email)) {
+      return { error: 'อีเมลนี้ถูกใช้งานแล้ว' };
     }
 
     const now = new Date().toISOString();
@@ -180,24 +196,79 @@ export class InternshipDataService {
   }
 
   updateUser(userId: number, updates: Partial<User>): void {
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(this.api.updateUser(userId, updates)).then(() => {
+        void this.refreshFromApi();
+      });
+      return;
+    }
+
     this.users = this.users.map((user) => (user.id === userId ? { ...user, ...updates } : user));
     this.persist();
   }
 
   addJob(job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): void {
-    this.jobPostings = [
-      ...this.jobPostings,
-      { ...job, id: this.nextId(this.jobPostings), status: 'open' }
-    ];
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(this.api.createJob(job)).then(() => {
+        void this.refreshFromApi();
+      });
+    } else {
+      this.jobPostings = [
+        ...this.jobPostings,
+        { 
+          ...job, 
+          id: this.nextId(this.jobPostings), 
+          status: 'open',
+          checkinTime: job.checkinTime || '09:00:00',
+          checkoutTime: job.checkoutTime || '17:00:00',
+          latedTime: job.latedTime || '09:15:00',
+          workDays: job.workDays || 'Monday - Friday'
+        }
+      ];
+      this.persist();
+    }
+  }
+
+  deleteJob(id: number): void {
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(this.api.deleteJob(id)).then(() => {
+        void this.refreshFromApi();
+      });
+      return;
+    }
+
+    this.jobPostings = this.jobPostings.filter((job) => job.id !== id);
+    this.persist();
+  }
+
+// ... (existing code)
+
+  setAttendanceVerification(attendance: Attendance, verificationStatus: VerificationStatus): void {
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(
+        this.api.patchAttendance(attendance, { verificationStatus })
+      ).then(() => {
+        void this.refreshFromApi();
+      });
+      return;
+    }
+
+    this.attendances = this.attendances.map((a) =>
+      a.id === attendance.id
+        ? {
+            ...a,
+            verificationStatus,
+            status: verificationStatus === 'rejected' ? 'absent' : a.status
+          }
+        : a
+    );
     this.persist();
   }
 
   addApplication(application: Omit<Application, 'id' | 'updatedAt'>): void {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createApplication(application)).then((created) => {
-        if (created) {
-          this.applications = [...this.applications, created];
-        }
+      void firstValueFrom(this.api.createApplication(application)).then(() => {
+        void this.refreshFromApi();
       });
       return;
     }
@@ -208,12 +279,8 @@ export class InternshipDataService {
 
   updateApplicationStatus(application: Application, status: ApplicationStatus): void {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.patchApplication(application.id, status)).then((updated) => {
-        if (updated) {
-          this.applications = this.applications.map((item) =>
-            item.id === application.id ? updated : item
-          );
-        }
+      void firstValueFrom(this.api.patchApplication(application.id, status)).then(() => {
+        void this.refreshFromApi();
       });
       return;
     }
@@ -226,10 +293,8 @@ export class InternshipDataService {
 
   addInternship(internship: Omit<Internship, 'id' | 'createdAt' | 'updatedAt'>): void {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createInternship(internship)).then((created) => {
-        if (created) {
-          this.internships = [...this.internships, created];
-        }
+      void firstValueFrom(this.api.createInternship(internship)).then(() => {
+        void this.refreshFromApi();
       });
       return;
     }
@@ -240,10 +305,8 @@ export class InternshipDataService {
 
   addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): void {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createAttendance(attendance)).then((created) => {
-        if (created) {
-          this.attendances = [...this.attendances, created];
-        }
+      void firstValueFrom(this.api.createAttendance(attendance)).then(() => {
+        void this.refreshFromApi();
       });
       return;
     }
@@ -264,10 +327,8 @@ export class InternshipDataService {
           checkOutTime: updates.checkOutTime,
           status: updates.status
         })
-      ).then((updated) => {
-        if (updated) {
-          this.attendances = this.attendances.map((a) => (a.id === attendanceId ? updated : a));
-        }
+      ).then(() => {
+        void this.refreshFromApi();
       });
       return;
     }
@@ -284,10 +345,8 @@ export class InternshipDataService {
     const payload = { ...logbook, status: 'pending' as LogbookStatus };
 
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createLogbook(payload)).then((created) => {
-        if (created) {
-          this.logbooks = [...this.logbooks, created];
-        }
+      void firstValueFrom(this.api.createLogbook(payload)).then(() => {
+        void this.refreshFromApi();
       });
       return;
     }
@@ -300,10 +359,8 @@ export class InternshipDataService {
     if (this.api.apiEnabled()) {
       void firstValueFrom(
         this.api.patchLogbook(logbook.id, { status, mentorComment })
-      ).then((updated) => {
-        if (updated) {
-          this.logbooks = this.logbooks.map((item) => (item.id === logbook.id ? updated : item));
-        }
+      ).then(() => {
+        void this.refreshFromApi();
       });
       return;
     }
@@ -316,10 +373,8 @@ export class InternshipDataService {
 
   addEvaluation(evaluation: Omit<Evaluation, 'id' | 'createdAt' | 'updatedAt'>): void {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createEvaluation(evaluation)).then((created) => {
-        if (created) {
-          this.evaluations = [...this.evaluations, created];
-        }
+      void firstValueFrom(this.api.createEvaluation(evaluation)).then(() => {
+        void this.refreshFromApi();
       });
       return;
     }
@@ -328,194 +383,15 @@ export class InternshipDataService {
     this.persist();
   }
 
-  resetDemoData(): void {
-    if (!this.hasLocalStorage()) {
-      return;
-    }
-
-    localStorage.removeItem(this.storageKey);
-    window.location.reload();
-  }
-
   private seedDemoData(): void {
-    this.users = [
-      { id: 1, name: 'ผู้ดูแลระบบ', email: 'admin@demo.local', password: 'admin123', role: 'admin', status: 'active' },
-      {
-        id: 2,
-        name: 'อ.มณีรัตน์ ศรีสุข',
-        email: 'advisor@demo.ac.th',
-        password: 'advisor123',
-        role: 'advisor',
-        status: 'active',
-        phone: '081-000-0001',
-        school: 'มหาวิทยาลัยเทคโนโลยีราชมงคล'
-      },
-      {
-        id: 3,
-        name: 'นัทธพงศ์ ใจดี',
-        email: 'student@demo.ac.th',
-        password: 'student123',
-        role: 'student',
-        status: 'active',
-        advisorId: 2,
-        phone: '081-111-2222',
-        school: 'มหาวิทยาลัยเทคโนโลยีราชมงคล',
-        resumeUrl: '/uploads/resume-natthapong.pdf'
-      },
-      {
-        id: 4,
-        name: 'บริษัท โปรเกรสซอฟต์ จำกัด',
-        email: 'company@demo.co.th',
-        password: 'company123',
-        role: 'company',
-        status: 'active'
-      },
-      {
-        id: 5,
-        name: 'ชลธิชา แสงทอง',
-        email: 'chonthicha@demo.ac.th',
-        password: 'student123',
-        role: 'student',
-        status: 'active',
-        advisorId: 2,
-        phone: '082-333-4444',
-        school: 'มหาวิทยาลัยเทคโนโลยีราชมงคล'
-      },
-      {
-        id: 6,
-        name: 'อ.สมชาย รักเรียน',
-        email: 'advisor2@demo.ac.th',
-        password: 'advisor123',
-        role: 'advisor',
-        status: 'active',
-        school: 'วิทยาลัยเทคนิคกรุงเทพ'
-      },
-      {
-        id: 7,
-        name: 'วิภาวดี ดีเลิศ',
-        email: 'student2@demo.ac.th',
-        password: 'student123',
-        role: 'student',
-        status: 'pending',
-        advisorId: 6,
-        school: 'วิทยาลัยเทคนิคกรุงเทพ'
-      }
-    ];
-
-    this.companies = [
-      {
-        id: 1,
-        userId: 4,
-        companyName: 'ProgressSoft',
-        description: 'Software house',
-        address: 'กรุงเทพฯ',
-        website: 'https://progresssoft.example',
-        contactEmail: 'hr@demo.co.th'
-      },
-      {
-        id: 2,
-        userId: 0,
-        companyName: 'Northwind Digital',
-        description: 'E-commerce',
-        address: 'เชียงใหม่',
-        contactEmail: 'jobs@northwind.example'
-      }
-    ];
-
-    this.jobPostings = [
-      {
-        id: 1,
-        companyId: 1,
-        title: 'Frontend Intern',
-        description: 'พัฒนา UI ด้วย Angular',
-        requirements: 'TypeScript, HTML, CSS',
-        benefits: 'Hybrid, mentor ประจำทีม',
-        slots: 3,
-        status: 'open'
-      },
-      {
-        id: 2,
-        companyId: 1,
-        title: 'QA Intern',
-        description: 'ทดสอบระบบและเขียน test case',
-        requirements: 'API testing, attention to detail',
-        benefits: 'On-site',
-        slots: 2,
-        status: 'open'
-      },
-      {
-        id: 3,
-        companyId: 2,
-        title: 'Digital Marketing Intern',
-        description: 'Content และ SEO',
-        requirements: 'Analytics basics',
-        benefits: 'Remote',
-        slots: 1,
-        status: 'open'
-      }
-    ];
-
-    this.applications = [
-      {
-        id: 1,
-        studentId: 3,
-        jobPostingId: 1,
-        status: 'approved',
-        appliedAt: '2026-05-20T10:00:00Z'
-      },
-      {
-        id: 2,
-        studentId: 5,
-        jobPostingId: 2,
-        status: 'pending',
-        appliedAt: '2026-05-24T14:30:00Z'
-      }
-    ];
-
-    this.internships = [
-      {
-        id: 1,
-        studentId: 3,
-        companyId: 1,
-        jobPostingId: 1,
-        startDate: '2026-06-01',
-        endDate: '2026-09-30',
-        status: 'active'
-      }
-    ];
-
-    this.attendances = [
-      {
-        id: 1,
-        internshipId: 1,
-        studentId: 3,
-        checkInTime: '2026-06-01T08:45:00',
-        checkOutTime: '2026-06-01T17:10:00',
-        status: 'present'
-      }
-    ];
-
-    this.logbooks = [
-      {
-        id: 1,
-        internshipId: 1,
-        title: 'วันแรกฝึกงาน',
-        content: 'ออกแบบหน้าจอรายการสมัครงานและแก้ responsive layout',
-        status: 'approved',
-        mentorComment: 'งานดี ตรงตามแผน'
-      }
-    ];
-
-    this.evaluations = [
-      {
-        id: 1,
-        internshipId: 1,
-        evaluatorId: 4,
-        score: 88,
-        feedback: 'ตรงเวลา เรียนรู้งานเร็ว และสื่อสารดี',
-        evaluationType: 'mentor'
-      }
-    ];
+    this.users = [];
+    this.companies = [];
+    this.jobPostings = [];
+    this.applications = [];
+    this.internships = [];
+    this.attendances = [];
+    this.logbooks = [];
+    this.evaluations = [];
   }
 
   private nextId(items: { id: number }[]): number {

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -46,9 +46,12 @@ export type InternshipDbSnapshot = {
   evaluations: Evaluation[];
 };
 
-type LoginResponse = ApiUser & {
-  token?: string;
-  user?: ApiUser;
+type LoginResponse = {
+  status: number;
+  message: string;
+  data: ApiUser & {
+    token: string;
+  };
 };
 
 /**
@@ -85,7 +88,7 @@ export class InternshipApiService {
       jobPostings: this.getList<ApiJobPosting, JobPosting>('jobs', mapJobPosting),
       applications: this.getList<ApiApplication, Application>('applications', mapApplication),
       internships: this.getList<ApiInternship, Internship>('internships', mapInternship),
-      attendances: this.getList<ApiAttendance, Attendance>('attendances', mapAttendance),
+      attendances: this.getList<ApiAttendance, Attendance>('attendance', mapAttendance),
       logbooks: this.getList<ApiLogbook, Logbook>('logbooks', mapLogbook),
       evaluations: this.getList<ApiEvaluation, Evaluation>('evaluations', mapEvaluation)
     }).pipe(
@@ -105,12 +108,16 @@ export class InternshipApiService {
       .post<LoginResponse>(`${this.base}/auth/login`, { email, password })
       .pipe(
         map((res) => {
-          if (res.token) {
-            this.setToken(res.token);
+          const data = res?.data;
+          if (data && data.token) {
+            this.setToken(data.token);
           }
-          return mapUser(res.user ?? res);
+          return data ? mapUser(data) : null;
         }),
-        catchError(() => of(null))
+        catchError((err) => {
+          console.error('[InternshipApi] Login failed', err);
+          return of(null);
+        })
       );
   }
 
@@ -129,10 +136,72 @@ export class InternshipApiService {
     if (!this.apiEnabled()) {
       return of(null);
     }
-
     return this.http.post(`${this.base}/auth/register`, body).pipe(
       switchMap(() => this.login(body.email, body.password)),
       catchError(() => of(null))
+    );
+  }
+
+  registerWithoutLogin(body: {
+    name: string;
+    email: string;
+    password: string;
+    role: 'student' | 'company' | 'advisor';
+    phone?: string;
+    school?: string;
+    company_name?: string;
+    description?: string;
+    address?: string;
+    contact_email?: string;
+  }): Observable<any> {
+    if (!this.apiEnabled()) {
+      return of(null);
+    }
+    return this.http.post(`${this.base}/auth/register`, body).pipe(
+      catchError((err) => {
+        console.error('[InternshipApi] registerWithoutLogin failed', err);
+        return of(null);
+      })
+    );
+  }
+
+  updateUser(id: number, body: Partial<User>): Observable<User | null> {
+    return this.putOne<ApiUser, User>(`users/${id}`, {
+      id: id,
+      name: body.name ?? '',
+      email: body.email ?? '',
+      phone: body.phone ?? null,
+      school: body.school ?? null,
+      status: body.status,
+      resume_url: body.resumeUrl ?? null
+    } as any, mapUser);
+  }
+
+  createJob(body: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Observable<JobPosting | null> {
+    return this.postOne<ApiJobPosting, JobPosting>('jobs', {
+      company_id: body.companyId,
+      title: body.title,
+      description: body.description ?? '',
+      requirements: body.requirements ?? '',
+      benefits: body.benefits ?? '',
+      checkin_time: body.checkinTime,
+      checkout_time: body.checkoutTime,
+      lated_time: body.latedTime,
+      work_days: body.workDays,
+      slots: body.slots ?? 1,
+      status: 'open'
+    }, mapJobPosting);
+  }
+
+  deleteJob(id: number): Observable<any> {
+    if (!this.apiEnabled()) {
+      return of(null);
+    }
+    return this.http.delete<any>(`${this.base}/jobs/${id}`, this.authOptions()).pipe(
+      catchError((err) => {
+        console.error('[InternshipApi] deleteJob failed', err);
+        return of(null);
+      })
     );
   }
 
@@ -160,11 +229,13 @@ export class InternshipApiService {
     }, mapAttendance);
   }
 
-  patchAttendance(attendance: Attendance, patch: Partial<Pick<Attendance, 'checkOutTime' | 'status'>>): Observable<Attendance | null> {
+  patchAttendance(attendance: Attendance, patch: Partial<Pick<Attendance, 'checkOutTime' | 'status' | 'verificationStatus'>>): Observable<Attendance | null> {
     return this.putOne<ApiAttendance, Attendance>('attendance/check-out', {
+      id: attendance.id,
       internship_id: attendance.internshipId,
       student_id: attendance.studentId,
-      status: patch.status
+      status: patch.status,
+      verification_status: patch.verificationStatus
     }, mapAttendance);
   }
 
@@ -197,45 +268,83 @@ export class InternshipApiService {
   }
 
   private getList<D, M>(path: string, mapper: (dto: D) => M): Observable<M[]> {
-    return this.http.get<D[]>(`${this.base}/${path}`, this.authOptions()).pipe(
-      map((rows) => rows.map(mapper)),
-      catchError(() => of([]))
+    interface ApiResponseList<T> {
+      status?: number;
+      data?: T[];
+      users?: T[];
+    }
+    return this.http.get<ApiResponseList<D>>(`${this.base}/${path}`, this.authOptions()).pipe(
+      map((res) => {
+        const rows = res?.data || [];
+        return rows.map(mapper);
+      }),
+      catchError((err) => {
+        console.error(`[InternshipApi] Failed to load list from ${path}`, err);
+        return of([]);
+      })
     );
   }
 
   private postOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
-    return this.http.post<D>(`${this.base}/${path}`, body, this.authOptions()).pipe(
-      map(mapper),
-      catchError(() => of(null))
+    return this.http.post<any>(`${this.base}/${path}`, body, this.authOptions()).pipe(
+      map((res) => {
+        const data = res?.data !== undefined ? res.data : res;
+        return mapper(data);
+      }),
+      catchError((err) => {
+        console.error(`[InternshipApi] Failed to post to ${path}`, err);
+        return of(null);
+      })
     );
   }
 
   private patchOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
-    return this.http.patch<D>(`${this.base}/${path}`, body, this.authOptions()).pipe(
-      map(mapper),
-      catchError(() => of(null))
+    return this.http.patch<any>(`${this.base}/${path}`, body, this.authOptions()).pipe(
+      map((res) => {
+        const data = res?.data !== undefined ? res.data : res;
+        return mapper(data);
+      }),
+      catchError((err) => {
+        console.error(`[InternshipApi] Failed to patch ${path}`, err);
+        return of(null);
+      })
     );
   }
 
   private putOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
-    return this.http.put<D>(`${this.base}/${path}`, body, this.authOptions()).pipe(
-      map(mapper),
-      catchError(() => of(null))
+    return this.http.put<any>(`${this.base}/${path}`, body, this.authOptions()).pipe(
+      map((res) => {
+        const data = res?.data !== undefined ? res.data : res;
+        return mapper(data);
+      }),
+      catchError((err) => {
+        console.error(`[InternshipApi] Failed to put to ${path}`, err);
+        return of(null);
+      })
     );
   }
 
   private setToken(token: string): void {
     if (typeof localStorage !== 'undefined') {
+      console.log('[InternshipApi] setToken:', token);
       localStorage.setItem(this.tokenKey, token);
     }
   }
 
-  private authOptions(): { headers?: { Authorization: string } } {
+  private authOptions(): { headers?: HttpHeaders } {
     if (typeof localStorage === 'undefined') {
       return {};
     }
 
     const token = localStorage.getItem(this.tokenKey);
-    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    console.log('[InternshipApi] authOptions token:', token);
+    if (!token) {
+      return {};
+    }
+    return {
+      headers: new HttpHeaders({
+        'Authorization': `Bearer ${token}`
+      })
+    };
   }
 }

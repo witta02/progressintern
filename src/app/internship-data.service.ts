@@ -303,14 +303,17 @@ export class InternshipDataService {
     this.persist();
   }
 
-  addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): void {
+  async addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): Promise<string | void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createAttendance(attendance)).then(() => {
+      try {
+        await firstValueFrom(this.api.createAttendance(attendance));
         void this.refreshFromApi();
-      });
-      return;
+        return;
+      } catch (err: any) {
+        if (err?.status === 409) return 'วันนี้เช็คอินแล้ว';
+        throw err;
+      }
     }
-
     this.attendances = [...this.attendances, { ...attendance, id: this.nextId(this.attendances) }];
     this.persist();
   }

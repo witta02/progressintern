@@ -796,7 +796,7 @@ export class App {
     }
   }
 
-  protected checkIn(): void {
+  protected async checkIn(): Promise<void> {
     const user = this.currentUser;
     if (!user || !this.activeInternship) {
       this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'ลงเวลา');
@@ -825,13 +825,17 @@ export class App {
       }
     }
 
-    this.data.addAttendance({
-      internshipId: this.activeInternship.id,
-      studentId: user.id,
-      checkInTime: now.toISOString(),
-      status,
-      verificationStatus: 'pending'
-    });
+    const checkInResult = await this.data.addAttendance({
+        internshipId: this.activeInternship.id,
+        studentId: user.id,
+        checkInTime: now.toISOString(),
+        status,
+        verificationStatus: 'pending'
+      });
+      if (checkInResult) {
+        this.notifications.warning(checkInResult, 'ลงเวลา');
+        return;
+      }
     this.notifications.success(
       `Check in แล้ว (${this.attendanceStatusLabel(status)})`,
       'ลงเวลา'

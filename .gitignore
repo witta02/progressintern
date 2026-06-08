@@ -2,3 +2,5 @@
 *.exe
 vendor/
 *.log
+.vercel
+.env*

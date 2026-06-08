@@ -5,36 +5,23 @@ import (
 	"internship-backend/config"
 	"internship-backend/routes"
 	"log"
-	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
-var engine *gin.Engine
-
-func init() {
+func main() {
 	_ = godotenv.Load()
 	if err := config.InitDatabase(); err != nil {
-		log.Println("❌ ล้มเหลวในการเชื่อมต่อฐานข้อมูล:", err)
+		log.Fatal("❌ ล้มเหลวในการเชื่อมต่อฐานข้อมูล:", err)
 	}
+	defer config.CloseDatabase()
 
-	gin.SetMode(gin.ReleaseMode)
-	engine = gin.Default()
-	routes.SetupRoutes(engine)
-}
+	r := gin.Default()
+	routes.SetupRoutes(r)
 
-// Handler is the entry point for Vercel
-func Handler(w http.ResponseWriter, r *http.Request) {
-	engine.ServeHTTP(w, r)
-}
-
-func main() {
-	if os.Getenv("VERCEL") == "" {
-		fmt.Println("🚀 API Server รันพร้อมใช้งานแล้วบนพอร์ต :8080")
-		if err := engine.Run(":8080"); err != nil {
-			log.Fatal("❌ Server พัง:", err)
-		}
+	fmt.Println("🚀 API Server รันพร้อมใช้งานแล้วบนพอร์ต :8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal("❌ Server พัง:", err)
 	}
 }

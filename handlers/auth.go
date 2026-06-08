@@ -35,6 +35,13 @@ func RegisterHandler(c *gin.Context) {
 	status := "active"
 	if input.Role == "student" {
 		status = "pending"
+		if input.School != "" {
+			var advisorCount int
+			err := config.DB.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'advisor' AND school = ?", input.School).Scan(&advisorCount)
+			if err == nil && advisorCount > 0 {
+				status = "active"
+			}
+		}
 	}
 	result, err := config.DB.Exec(
 		"INSERT INTO users (name, email, password, role, phone, school, status) VALUES (?, ?, ?, ?, ?, ?, ?)",

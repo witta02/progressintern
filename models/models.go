@@ -29,12 +29,16 @@ type LoginInput struct {
 }
 
 type RegisterInput struct {
-	Name     string `json:"name" binding:"required,min=2,max=255"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-	Role     string `json:"role" binding:"required,oneof=student company advisor admin"`
-	Phone    string `json:"phone" binding:"omitempty"`
-	School   string `json:"school"`
+	Name         string `json:"name" binding:"required,min=2,max=255"`
+	Email        string `json:"email" binding:"required,email"`
+	Password     string `json:"password" binding:"required,min=6"`
+	Role         string `json:"role" binding:"required,oneof=student company advisor admin"`
+	Phone        string `json:"phone" binding:"omitempty"`
+	School       string `json:"school"`
+	CompanyName  string `json:"company_name"`
+	Description  string `json:"description"`
+	Address      string `json:"address"`
+	ContactEmail string `json:"contact_email"`
 }
 
 type JWTResponse struct {

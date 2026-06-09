@@ -5,6 +5,7 @@ import (
 	"internship-backend/config"
 	"internship-backend/models"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -43,13 +44,25 @@ func RegisterHandler(c *gin.Context) {
 			}
 		}
 	}
+
+	// Ensure school is never empty for users table if it's NOT NULL
+	schoolValue := input.School
+	if schoolValue == "" {
+		schoolValue = "-" // Default value for non-student/advisor roles
+	}
+
 	result, err := config.DB.Exec(
 		"INSERT INTO users (name, email, password, role, phone, school, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		input.Name, input.Email, string(hashed), input.Role, input.Phone, input.School, status,
+		input.Name, input.Email, string(hashed), input.Role, input.Phone, schoolValue, status,
 	)
 	if err != nil {
 		fmt.Printf("❌ Register DB error: %v\n", err)
-		c.JSON(500, gin.H{"status": 500, "error": "อีเมลนี้อาจซ้ำในระบบ หรือบันทึกไม่ได้"})
+		// Check for duplicate entry error (standard MySQL error code 1062)
+		if strings.Contains(err.Error(), "1062") || strings.Contains(err.Error(), "Duplicate entry") {
+			c.JSON(409, gin.H{"status": 409, "error": "อีเมลนี้ถูกใช้งานไปแล้ว"})
+		} else {
+			c.JSON(500, gin.H{"status": 500, "error": "ไม่สามารถบันทึกข้อมูลได้: " + err.Error()})
+		}
 		return
 	}
 
@@ -57,10 +70,18 @@ func RegisterHandler(c *gin.Context) {
 
 	// Auto-create company profile when role=company
 	if input.Role == "company" {
-		companyName := input.Name
+		companyName := input.CompanyName
+		if companyName == "" {
+			companyName = input.Name
+		}
+		contactEmail := input.ContactEmail
+		if contactEmail == "" {
+			contactEmail = input.Email
+		}
+		
 		_, compErr := config.DB.Exec(
-			"INSERT INTO companies (user_id, company_name, contact_email) VALUES (?, ?, ?)",
-			userID, companyName, input.Email,
+			"INSERT INTO companies (user_id, company_name, description, address, contact_email) VALUES (?, ?, ?, ?, ?)",
+			userID, companyName, input.Description, input.Address, contactEmail,
 		)
 		if compErr != nil {
 			fmt.Printf("⚠️ Could not create company profile: %v\n", compErr)

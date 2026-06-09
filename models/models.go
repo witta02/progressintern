@@ -285,7 +285,7 @@ type LeaveRequest struct {
 	Reason       string     `json:"reason" db:"reason"`
 	Status       string     `json:"status" db:"status"` // pending, approved, rejected
 	MentorID     *int       `json:"mentor_id" db:"mentor_id"`
-	Comment      string     `json:"comment" db:"comment"`
+	Comment      *string    `json:"comment" db:"comment"`
 	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
 	ApprovedAt   *time.Time `json:"approved_at" db:"approved_at"`

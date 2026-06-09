@@ -1,1 +1,7 @@
-{"version": 2, "rewrites": [{ "source": "/(.*)", "destination": "/" }]}
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://progressintern.vercel.app/api/$1" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}

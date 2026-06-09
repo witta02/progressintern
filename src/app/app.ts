@@ -45,7 +45,7 @@ export class App {
     console.log('App Initialized v2.0 - Leaves & SweetAlert2');
     this.initSession();
     setTimeout(() => {
-      this.notifications.success('ระบบจัดการฝึกงานอัปเดตเป็นเวอร์ชันใหม่แล้ว', 'อัปเดตสำเร็จ');
+      this.notifications.success('ยินดีต้อนรับสู่ระบบจัดการฝึกงาน', 'Welcome');
     }, 2000);
   }
 

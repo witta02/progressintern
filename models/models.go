@@ -269,6 +269,38 @@ type CreateEvaluationInput struct {
 	RubricData    string  `json:"rubric_data" binding:"omitempty"`
 }
 
+// ==================== Leave Request ====================
+
+type LeaveRequest struct {
+	ID           int        `json:"id" db:"id"`
+	InternshipID int        `json:"internship_id" db:"internship_id"`
+	StudentID    int        `json:"student_id" db:"student_id"`
+	LeaveType    string     `json:"leave_type" db:"leave_type"` // sick, personal
+	StartDate    time.Time  `json:"start_date" db:"start_date"`
+	EndDate      time.Time  `json:"end_date" db:"end_date"`
+	Reason       string     `json:"reason" db:"reason"`
+	Status       string     `json:"status" db:"status"` // pending, approved, rejected
+	MentorID     *int       `json:"mentor_id" db:"mentor_id"`
+	Comment      string     `json:"comment" db:"comment"`
+	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
+	ApprovedAt   *time.Time `json:"approved_at" db:"approved_at"`
+}
+
+type CreateLeaveInput struct {
+	InternshipID int    `json:"internship_id" binding:"required"`
+	StudentID    int    `json:"student_id" binding:"required"`
+	LeaveType    string `json:"leave_type" binding:"required,oneof=sick personal"`
+	StartDate    string `json:"start_date" binding:"required"` // Expecting YYYY-MM-DD
+	EndDate      string `json:"end_date" binding:"required"`   // Expecting YYYY-MM-DD
+	Reason       string `json:"reason" binding:"required,min=5"`
+}
+
+type UpdateLeaveStatusInput struct {
+	Status  string `json:"status" binding:"required,oneof=approved rejected"`
+	Comment string `json:"comment" binding:"omitempty"`
+}
+
 // ==================== Notification ====================
 
 type Notification struct {

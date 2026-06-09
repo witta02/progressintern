@@ -164,7 +164,30 @@ CREATE TABLE IF NOT EXISTS evaluations (
     INDEX idx_score (score)
 );
 
--- 9️⃣ NOTIFICATIONS TABLE (การแจ้งเตือน)
+-- 9️⃣ LEAVE_REQUESTS TABLE (ระบบลากิจ/ลาป่วย)
+CREATE TABLE IF NOT EXISTS leave_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    internship_id INT NOT NULL,
+    student_id INT NOT NULL,
+    leave_type ENUM('sick', 'personal') NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    reason TEXT NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    mentor_id INT,
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    approved_at DATETIME,
+    FOREIGN KEY (internship_id) REFERENCES internships(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (mentor_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_internship_id (internship_id),
+    INDEX idx_student_id (student_id),
+    INDEX idx_status (status)
+);
+
+-- 🔟 NOTIFICATIONS TABLE (การแจ้งเตือน)
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,

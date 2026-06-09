@@ -108,11 +108,23 @@ func SetupRoutes(router *gin.Engine) {
 
 	// ========================================================
 	// ⭐ Evaluation Routes
-	// ========================================================
+	// ==================== Evaluation Routes ====================
 	evaluationGroup := router.Group("/api/evaluations")
 	evaluationGroup.Use(middleware.AuthMiddleware())
 	{
 		evaluationGroup.GET("", handlers.GetAllEvaluationsHandler)
 		evaluationGroup.POST("", handlers.CreateEvaluationHandler)
 	}
-}
+
+	// ========================================================
+	// 🏖️ Leave Routes
+	// ========================================================
+	leaveGroup := router.Group("/api/leaves")
+	leaveGroup.Use(middleware.AuthMiddleware())
+	{
+		leaveGroup.POST("", handlers.CreateLeaveHandler)
+		leaveGroup.GET("", handlers.GetAllLeavesHandler)
+		leaveGroup.PUT("/:id/status", handlers.UpdateLeaveStatusHandler)
+	}
+	}
+

@@ -818,6 +818,16 @@ export class App {
       return;
     }
 
+    // Check if already checked in today
+    const todayStr = new Date().toDateString();
+    const checkedInToday = this.attendances.some(
+      (a) => a.studentId === user.id && new Date(a.checkInTime).toDateString() === todayStr
+    );
+    if (checkedInToday) {
+      this.notifications.warning('วันนี้คุณได้ลงเวลาไปแล้ว', 'ลงเวลา');
+      return;
+    }
+
     if (this.hasOpenAttendance()) {
       this.notifications.warning('มีรายการ check in ที่ยังไม่ได้ check out', 'ลงเวลา');
       return;
@@ -854,6 +864,17 @@ export class App {
   }
 
   protected checkOut(): void {
+    const todayStr = new Date().toDateString();
+    
+    // Check if already checked out today
+    const checkedOutToday = this.attendances.some(
+      (a) => a.studentId === this.currentUser?.id && a.checkOutTime && new Date(a.checkInTime).toDateString() === todayStr
+    );
+    if (checkedOutToday) {
+      this.notifications.warning('วันนี้คุณได้ลงเวลาไปแล้ว', 'ลงเวลา');
+      return;
+    }
+
     const openAttendance = this.attendances.find(
       (attendance) =>
         attendance.internshipId === this.activeInternship?.id && !attendance.checkOutTime

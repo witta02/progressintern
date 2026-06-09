@@ -1,1 +1,9 @@
-export const environment = { production: false, apiUrl: "https://progressintern.vercel.app/api", useMockData: false };
+/**
+ * Development: proxy forwards /api → coworker backend (see proxy.conf.json).
+ * Change useMockData to false once the backend is running.
+ */
+export const environment = {
+  production: false,
+  apiUrl: '/api',
+  useMockData: false
+};

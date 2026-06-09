@@ -19,7 +19,8 @@ import {
   LogbookStatus,
   RegisterRole,
   Role,
-  User
+  User,
+  LeaveRequest
 } from './internship.models';
 
 @Component({
@@ -138,6 +139,13 @@ export class App {
     resumeUrl: ''
   };
 
+  protected leaveForm = {
+    leaveType: 'sick' as 'sick' | 'personal',
+    startDate: this.today(),
+    endDate: this.today(),
+    reason: ''
+  };
+
   protected newJob = {
     title: '',
     description: '',
@@ -164,6 +172,7 @@ export class App {
     internships: 'ฝึกงาน',
     attendance: 'ลงเวลา',
     logbooks: 'บันทึก',
+    leaves: 'การลา',
     evaluations: 'ประเมินผล',
     edit: 'แก้ไขข้อมูล',
     schema: 'ฐานข้อมูล'
@@ -227,10 +236,10 @@ export class App {
 
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
-      admin: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit', 'schema'],
-      advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit'],
-      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit'],
-      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'evaluations', 'edit']
+      admin: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit', 'schema'],
+      advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
+      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
+      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit']
     };
 
     if (!this.currentUser) return [];
@@ -408,6 +417,11 @@ export class App {
   protected get visibleLogbooks(): Logbook[] {
     const internshipIds = this.visibleInternships.map((internship) => internship.id);
     return this.data.logbooks.filter((logbook) => internshipIds.includes(logbook.internshipId));
+  }
+
+  protected get visibleLeaves(): LeaveRequest[] {
+    const internshipIds = this.visibleInternships.map((internship) => internship.id);
+    return this.data.leaves.filter((leave) => internshipIds.includes(leave.internshipId));
   }
 
   protected get visibleEvaluations() {
@@ -796,7 +810,7 @@ export class App {
     }
   }
 
-  protected async checkIn(): Promise<void> {
+  protected checkIn(): void {
     const user = this.currentUser;
     if (!user || !this.activeInternship) {
       this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'ลงเวลา');
@@ -825,17 +839,13 @@ export class App {
       }
     }
 
-    const checkInResult = await this.data.addAttendance({
-        internshipId: this.activeInternship.id,
-        studentId: user.id,
-        checkInTime: now.toISOString(),
-        status,
-        verificationStatus: 'pending'
-      });
-      if (checkInResult) {
-        this.notifications.warning(checkInResult, 'ลงเวลา');
-        return;
-      }
+    this.data.addAttendance({
+      internshipId: this.activeInternship.id,
+      studentId: user.id,
+      checkInTime: now.toISOString(),
+      status,
+      verificationStatus: 'pending'
+    });
     this.notifications.success(
       `Check in แล้ว (${this.attendanceStatusLabel(status)})`,
       'ลงเวลา'
@@ -903,6 +913,41 @@ export class App {
       this.notifications.success(`บันทึกของ ${student} → ${label}`, 'บันทึก');
     } else {
       this.notifications.warning(`บันทึกของ ${student} → ${label}`, 'บันทึก');
+    }
+  }
+
+  protected addLeave(): void {
+    if (!this.activeInternship) {
+      this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'การลา');
+      return;
+    }
+
+    if (!this.leaveForm.reason.trim()) {
+      this.notifications.warning('กรุณากรอกเหตุผลการลา', 'การลา');
+      return;
+    }
+
+    this.data.addLeave({
+      internshipId: this.activeInternship.id,
+      studentId: this.currentUser!.id,
+      leaveType: this.leaveForm.leaveType,
+      startDate: this.leaveForm.startDate,
+      endDate: this.leaveForm.endDate,
+      reason: this.leaveForm.reason.trim()
+    });
+    
+    this.leaveForm.reason = '';
+    this.notifications.success('ส่งคำขอลาแล้ว (รออนุมัติ)', 'การลา');
+  }
+
+  protected setLeaveStatus(leave: LeaveRequest, status: 'approved' | 'rejected'): void {
+    const student = this.userName(leave.studentId);
+    this.data.updateLeaveStatus(leave.id, status);
+    
+    if (status === 'approved') {
+      this.notifications.success(`อนุมัติคำขอลาของ ${student} แล้ว`, 'การลา');
+    } else {
+      this.notifications.warning(`ปฏิเสธคำขอลาของ ${student} แล้ว`, 'การลา');
     }
   }
 
@@ -1067,6 +1112,21 @@ export class App {
       approved: 'อนุมัติ',
       rejected: 'ปฏิเสธ'
     }[status];
+  }
+
+  protected leaveTypeLabel(type: string): string {
+    return {
+      sick: 'ลาป่วย',
+      personal: 'ลากิจ'
+    }[type] || type;
+  }
+
+  protected leaveStatusLabel(status: string): string {
+    return {
+      pending: 'รออนุมัติ',
+      approved: 'อนุมัติแล้ว',
+      rejected: 'ปฏิเสธแล้ว'
+    }[status] || status;
   }
 
   protected verificationStatusLabel(status: 'pending' | 'approved' | 'rejected'): string {

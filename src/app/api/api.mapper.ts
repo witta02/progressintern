@@ -233,6 +233,24 @@ export function mapEvaluation(dto: ApiEvaluation): Evaluation {
   };
 }
 
+export function mapLeaveRequest(dto: ApiLeaveRequest): any {
+  return {
+    id: dto.id,
+    internshipId: dto.internship_id,
+    studentId: dto.student_id,
+    leaveType: dto.leave_type,
+    startDate: dto.start_date,
+    endDate: dto.end_date,
+    reason: dto.reason,
+    status: dto.status,
+    mentorId: dto.mentor_id ?? undefined,
+    comment: dto.comment ?? undefined,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+    approvedAt: dto.approved_at ?? undefined
+  };
+}
+
 export function toApiApplication(body: Omit<Application, 'id' | 'updatedAt'>): Omit<ApiApplication, 'id'> {
   return {
     student_id: body.studentId,

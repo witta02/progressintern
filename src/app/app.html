@@ -163,6 +163,7 @@
             <svg *ngSwitchCase="'internships'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
             <svg *ngSwitchCase="'attendance'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <svg *ngSwitchCase="'logbooks'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <svg *ngSwitchCase="'leaves'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
             <svg *ngSwitchCase="'evaluations'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
             <svg *ngSwitchCase="'edit'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <svg *ngSwitchCase="'schema'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
@@ -624,6 +625,93 @@
                 </tr>
                 <tr *ngIf="visibleLogbooks.length === 0">
                   <td colspan="5" class="px-10 py-8 text-center text-sm font-bold text-slate-400">ยังไม่มีบันทึกในขอบเขตสิทธิ์นี้</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEAVES -->
+      <section *ngIf="activeView === 'leaves'" class="space-y-12">
+        <article *ngIf="currentUser?.role === 'student' && activeInternship" class="bg-white rounded-[2.5rem] p-12 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
+          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-4">
+              <h3 class="text-4xl font-black mb-4 tracking-tight">ส่งคำขอลา</h3>
+              <p class="text-slate-500 font-medium text-lg leading-relaxed">แจ้งความประสงค์การลาป่วยหรือลากิจ พร้อมระบุช่วงเวลาและเหตุผลประกอบ</p>
+            </div>
+            <form class="lg:col-span-8 space-y-5" (ngSubmit)="addLeave()">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทการลา</label>
+                  <select name="leaveType" [(ngModel)]="leaveForm.leaveType" 
+                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                    <option value="sick">ลาป่วย</option>
+                    <option value="personal">ลากิจ</option>
+                  </select>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ตั้งแต่วันที่</label>
+                  <input name="leaveStart" type="date" [(ngModel)]="leaveForm.startDate" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ถึงวันที่</label>
+                  <input name="leaveEnd" type="date" [(ngModel)]="leaveForm.endDate" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เหตุผลการลา</label>
+                <textarea name="leaveReason" [(ngModel)]="leaveForm.reason" rows="3" placeholder="ระบุเหตุผล เช่น มีไข้สูง ปวดศีรษะ หรือมีความจำเป็นทางครอบครัว..." 
+                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+              </div>
+              <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
+                ส่งคำขอลา
+              </button>
+            </form>
+          </div>
+        </article>
+
+        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50/50">
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">นักศึกษา</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ประเภท</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ระยะเวลา</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">เหตุผล</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let leave of visibleLeaves" class="hover:bg-blue-50/20 transition-colors">
+                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(leave.studentId) }}</td>
+                  <td class="px-10 py-6 font-bold text-slate-700">{{ leaveTypeLabel(leave.leaveType) }}</td>
+                  <td class="px-10 py-6 font-medium text-slate-500">
+                    {{ formatTermDate(leave.startDate) }} - {{ formatTermDate(leave.endDate) }}
+                  </td>
+                  <td class="px-10 py-6 font-medium text-slate-500 max-w-xs truncate" title="{{ leave.reason }}">{{ leave.reason }}</td>
+                  <td class="px-10 py-6">
+                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
+                          [class.bg-emerald-50]="leave.status === 'approved'" [class.text-emerald-600]="leave.status === 'approved'" [class.border-emerald-100]="leave.status === 'approved'"
+                          [class.bg-rose-50]="leave.status === 'rejected'" [class.text-rose-600]="leave.status === 'rejected'" [class.border-rose-100]="leave.status === 'rejected'"
+                          [class.bg-slate-50]="leave.status === 'pending'" [class.text-slate-600]="leave.status === 'pending'" [class.border-slate-100]="leave.status === 'pending'">
+                      {{ leaveStatusLabel(leave.status) }}
+                    </span>
+                  </td>
+                  <td class="px-10 py-6">
+                    <div class="flex gap-2" *ngIf="currentUser?.role === 'company' && leave.status === 'pending'">
+                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="setLeaveStatus(leave, 'approved')">Approve</button>
+                      <button class="px-5 py-2.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="setLeaveStatus(leave, 'rejected')">Reject</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="visibleLeaves.length === 0">
+                  <td colspan="6" class="px-10 py-8 text-center text-sm font-bold text-slate-400">ยังไม่มีประวัติการลาในขอบเขตสิทธิ์นี้</td>
                 </tr>
               </tbody>
             </table>

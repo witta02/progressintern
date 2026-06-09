@@ -1,89 +1,63 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable } from '@angular/core';
+import Swal from 'sweetalert2';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
-export interface AppNotification {
-  id: number;
-  type: NotificationType;
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: number;
-}
-
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  /** Active toast banners (auto-dismiss) */
-  readonly toasts = signal<AppNotification[]>([]);
-
-  /** Full session history for the bell panel */
-  readonly history = signal<AppNotification[]>([]);
-
-  private nextId = 1;
-
-  readonly unreadCount = computed(() => this.history().filter(h => !h.read).length);
-
+  
   notify(
     message: string,
     type: NotificationType = 'info',
     title?: string,
-    durationMs = 5000
-  ): AppNotification {
-    const item: AppNotification = {
-      id: this.nextId++,
-      type,
-      title: title ?? this.defaultTitle(type),
-      message,
-      read: false,
-      createdAt: Date.now()
-    };
+    durationMs = 3000
+  ): void {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: durationMs,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+      }
+    });
 
-    this.history.update(h => [item, ...h]);
-    this.toasts.update(t => [item, ...t]);
-
-    if (durationMs > 0 && typeof window !== 'undefined') {
-      window.setTimeout(() => this.dismissToast(item.id), durationMs);
-    }
-
-    return item;
+    Toast.fire({
+      icon: type,
+      title: title || this.defaultTitle(type),
+      text: message
+    });
   }
 
-  success(message: string, title?: string): AppNotification {
-    return this.notify(message, 'success', title);
+  success(message: string, title?: string): void {
+    this.notify(message, 'success', title);
   }
 
-  error(message: string, title?: string): AppNotification {
-    return this.notify(message, 'error', title, 7000);
+  error(message: string, title?: string): void {
+    this.notify(message, 'error', title, 5000);
   }
 
-  warning(message: string, title?: string): AppNotification {
-    return this.notify(message, 'warning', title, 6000);
+  warning(message: string, title?: string): void {
+    this.notify(message, 'warning', title);
   }
 
-  info(message: string, title?: string): AppNotification {
-    return this.notify(message, 'info', title);
+  info(message: string, title?: string): void {
+    this.notify(message, 'info', title);
   }
 
-  dismissToast(id: number): void {
-    this.toasts.update(toasts => toasts.filter(t => t.id !== id));
-  }
-
-  dismiss(id: number): void {
-    this.dismissToast(id);
-    this.history.update(history => 
-      history.map(n => n.id === id ? { ...n, read: true } : n)
-    );
-  }
-
-  markAllRead(): void {
-    this.history.update(history => 
-      history.map(n => ({ ...n, read: true }))
-    );
-  }
-
-  clearAll(): void {
-    this.history.set([]);
-    this.toasts.set([]);
+  confirm(title: string, text: string): Promise<boolean> {
+    return Swal.fire({
+      title,
+      text,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'ยืนยัน',
+      cancelButtonText: 'ยกเลิก'
+    }).then((result) => result.isConfirmed);
   }
 
   private defaultTitle(type: NotificationType): string {
@@ -94,4 +68,14 @@ export class NotificationService {
       info: 'ข้อมูล'
     }[type];
   }
+
+  // Compatibility methods for old code
+  markAllRead(): void {}
+  clearAll(): void {}
+  dismissToast(id: number): void {}
+  dismiss(id: number): void {}
+  
+  get toasts() { return () => []; }
+  get history() { return () => []; }
+  get unreadCount() { return () => 0; }
 }

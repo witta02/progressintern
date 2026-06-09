@@ -133,6 +133,22 @@ export interface Evaluation {
   updatedAt?: string;
 }
 
+export interface LeaveRequest {
+  id: number;
+  internshipId: number;
+  studentId: number;
+  leaveType: LeaveType;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: LeaveStatus;
+  mentorId?: number;
+  comment?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  approvedAt?: string;
+}
+
 /** Column reference for admin schema view */
 export const DB_SCHEMA_TABLES: { name: string; columns: string }[] = [
   { name: 'users', columns: 'id, name, email, password, role, phone, profile_image, resume_url, created_at, updated_at' },
@@ -142,5 +158,6 @@ export const DB_SCHEMA_TABLES: { name: string; columns: string }[] = [
   { name: 'internships', columns: 'id, student_id, company_id, job_posting_id, start_date, end_date, status, created_at, updated_at' },
   { name: 'attendances', columns: 'id, internship_id, student_id, check_in_time, check_out_time, latitude, longitude, status, created_at' },
   { name: 'logbooks', columns: 'id, internship_id, title, content, attachment_url, mentor_comment, status, created_at, updated_at' },
-  { name: 'evaluations', columns: 'id, internship_id, evaluator_id, score, feedback, evaluation_type, created_at, updated_at' }
+  { name: 'evaluations', columns: 'id, internship_id, evaluator_id, score, feedback, evaluation_type, created_at, updated_at' },
+  { name: 'leave_requests', columns: 'id, internship_id, student_id, leave_type, start_date, end_date, reason, status, mentor_id, comment, created_at, approved_at' }
 ];

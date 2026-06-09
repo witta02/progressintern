@@ -12,6 +12,7 @@ import {
   EvaluationType,
   Internship,
   JobPosting,
+  LeaveRequest,
   Logbook,
   LogbookStatus,
   RegisterInput,
@@ -34,6 +35,7 @@ export class InternshipDataService {
   attendances: Attendance[] = [];
   logbooks: Logbook[] = [];
   evaluations: Evaluation[] = [];
+  leaves: LeaveRequest[] = [];
 
   /** Set after API load attempt */
   apiConnected = false;
@@ -67,6 +69,7 @@ export class InternshipDataService {
     this.attendances = snapshot.attendances;
     this.logbooks = snapshot.logbooks;
     this.evaluations = snapshot.evaluations;
+    this.leaves = snapshot.leaves;
     this.apiConnected = true;
     this.apiLoadError = '';
   }
@@ -241,8 +244,6 @@ export class InternshipDataService {
     this.persist();
   }
 
-// ... (existing code)
-
   setAttendanceVerification(attendance: Attendance, verificationStatus: VerificationStatus): void {
     if (this.api.apiEnabled()) {
       void firstValueFrom(
@@ -303,17 +304,14 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): Promise<string | void> {
+  addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): void {
     if (this.api.apiEnabled()) {
-      try {
-        await firstValueFrom(this.api.createAttendance(attendance));
+      void firstValueFrom(this.api.createAttendance(attendance)).then(() => {
         void this.refreshFromApi();
-        return;
-      } catch (err: any) {
-        if (err?.status === 409) return 'วันนี้เช็คอินแล้ว';
-        throw err;
-      }
+      });
+      return;
     }
+
     this.attendances = [...this.attendances, { ...attendance, id: this.nextId(this.attendances) }];
     this.persist();
   }
@@ -386,6 +384,30 @@ export class InternshipDataService {
     this.persist();
   }
 
+  addLeave(leave: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): void {
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(this.api.createLeave(leave)).then(() => {
+        void this.refreshFromApi();
+      });
+      return;
+    }
+
+    this.leaves = [...this.leaves, { ...leave, id: this.nextId(this.leaves), status: 'pending', createdAt: new Date().toISOString() }];
+    this.persist();
+  }
+
+  updateLeaveStatus(leaveId: number, status: 'approved' | 'rejected', comment?: string): void {
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(this.api.patchLeaveStatus(leaveId, status, comment)).then(() => {
+        void this.refreshFromApi();
+      });
+      return;
+    }
+
+    this.leaves = this.leaves.map((l) => l.id === leaveId ? { ...l, status, comment, approvedAt: status === 'approved' ? new Date().toISOString() : undefined } : l);
+    this.persist();
+  }
+
   private seedDemoData(): void {
     this.users = [];
     this.companies = [];
@@ -395,6 +417,7 @@ export class InternshipDataService {
     this.attendances = [];
     this.logbooks = [];
     this.evaluations = [];
+    this.leaves = [];
   }
 
   private nextId(items: { id: number }[]): number {
@@ -416,7 +439,8 @@ export class InternshipDataService {
         internships: this.internships,
         attendances: this.attendances,
         logbooks: this.logbooks,
-        evaluations: this.evaluations
+        evaluations: this.evaluations,
+        leaves: this.leaves
       })
     );
   }
@@ -441,6 +465,7 @@ export class InternshipDataService {
       this.attendances = Array.isArray(state.attendances) ? state.attendances : this.attendances;
       this.logbooks = Array.isArray(state.logbooks) ? state.logbooks : this.logbooks;
       this.evaluations = Array.isArray(state.evaluations) ? state.evaluations : this.evaluations;
+      this.leaves = Array.isArray(state.leaves) ? state.leaves : this.leaves;
     } catch {
       localStorage.removeItem(this.storageKey);
     }

@@ -267,6 +267,24 @@ export class InternshipApiService {
     }, mapEvaluation);
   }
 
+  createLeave(body: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): Observable<LeaveRequest | null> {
+    return this.postOne<ApiLeaveRequest, LeaveRequest>('leaves', {
+      internship_id: body.internshipId,
+      student_id: body.studentId,
+      leave_type: body.leaveType,
+      start_date: body.startDate,
+      end_date: body.endDate,
+      reason: body.reason
+    }, mapLeaveRequest);
+  }
+
+  patchLeaveStatus(id: number, status: 'approved' | 'rejected', comment?: string): Observable<LeaveRequest | null> {
+    return this.putOne<ApiLeaveRequest, LeaveRequest>(`leaves/${id}/status`, {
+      status,
+      comment: comment ?? null
+    }, mapLeaveRequest);
+  }
+
   private getList<D, M>(path: string, mapper: (dto: D) => M): Observable<M[]> {
     interface ApiResponseList<T> {
       status?: number;

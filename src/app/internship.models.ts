@@ -25,6 +25,8 @@ export type AttendanceStatus = 'present' | 'late' | 'absent' | 'early_leave';
 export type VerificationStatus = 'pending' | 'approved' | 'rejected';
 export type LogbookStatus = 'pending' | 'approved' | 'rejected';
 export type EvaluationType = 'mentor' | 'advisor';
+export type LeaveType = 'sick' | 'personal';
+export type LeaveStatus = 'pending' | 'approved' | 'rejected';
 
 export type UserStatus = 'pending' | 'active' | 'rejected';
 

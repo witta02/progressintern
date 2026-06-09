@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,4 +8,7 @@ import { CommonModule } from '@angular/common';
   template: ``,
   styles: [``]
 })
-export class NotificationHostComponent {}
+export class NotificationHostComponent {
+  @Input() panelOpen = false;
+  @Output() panelClosed = new EventEmitter<void>();
+}

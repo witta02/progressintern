@@ -11,6 +11,7 @@ import {
   ApiJobPosting,
   ApiLogbook,
   ApiUser,
+  ApiLeaveRequest,
   mapApplication,
   mapAttendance,
   mapCompany,
@@ -19,6 +20,7 @@ import {
   mapJobPosting,
   mapLogbook,
   mapUser,
+  mapLeaveRequest,
   toApiApplication,
   toApiInternship
 } from './api.mapper';
@@ -32,7 +34,8 @@ import {
   Internship,
   JobPosting,
   Logbook,
-  User
+  User,
+  LeaveRequest
 } from '../internship.models';
 
 export type InternshipDbSnapshot = {
@@ -44,6 +47,7 @@ export type InternshipDbSnapshot = {
   attendances: Attendance[];
   logbooks: Logbook[];
   evaluations: Evaluation[];
+  leaves: LeaveRequest[];
 };
 
 type LoginResponse = {
@@ -56,16 +60,6 @@ type LoginResponse = {
 
 /**
  * REST client aligned with `internship_db` tables.
- * Expected routes (adjust with your coworker if paths differ):
- *   GET/POST  /api/users
- *   GET/POST  /api/companies
- *   GET/POST  /api/job-postings
- *   GET/PATCH /api/applications
- *   GET/POST  /api/internships
- *   GET/POST  /api/attendances
- *   GET/POST  /api/logbooks
- *   GET/POST  /api/evaluations
- *   POST      /api/auth/login  → { user: ApiUser, token?: string }
  */
 @Injectable({ providedIn: 'root' })
 export class InternshipApiService {
@@ -90,7 +84,8 @@ export class InternshipApiService {
       internships: this.getList<ApiInternship, Internship>('internships', mapInternship),
       attendances: this.getList<ApiAttendance, Attendance>('attendance', mapAttendance),
       logbooks: this.getList<ApiLogbook, Logbook>('logbooks', mapLogbook),
-      evaluations: this.getList<ApiEvaluation, Evaluation>('evaluations', mapEvaluation)
+      evaluations: this.getList<ApiEvaluation, Evaluation>('evaluations', mapEvaluation),
+      leaves: this.getList<ApiLeaveRequest, LeaveRequest>('leaves', mapLeaveRequest)
     }).pipe(
       catchError((err) => {
         console.error('[InternshipApi] Failed to load data', err);
@@ -269,12 +264,12 @@ export class InternshipApiService {
 
   createLeave(body: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): Observable<LeaveRequest | null> {
     return this.postOne<ApiLeaveRequest, LeaveRequest>('leaves', {
-      internship_id: body.internshipId,
-      student_id: body.studentId,
-      leave_type: body.leaveType,
-      start_date: body.startDate,
-      end_date: body.endDate,
-      reason: body.reason
+      internship_id: (body as any).internshipId,
+      student_id: (body as any).studentId,
+      leave_type: (body as any).leaveType,
+      start_date: (body as any).startDate,
+      end_date: (body as any).endDate,
+      reason: (body as any).reason
     }, mapLeaveRequest);
   }
 
@@ -289,7 +284,6 @@ export class InternshipApiService {
     interface ApiResponseList<T> {
       status?: number;
       data?: T[];
-      users?: T[];
     }
     return this.http.get<ApiResponseList<D>>(`${this.base}/${path}`, this.authOptions()).pipe(
       map((res) => {
@@ -316,19 +310,6 @@ export class InternshipApiService {
     );
   }
 
-  private patchOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
-    return this.http.patch<any>(`${this.base}/${path}`, body, this.authOptions()).pipe(
-      map((res) => {
-        const data = res?.data !== undefined ? res.data : res;
-        return mapper(data);
-      }),
-      catchError((err) => {
-        console.error(`[InternshipApi] Failed to patch ${path}`, err);
-        return of(null);
-      })
-    );
-  }
-
   private putOne<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M | null> {
     return this.http.put<any>(`${this.base}/${path}`, body, this.authOptions()).pipe(
       map((res) => {
@@ -344,7 +325,6 @@ export class InternshipApiService {
 
   private setToken(token: string): void {
     if (typeof localStorage !== 'undefined') {
-      console.log('[InternshipApi] setToken:', token);
       localStorage.setItem(this.tokenKey, token);
     }
   }
@@ -353,9 +333,7 @@ export class InternshipApiService {
     if (typeof localStorage === 'undefined') {
       return {};
     }
-
     const token = localStorage.getItem(this.tokenKey);
-    console.log('[InternshipApi] authOptions token:', token);
     if (!token) {
       return {};
     }

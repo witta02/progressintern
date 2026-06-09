@@ -6,7 +6,8 @@ import {
   Internship,
   JobPosting,
   Logbook,
-  User
+  User,
+  LeaveRequest
 } from '../internship.models';
 
 /** API payloads use snake_case (MySQL / typical Node backends). */
@@ -112,6 +113,22 @@ export type ApiEvaluation = {
   evaluation_type: Evaluation['evaluationType'];
   created_at?: string;
   updated_at?: string;
+};
+
+export type ApiLeaveRequest = {
+  id: number;
+  internship_id: number;
+  student_id: number;
+  leave_type: 'sick' | 'personal';
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  mentor_id?: number | null;
+  comment?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  approved_at?: string | null;
 };
 
 export function mapUser(dto: ApiUser): User {
@@ -233,7 +250,7 @@ export function mapEvaluation(dto: ApiEvaluation): Evaluation {
   };
 }
 
-export function mapLeaveRequest(dto: ApiLeaveRequest): any {
+export function mapLeaveRequest(dto: ApiLeaveRequest): LeaveRequest {
   return {
     id: dto.id,
     internshipId: dto.internship_id,

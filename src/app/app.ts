@@ -42,10 +42,11 @@ export class App {
   protected initialized = false;
 
   constructor() {
+    console.log('App Initialized v2.0 - Leaves & SweetAlert2');
     this.initSession();
     setTimeout(() => {
-      this.notifications.info('ยินดีต้อนรับเข้าสู่ระบบจัดการฝึกงาน', 'ระบบพร้อมใช้งาน');
-    }, 1000);
+      this.notifications.success('ระบบจัดการฝึกงานอัปเดตเป็นเวอร์ชันใหม่แล้ว', 'อัปเดตสำเร็จ');
+    }, 2000);
   }
 
   private async initSession(): Promise<void> {

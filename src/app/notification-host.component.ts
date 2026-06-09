@@ -8,14 +8,15 @@ import { NotificationService } from './notification.service';
   imports: [CommonModule],
   template: `
     <div 
-      class="fixed inset-0 z-50 pointer-events-none transition-opacity duration-300"
+      class="fixed inset-0 z-50 transition-opacity duration-300"
       [class.opacity-100]="panelOpen"
       [class.opacity-0]="!panelOpen"
       [class.pointer-events-auto]="panelOpen"
+      [class.pointer-events-none]="!panelOpen"
     >
       <!-- Backdrop -->
       <div 
-        class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+        class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300"
         [class.opacity-100]="panelOpen"
         [class.opacity-0]="!panelOpen"
         (click)="panelClosed.emit()"
@@ -23,7 +24,7 @@ import { NotificationService } from './notification.service';
 
       <!-- Panel content sliding from right -->
       <div 
-        class="absolute inset-y-0 right-0 w-full sm:w-[450px] bg-white/95 backdrop-blur-md shadow-2xl border-l border-slate-200/60 flex flex-col transition-transform duration-300 transform pointer-events-auto"
+        class="absolute inset-y-0 right-0 w-full sm:w-[450px] bg-white/95 backdrop-blur-md shadow-2xl border-l border-slate-200/60 flex flex-col transition-transform duration-300 transform"
         [class.translate-x-0]="panelOpen"
         [class.translate-x-full]="!panelOpen"
       >

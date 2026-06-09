@@ -3,8 +3,45 @@ import Swal from 'sweetalert2';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
+export interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  timestamp: Date;
+  read: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
+  private items: NotificationItem[] = [];
+
+  constructor() {
+    this.loadFromStorage();
+  }
+
+  private saveToStorage(): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('intern-manager-notifications-v1', JSON.stringify(this.items));
+    }
+  }
+
+  private loadFromStorage(): void {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('intern-manager-notifications-v1');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          this.items = parsed.map((item: any) => ({
+            ...item,
+            timestamp: new Date(item.timestamp)
+          }));
+        }
+      } catch (e) {
+        console.error('Failed to load notifications from storage', e);
+      }
+    }
+  }
   
   notify(
     message: string,
@@ -12,6 +49,24 @@ export class NotificationService {
     title?: string,
     durationMs = 3000
   ): void {
+    const itemTitle = title || this.defaultTitle(type);
+    
+    // Add to local history list
+    const newItem: NotificationItem = {
+      id: Math.random().toString(36).substring(2, 11),
+      title: itemTitle,
+      message,
+      type,
+      timestamp: new Date(),
+      read: false
+    };
+    
+    this.items.unshift(newItem);
+    if (this.items.length > 50) {
+      this.items.pop();
+    }
+    this.saveToStorage();
+
     const Toast = Swal.mixin({
       toast: true,
       position: 'top-end',
@@ -26,7 +81,7 @@ export class NotificationService {
 
     Toast.fire({
       icon: type,
-      title: title || this.defaultTitle(type),
+      title: itemTitle,
       text: message
     });
   }
@@ -69,13 +124,36 @@ export class NotificationService {
     }[type];
   }
 
-  // Compatibility methods for old code
-  markAllRead(): void {}
-  clearAll(): void {}
-  dismissToast(id: number): void {}
-  dismiss(id: number): void {}
+  // Compatibility and utility methods
+  markAllRead(): void {
+    this.items.forEach(item => item.read = true);
+    this.saveToStorage();
+  }
+
+  clearAll(): void {
+    this.items = [];
+    this.saveToStorage();
+  }
+
+  dismiss(id: string | number): void {
+    const idStr = id.toString();
+    this.items = this.items.filter(item => item.id !== idStr);
+    this.saveToStorage();
+  }
+
+  dismissToast(id: number): void {
+    this.dismiss(id);
+  }
   
-  get toasts() { return () => []; }
-  get history() { return () => []; }
-  get unreadCount() { return () => 0; }
+  get toasts() { 
+    return () => this.items; 
+  }
+  
+  get history() { 
+    return () => this.items; 
+  }
+  
+  get unreadCount() { 
+    return () => this.items.filter(item => !item.read).length; 
+  }
 }

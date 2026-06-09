@@ -34,13 +34,13 @@ func InitDatabase() error {
 	// เชื่อมต่อ
 	DB, err = sql.Open("mysql", dsn)
 	if err != nil {
-		log.Fatal("❌ เปิด DB พัง: ", err)
+		log.Println("❌ เปิด DB พัง: ", err)
 		return err
 	}
 
 	// ตรวจสอบการเชื่อมต่อ
 	if err := DB.Ping(); err != nil {
-		log.Fatal("❌ TiDB ปฏิเสธการเชื่อมต่อ: ", err)
+		log.Println("❌ TiDB ปฏิเสธการเชื่อมต่อ: ", err)
 		return err
 	}
 

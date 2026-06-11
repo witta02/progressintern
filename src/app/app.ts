@@ -293,7 +293,7 @@ export class App {
 
   protected get managedStudents(): User[] {
     if (this.currentUser?.role === 'admin') {
-      return this.users.filter((user) => user.role === 'student');
+      return this.users.filter((user) => user.role !== 'admin');
     }
 
     if (this.currentUser?.role !== 'advisor') {
@@ -747,13 +747,17 @@ export class App {
   protected approveStudent(student: User): void {
     const user = this.currentUser;
     if (!user) return;
-    this.data.updateUser(student.id, { status: 'active', school: user.school });
-    this.notifications.success(`อนุมัติและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
+    const updates: Partial<User> = { status: 'active' };
+    if (user.role === 'advisor') {
+      updates.school = user.school;
+    }
+    this.data.updateUser(student.id, updates);
+    this.notifications.success(`อนุมัติผู้ใช้ ${student.name} เรียบร้อยแล้ว`, 'จัดการผู้ใช้');
   }
   
   protected rejectStudent(student: User): void {
     this.data.updateUser(student.id, { status: 'rejected' });
-    this.notifications.warning(`ปฏิเสธบัญชีของ ${student.name} แล้ว`, 'จัดการนักศึกษา');
+    this.notifications.warning(`ปฏิเสธบัญชีของ ${student.name} แล้ว`, 'จัดการผู้ใช้');
   }
   
   protected claimStudent(student: User): void {

@@ -5,6 +5,7 @@ import (
 	"internship-backend/config"
 	"internship-backend/models"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -29,6 +30,12 @@ func RegisterHandler(c *gin.Context) {
 	var input models.RegisterInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ครบถ้วน: " + err.Error()})
+		return
+	}
+
+	// Password complexity check
+	if err := validatePassword(input.Password); err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "รหัสผ่านไม่ปลอดภัย: " + err.Error()})
 		return
 	}
 
@@ -74,6 +81,7 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	userID, _ := result.LastInsertId()
+	writeAuditLog(int(userID), "REGISTER", c.ClientIP())
 
 	// Auto-create company profile when role=company
 	if input.Role == "company" {
@@ -116,14 +124,18 @@ func LoginHandler(c *gin.Context) {
 	).Scan(&id, &name, &email, &hashed, &role, &status)
 
 	if err != nil {
+		writeAuditLog(0, "LOGIN_FAILED_USER_NOT_FOUND", c.ClientIP())
 		c.JSON(401, gin.H{"status": 401, "error": "ไม่พบผู้ใช้งานนี้"})
 		return
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(hashed), []byte(input.Password)) != nil {
+		writeAuditLog(id, "LOGIN_FAILED_WRONG_PASSWORD", c.ClientIP())
 		c.JSON(401, gin.H{"status": 401, "error": "รหัสผ่านไม่ถูกต้อง"})
 		return
 	}
+
+	writeAuditLog(id, "LOGIN_SUCCESS", c.ClientIP())
 
 	// สร้าง JWT Token — use getJWTKey() to match middleware
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -152,4 +164,41 @@ func LoginHandler(c *gin.Context) {
 			"token":  tString,
 		},
 	})
+}
+
+// validatePassword checks complexity criteria
+func validatePassword(password string) error {
+	if len(password) < 8 {
+		return fmt.Errorf("ต้องมีความยาวอย่างน้อย 8 ตัวอักษร")
+	}
+	if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+		return fmt.Errorf("ต้องมีตัวอักษรพิมพ์ใหญ่อย่างน้อย 1 ตัว")
+	}
+	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+		return fmt.Errorf("ต้องมีตัวอักษรพิมพ์เล็กอย่างน้อย 1 ตัว")
+	}
+	if !regexp.MustCompile(`[0-9]`).MatchString(password) {
+		return fmt.Errorf("ต้องมีตัวเลขอย่างน้อย 1 ตัว")
+	}
+	if !regexp.MustCompile(`[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};':",\./<>\?~` + "`" + `|]`).MatchString(password) {
+		return fmt.Errorf("ต้องมีอักขระพิเศษอย่างน้อย 1 ตัว")
+	}
+	return nil
+}
+
+// writeAuditLog logs events to the audit_logs table
+func writeAuditLog(userID int, action string, ipAddress string) {
+	var dbUserID interface{}
+	if userID > 0 {
+		dbUserID = userID
+	} else {
+		dbUserID = nil
+	}
+	_, err := config.DB.Exec(
+		"INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)",
+		dbUserID, action, ipAddress,
+	)
+	if err != nil {
+		fmt.Printf("⚠️ Audit log insert failed: %v\n", err)
+	}
 }

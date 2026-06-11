@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"internship-backend/config"
 	"os"
 	"strings"
 
@@ -62,6 +63,21 @@ func AuthMiddleware() gin.HandlerFunc {
 		if err != nil || !token.Valid {
 			fmt.Printf("❌ Token validation failed: error=%v, token=%+v\n", err, token)
 			c.JSON(401, gin.H{"status": 401, "error": "Token ไม่ถูกต้องหรือหมดอายุแล้ว"})
+			c.Abort()
+			return
+		}
+
+		// ตรวจสอบว่าผู้ใช้มีตัวตนจริงและสถานะไม่ถูกระงับ
+		var status string
+		dbErr := config.DB.QueryRow("SELECT status FROM users WHERE id = ?", claims.UserID).Scan(&status)
+		if dbErr != nil {
+			c.JSON(401, gin.H{"status": 401, "error": "ไม่พบผู้ใช้ในระบบ"})
+			c.Abort()
+			return
+		}
+
+		if status == "rejected" {
+			c.JSON(403, gin.H{"status": 403, "error": "บัญชีของคุณถูกระงับการใช้งาน"})
 			c.Abort()
 			return
 		}

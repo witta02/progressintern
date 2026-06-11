@@ -11,12 +11,44 @@ import (
 
 // CreateLeaveHandler handles student leave submission
 func CreateLeaveHandler(c *gin.Context) {
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	if reqRole.(string) != "student" {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "เฉพาะนักศึกษาเท่านั้นที่สามารถส่งคำขอลาได้",
+		})
+		return
+	}
+
 	var input models.CreateLeaveInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Status:  http.StatusBadRequest,
 			Message: "ข้อมูลไม่ถูกต้อง",
 			Error:   err.Error(),
+		})
+		return
+	}
+
+	if input.StudentID != reqUserID.(int) {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "คุณไม่มีสิทธิ์ส่งคำขอลาแทนผู้อื่น",
+		})
+		return
+	}
+
+	var internshipExists int
+	err := config.DB.QueryRow(
+		"SELECT COUNT(*) FROM internships WHERE id = ? AND student_id = ? AND status = 'active'",
+		input.InternshipID, input.StudentID,
+	).Scan(&internshipExists)
+	if err != nil || internshipExists == 0 {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "ไม่พบข้อมูลการฝึกงานที่มีสถานะ Active ของคุณ",
 		})
 		return
 	}
@@ -42,7 +74,48 @@ func CreateLeaveHandler(c *gin.Context) {
 
 // GetAllLeavesHandler returns all leave requests (for admin/advisor/company)
 func GetAllLeavesHandler(c *gin.Context) {
-	rows, err := config.DB.Query("SELECT id, internship_id, student_id, leave_type, start_date, end_date, reason, status, mentor_id, comment, created_at, updated_at, approved_at FROM leave_requests ORDER BY created_at DESC")
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var rows *sql.Rows
+	var err error
+
+	if roleStr == "admin" {
+		rows, err = config.DB.Query("SELECT id, internship_id, student_id, leave_type, start_date, end_date, reason, status, mentor_id, comment, created_at, updated_at, approved_at FROM leave_requests ORDER BY created_at DESC")
+	} else if roleStr == "advisor" {
+		var school string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
+
+		rows, err = config.DB.Query(
+			`SELECT l.id, l.internship_id, l.student_id, l.leave_type, l.start_date, l.end_date, l.reason, l.status, l.mentor_id, l.comment, l.created_at, l.updated_at, l.approved_at 
+			 FROM leave_requests l
+			 LEFT JOIN users u ON l.student_id = u.id
+			 WHERE u.school = ? AND u.school <> ''
+			 ORDER BY l.created_at DESC`,
+			school,
+		)
+	} else if roleStr == "company" {
+		rows, err = config.DB.Query(
+			`SELECT l.id, l.internship_id, l.student_id, l.leave_type, l.start_date, l.end_date, l.reason, l.status, l.mentor_id, l.comment, l.created_at, l.updated_at, l.approved_at 
+			 FROM leave_requests l
+			 LEFT JOIN internships i ON l.internship_id = i.id
+			 LEFT JOIN companies c ON i.company_id = c.id
+			 WHERE c.user_id = ?
+			 ORDER BY l.created_at DESC`,
+			userIDInt,
+		)
+	} else { // student
+		rows, err = config.DB.Query(
+			`SELECT id, internship_id, student_id, leave_type, start_date, end_date, reason, status, mentor_id, comment, created_at, updated_at, approved_at 
+			 FROM leave_requests 
+			 WHERE student_id = ?
+			 ORDER BY created_at DESC`,
+			userIDInt,
+		)
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Status:  http.StatusInternalServerError,
@@ -83,7 +156,54 @@ func UpdateLeaveStatusHandler(c *gin.Context) {
 		return
 	}
 
-	mentorID, _ := c.Get("user_id")
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var sID, iID int
+	err := config.DB.QueryRow("SELECT student_id, internship_id FROM leave_requests WHERE id = ?", id).Scan(&sID, &iID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, models.APIResponse{
+			Status:  http.StatusNotFound,
+			Message: "ไม่พบคำขอลาที่ระบุ",
+		})
+		return
+	}
+
+	isAuthorized := false
+	if roleStr == "admin" {
+		isAuthorized = true
+	} else if roleStr == "company" {
+		var dbUserID int
+		err := config.DB.QueryRow(
+			`SELECT c.user_id FROM internships i
+			 JOIN companies c ON i.company_id = c.id
+			 WHERE i.id = ?`,
+			iID,
+		).Scan(&dbUserID)
+		if err == nil && dbUserID == userIDInt {
+			isAuthorized = true
+		}
+	} else if roleStr == "advisor" {
+		var advisorSchool, studentSchool string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&advisorSchool)
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", sID).Scan(&studentSchool)
+		if advisorSchool != "" && advisorSchool == studentSchool {
+			isAuthorized = true
+		}
+	}
+
+	if !isAuthorized {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "คุณไม่มีสิทธิ์ในการอนุมัติหรือปฏิเสธคำขอลานี้",
+		})
+		return
+	}
+
+	mentorID := userIDInt
 
 	var approvedAt interface{}
 	if input.Status == "approved" {

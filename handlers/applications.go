@@ -11,13 +11,33 @@ import (
 // [POST] นักศึกษาส่งใบสมัครงาน
 // ========================================================
 func ApplyJobHandler(c *gin.Context) {
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	if reqRole.(string) != "student" {
+		c.JSON(403, gin.H{"status": 403, "error": "เฉพาะนักศึกษาเท่านั้นที่สมัครงานได้"})
+		return
+	}
+
 	var input models.ApplyInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
 		return
 	}
 
-	_, err := config.DB.Exec(
+	if input.StudentID != reqUserID.(int) {
+		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์สมัครงานในนามผู้อื่น"})
+		return
+	}
+
+	var status string
+	err := config.DB.QueryRow("SELECT status FROM users WHERE id = ?", input.StudentID).Scan(&status)
+	if err != nil || status != "active" {
+		c.JSON(403, gin.H{"status": 403, "error": "บัญชีของคุณยังไม่ได้รับการอนุมัติ"})
+		return
+	}
+
+	_, err = config.DB.Exec(
 		"INSERT INTO applications (student_id, job_posting_id) VALUES (?, ?)",
 		input.StudentID, input.JobPostingID,
 	)
@@ -34,6 +54,25 @@ func ApplyJobHandler(c *gin.Context) {
 // ========================================================
 func GetCompanyAppsHandler(c *gin.Context) {
 	companyID := c.Param("id")
+
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	if roleStr != "admin" {
+		if roleStr != "company" {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์เข้าถึงข้อมูลใบสมัครของบริษัทนี้"})
+			return
+		}
+		var dbUserID int
+		err := config.DB.QueryRow("SELECT user_id FROM companies WHERE id = ?", companyID).Scan(&dbUserID)
+		if err != nil || dbUserID != userIDInt {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์เข้าถึงข้อมูลใบสมัครของบริษัทนี้"})
+			return
+		}
+	}
 
 	rows, err := config.DB.Query(
 		`SELECT a.id, u.name, u.email, j.title, a.status, a.applied_at
@@ -81,6 +120,31 @@ func UpdateAppStatusHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "กรุณาระบุสถานะ"})
 		return
+	}
+
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	if roleStr != "admin" {
+		if roleStr != "company" {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการจัดการใบสมัครนี้"})
+			return
+		}
+		var ownerUserID int
+		err := config.DB.QueryRow(
+			`SELECT c.user_id FROM applications a
+			 JOIN job_postings j ON a.job_posting_id = j.id
+			 JOIN companies c ON j.company_id = c.id
+			 WHERE a.id = ?`,
+			appID,
+		).Scan(&ownerUserID)
+		if err != nil || ownerUserID != userIDInt {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการจัดการใบสมัครนี้"})
+			return
+		}
 	}
 
 	// ถ้าอนุมัติ ให้ตรวจสอบว่านักศึกษามีที่ฝึกงานอยู่แล้วหรือไม่

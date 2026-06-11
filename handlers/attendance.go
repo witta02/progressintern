@@ -10,6 +10,14 @@ import (
 // [POST] นักศึกษาเช็คอินเข้างานประจำวัน
 // ========================================================
 func CheckInHandler(c *gin.Context) {
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	if reqRole.(string) != "student" {
+		c.JSON(403, gin.H{"status": 403, "error": "เฉพาะนักศึกษาเท่านั้นที่ลงเวลาเข้างานได้"})
+		return
+	}
+
 	var input struct {
 		InternshipID int     `json:"internship_id" binding:"required"`
 		StudentID    int     `json:"student_id" binding:"required"`
@@ -18,6 +26,21 @@ func CheckInHandler(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
+		return
+	}
+
+	if input.StudentID != reqUserID.(int) {
+		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ลงเวลาเข้างานแทนผู้อื่น"})
+		return
+	}
+
+	var internshipExists int
+	err := config.DB.QueryRow(
+		"SELECT COUNT(*) FROM internships WHERE id = ? AND student_id = ? AND status = 'active'",
+		input.InternshipID, input.StudentID,
+	).Scan(&internshipExists)
+	if err != nil || internshipExists == 0 {
+		c.JSON(403, gin.H{"status": 403, "error": "ไม่พบข้อมูลการฝึกงานที่มีสถานะ Active ของคุณ"})
 		return
 	}
 
@@ -83,6 +106,49 @@ func CheckOutHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
 		return
+	}
+
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	isVerificationRequest := input.VerificationStatus != "" || input.Status != ""
+
+	if isVerificationRequest {
+		isAuthorized := false
+		if roleStr == "admin" {
+			isAuthorized = true
+		} else if roleStr == "company" {
+			var dbUserID int
+			err := config.DB.QueryRow(
+				`SELECT c.user_id FROM internships i
+				 JOIN companies c ON i.company_id = c.id
+				 WHERE i.id = ?`,
+				input.InternshipID,
+			).Scan(&dbUserID)
+			if err == nil && dbUserID == userIDInt {
+				isAuthorized = true
+			}
+		} else if roleStr == "advisor" {
+			var advisorSchool, studentSchool string
+			config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&advisorSchool)
+			config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", input.StudentID).Scan(&studentSchool)
+			if advisorSchool != "" && advisorSchool == studentSchool {
+				isAuthorized = true
+			}
+		}
+
+		if !isAuthorized {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการอนุมัติหรือแก้ไขสถานะการลงเวลานี้"})
+			return
+		}
+	} else {
+		if roleStr != "student" || input.StudentID != userIDInt {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ลงเวลาออกแทนผู้อื่น"})
+			return
+		}
 	}
 
 	var sql string

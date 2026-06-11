@@ -12,9 +12,70 @@ import (
 // USERS
 // ========================================================
 
-// GetAllUsersHandler fetches all users
+// GetAllUsersHandler fetches all users with role-based filtering
 func GetAllUsersHandler(c *gin.Context) {
-	rows, err := config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,'') FROM users")
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	var rows *sql.Rows
+	var err error
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	if roleStr == "admin" {
+		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,'') FROM users")
+	} else if roleStr == "advisor" {
+		var school string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
+
+		rows, err = config.DB.Query(
+			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,'') 
+			 FROM users 
+			 WHERE id = ? 
+			    OR (school = ? AND school <> '' AND role IN ('student', 'advisor')) 
+			    OR role = 'company' 
+			    OR role = 'admin'`,
+			userIDInt, school,
+		)
+	} else if roleStr == "company" {
+		rows, err = config.DB.Query(
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,'')
+			 FROM users u
+			 LEFT JOIN companies c ON c.user_id = ?
+			 LEFT JOIN job_postings j ON j.company_id = c.id
+			 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = u.id
+			 LEFT JOIN internships i ON i.company_id = c.id AND i.student_id = u.id
+			 WHERE u.id = ? 
+			    OR u.role = 'admin'
+			    OR (u.role = 'student' AND (a.id IS NOT NULL OR i.id IS NOT NULL))
+			    OR (u.role = 'advisor' AND u.school IN (
+			         SELECT DISTINCT school FROM users s 
+			         LEFT JOIN applications sa ON sa.student_id = s.id AND sa.job_posting_id = j.id
+			         LEFT JOIN internships si ON si.student_id = s.id AND si.company_id = c.id
+			         WHERE s.role = 'student' AND (sa.id IS NOT NULL OR si.id IS NOT NULL)
+			    ))`,
+			userIDInt, userIDInt,
+		)
+	} else { // student
+		var school string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
+
+		rows, err = config.DB.Query(
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,'')
+			 FROM users u
+			 LEFT JOIN companies c ON c.user_id = u.id
+			 LEFT JOIN job_postings j ON j.company_id = c.id
+			 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = ?
+			 LEFT JOIN internships i ON i.company_id = c.id AND i.student_id = ?
+			 WHERE u.id = ?
+			    OR u.role = 'admin'
+			    OR (u.role = 'advisor' AND u.school = ? AND u.school <> '')
+			    OR (u.role = 'company' AND (a.id IS NOT NULL OR i.id IS NOT NULL))`,
+			userIDInt, userIDInt, userIDInt, school,
+		)
+	}
+
 	if err != nil {
 		fmt.Printf("❌ Query error: %v\n", err)
 		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลผู้ใช้ล้มเหลว"})
@@ -45,14 +106,87 @@ func GetAllUsersHandler(c *gin.Context) {
 	c.JSON(200, gin.H{"status": 200, "data": list})
 }
 
-// GetUserByIDHandler fetches a single user
+// GetUserByIDHandler fetches a single user with authorization check
 func GetUserByIDHandler(c *gin.Context) {
 	userID := c.Param("id")
+	
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var targetUserIDInt int
+	fmt.Sscanf(userID, "%d", &targetUserIDInt)
+
+	isAuthorized := false
+	if roleStr == "admin" || userIDInt == targetUserIDInt {
+		isAuthorized = true
+	} else if roleStr == "advisor" {
+		var reqSchool, targetSchool, targetRole string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&reqSchool)
+		config.DB.QueryRow("SELECT COALESCE(school,''), role FROM users WHERE id = ?", targetUserIDInt).Scan(&targetSchool, &targetRole)
+		if reqSchool != "" && reqSchool == targetSchool && (targetRole == "student" || targetRole == "advisor") {
+			isAuthorized = true
+		}
+	} else if roleStr == "company" {
+		var targetRole string
+		config.DB.QueryRow("SELECT role FROM users WHERE id = ?", targetUserIDInt).Scan(&targetRole)
+		if targetRole == "admin" {
+			isAuthorized = true
+		} else {
+			var hasRelation int
+			config.DB.QueryRow(
+				`SELECT COUNT(*) FROM users u
+				 LEFT JOIN companies c ON c.user_id = ?
+				 LEFT JOIN job_postings j ON j.company_id = c.id
+				 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = u.id
+				 LEFT JOIN internships i ON i.company_id = c.id AND i.student_id = u.id
+				 WHERE u.id = ? AND (a.id IS NOT NULL OR i.id IS NOT NULL)`,
+				userIDInt, targetUserIDInt,
+			).Scan(&hasRelation)
+			if hasRelation > 0 {
+				isAuthorized = true
+			}
+		}
+	} else if roleStr == "student" {
+		var targetRole string
+		config.DB.QueryRow("SELECT role FROM users WHERE id = ?", targetUserIDInt).Scan(&targetRole)
+		if targetRole == "admin" {
+			isAuthorized = true
+		} else if targetRole == "advisor" {
+			var reqSchool, targetSchool string
+			config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&reqSchool)
+			config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", targetUserIDInt).Scan(&targetSchool)
+			if reqSchool != "" && reqSchool == targetSchool {
+				isAuthorized = true
+			}
+		} else if targetRole == "company" {
+			var hasRelation int
+			config.DB.QueryRow(
+				`SELECT COUNT(*) FROM companies c
+				 LEFT JOIN job_postings j ON j.company_id = c.id
+				 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = ?
+				 LEFT JOIN internships i ON i.company_id = c.id AND i.student_id = ?
+				 WHERE c.user_id = ? AND (a.id IS NOT NULL OR i.id IS NOT NULL)`,
+				userIDInt, userIDInt, targetUserIDInt,
+			).Scan(&hasRelation)
+			if hasRelation > 0 {
+				isAuthorized = true
+			}
+		}
+	}
+
+	if !isAuthorized {
+		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์เข้าถึงข้อมูลผู้ใช้นี้"})
+		return
+	}
+
 	var id int
 	var name, email, role, phone, profileImage, school, status, resumeURL string
 	err := config.DB.QueryRow(
 		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,'') FROM users WHERE id = ?",
-		userID,
+		targetUserIDInt,
 	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบผู้ใช้"})
@@ -67,6 +201,7 @@ func GetUserByIDHandler(c *gin.Context) {
 		},
 	})
 }
+
 
 // ========================================================
 // COMPANIES
@@ -107,18 +242,72 @@ func GetAllCompaniesHandler(c *gin.Context) {
 // APPLICATIONS (with JOINs for richer data)
 // ========================================================
 
-// GetAllApplicationsHandler fetches all applications with student + job info
+// GetAllApplicationsHandler fetches all applications with student + job info, filtered by role
 func GetAllApplicationsHandler(c *gin.Context) {
-	rows, err := config.DB.Query(
-		`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
-		        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
-		        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
-		 FROM applications a
-		 LEFT JOIN users u ON a.student_id = u.id
-		 LEFT JOIN job_postings j ON a.job_posting_id = j.id
-		 LEFT JOIN companies c ON j.company_id = c.id
-		 ORDER BY a.applied_at DESC`,
-	)
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var rows *sql.Rows
+	var err error
+
+	if roleStr == "admin" {
+		rows, err = config.DB.Query(
+			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
+			        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
+			        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
+			 FROM applications a
+			 LEFT JOIN users u ON a.student_id = u.id
+			 LEFT JOIN job_postings j ON a.job_posting_id = j.id
+			 LEFT JOIN companies c ON j.company_id = c.id
+			 ORDER BY a.applied_at DESC`,
+		)
+	} else if roleStr == "advisor" {
+		var school string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
+
+		rows, err = config.DB.Query(
+			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
+			        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
+			        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
+			 FROM applications a
+			 LEFT JOIN users u ON a.student_id = u.id
+			 LEFT JOIN job_postings j ON a.job_posting_id = j.id
+			 LEFT JOIN companies c ON j.company_id = c.id
+			 WHERE u.school = ? AND u.school <> ''
+			 ORDER BY a.applied_at DESC`,
+			school,
+		)
+	} else if roleStr == "company" {
+		rows, err = config.DB.Query(
+			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
+			        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
+			        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
+			 FROM applications a
+			 LEFT JOIN users u ON a.student_id = u.id
+			 LEFT JOIN job_postings j ON a.job_posting_id = j.id
+			 LEFT JOIN companies c ON j.company_id = c.id
+			 WHERE c.user_id = ?
+			 ORDER BY a.applied_at DESC`,
+			userIDInt,
+		)
+	} else { // student
+		rows, err = config.DB.Query(
+			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
+			        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
+			        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
+			 FROM applications a
+			 LEFT JOIN users u ON a.student_id = u.id
+			 LEFT JOIN job_postings j ON a.job_posting_id = j.id
+			 LEFT JOIN companies c ON j.company_id = c.id
+			 WHERE a.student_id = ?
+			 ORDER BY a.applied_at DESC`,
+			userIDInt,
+		)
+	}
+
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลใบสมัครล้มเหลว: " + err.Error()})
 		return
@@ -153,18 +342,72 @@ func GetAllApplicationsHandler(c *gin.Context) {
 // INTERNSHIPS
 // ========================================================
 
-// GetAllInternshipsHandler fetches all internships with JOINed names
+// GetAllInternshipsHandler fetches all internships with JOINed names, filtered by role
 func GetAllInternshipsHandler(c *gin.Context) {
-	rows, err := config.DB.Query(
-		`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
-		        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
-		        COALESCE(j.title, '') as job_title
-		 FROM internships i
-		 LEFT JOIN users u ON i.student_id = u.id
-		 LEFT JOIN companies c ON i.company_id = c.id
-		 LEFT JOIN job_postings j ON i.job_posting_id = j.id
-		 ORDER BY i.created_at DESC`,
-	)
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var rows *sql.Rows
+	var err error
+
+	if roleStr == "admin" {
+		rows, err = config.DB.Query(
+			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
+			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
+			        COALESCE(j.title, '') as job_title
+			 FROM internships i
+			 LEFT JOIN users u ON i.student_id = u.id
+			 LEFT JOIN companies c ON i.company_id = c.id
+			 LEFT JOIN job_postings j ON i.job_posting_id = j.id
+			 ORDER BY i.created_at DESC`,
+		)
+	} else if roleStr == "advisor" {
+		var school string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
+
+		rows, err = config.DB.Query(
+			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
+			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
+			        COALESCE(j.title, '') as job_title
+			 FROM internships i
+			 LEFT JOIN users u ON i.student_id = u.id
+			 LEFT JOIN companies c ON i.company_id = c.id
+			 LEFT JOIN job_postings j ON i.job_posting_id = j.id
+			 WHERE u.school = ? AND u.school <> ''
+			 ORDER BY i.created_at DESC`,
+			school,
+		)
+	} else if roleStr == "company" {
+		rows, err = config.DB.Query(
+			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
+			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
+			        COALESCE(j.title, '') as job_title
+			 FROM internships i
+			 LEFT JOIN users u ON i.student_id = u.id
+			 LEFT JOIN companies c ON i.company_id = c.id
+			 LEFT JOIN job_postings j ON i.job_posting_id = j.id
+			 WHERE c.user_id = ?
+			 ORDER BY i.created_at DESC`,
+			userIDInt,
+		)
+	} else { // student
+		rows, err = config.DB.Query(
+			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
+			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
+			        COALESCE(j.title, '') as job_title
+			 FROM internships i
+			 LEFT JOIN users u ON i.student_id = u.id
+			 LEFT JOIN companies c ON i.company_id = c.id
+			 LEFT JOIN job_postings j ON i.job_posting_id = j.id
+			 WHERE i.student_id = ?
+			 ORDER BY i.created_at DESC`,
+			userIDInt,
+		)
+	}
+
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลฝึกงานล้มเหลว: " + err.Error()})
 		return
@@ -196,8 +439,15 @@ func GetAllInternshipsHandler(c *gin.Context) {
 	c.JSON(200, gin.H{"status": 200, "data": list})
 }
 
-// CreateInternshipHandler creates a new internship record
+// CreateInternshipHandler creates a new internship record with authorization check
 func CreateInternshipHandler(c *gin.Context) {
+	reqRole, _ := c.Get("role")
+	roleStr := reqRole.(string)
+	if roleStr != "admin" && roleStr != "company" {
+		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการสร้างข้อมูลการฝึกงาน"})
+		return
+	}
+
 	var input struct {
 		StudentID    int    `json:"student_id" binding:"required"`
 		CompanyID    int    `json:"company_id" binding:"required"`
@@ -225,13 +475,58 @@ func CreateInternshipHandler(c *gin.Context) {
 // ATTENDANCE
 // ========================================================
 
-// GetAllAttendancesHandler fetches all attendances
+// GetAllAttendancesHandler fetches all attendances, filtered by role
 func GetAllAttendancesHandler(c *gin.Context) {
-	rows, err := config.DB.Query(
-		`SELECT id, internship_id, student_id, check_in_time, check_out_time, 
-		        COALESCE(latitude, 0), COALESCE(longitude, 0), status, created_at, verification_status 
-		 FROM attendances ORDER BY created_at DESC`,
-	)
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var rows *sql.Rows
+	var err error
+
+	if roleStr == "admin" {
+		rows, err = config.DB.Query(
+			`SELECT id, internship_id, student_id, check_in_time, check_out_time, 
+			        COALESCE(latitude, 0), COALESCE(longitude, 0), status, created_at, verification_status 
+			 FROM attendances ORDER BY created_at DESC`,
+		)
+	} else if roleStr == "advisor" {
+		var school string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
+
+		rows, err = config.DB.Query(
+			`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
+			        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), a.status, a.created_at, a.verification_status 
+			 FROM attendances a
+			 LEFT JOIN users u ON a.student_id = u.id
+			 WHERE u.school = ? AND u.school <> ''
+			 ORDER BY a.created_at DESC`,
+			school,
+		)
+	} else if roleStr == "company" {
+		rows, err = config.DB.Query(
+			`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
+			        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), a.status, a.created_at, a.verification_status 
+			 FROM attendances a
+			 LEFT JOIN internships i ON a.internship_id = i.id
+			 LEFT JOIN companies c ON i.company_id = c.id
+			 WHERE c.user_id = ?
+			 ORDER BY a.created_at DESC`,
+			userIDInt,
+		)
+	} else { // student
+		rows, err = config.DB.Query(
+			`SELECT id, internship_id, student_id, check_in_time, check_out_time, 
+			        COALESCE(latitude, 0), COALESCE(longitude, 0), status, created_at, verification_status 
+			 FROM attendances 
+			 WHERE student_id = ?
+			 ORDER BY created_at DESC`,
+			userIDInt,
+		)
+	}
+
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลลงเวลาล้มเหลว: " + err.Error()})
 		return
@@ -268,15 +563,65 @@ func GetAllAttendancesHandler(c *gin.Context) {
 // LOGBOOKS
 // ========================================================
 
-// GetAllLogbooksHandler fetches all logbooks with student name
+// GetAllLogbooksHandler fetches all logbooks with student name, filtered by role
 func GetAllLogbooksHandler(c *gin.Context) {
-	rows, err := config.DB.Query(
-		`SELECT l.id, l.internship_id, l.title, l.content, 
-		        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
-		        l.created_at, l.updated_at
-		 FROM logbooks l
-		 ORDER BY l.created_at DESC`,
-	)
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var rows *sql.Rows
+	var err error
+
+	if roleStr == "admin" {
+		rows, err = config.DB.Query(
+			`SELECT l.id, l.internship_id, l.title, l.content, 
+			        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
+			        l.created_at, l.updated_at
+			 FROM logbooks l
+			 ORDER BY l.created_at DESC`,
+		)
+	} else if roleStr == "advisor" {
+		var school string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
+
+		rows, err = config.DB.Query(
+			`SELECT l.id, l.internship_id, l.title, l.content, 
+			        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
+			        l.created_at, l.updated_at
+			 FROM logbooks l
+			 LEFT JOIN internships i ON l.internship_id = i.id
+			 LEFT JOIN users u ON i.student_id = u.id
+			 WHERE u.school = ? AND u.school <> ''
+			 ORDER BY l.created_at DESC`,
+			school,
+		)
+	} else if roleStr == "company" {
+		rows, err = config.DB.Query(
+			`SELECT l.id, l.internship_id, l.title, l.content, 
+			        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
+			        l.created_at, l.updated_at
+			 FROM logbooks l
+			 LEFT JOIN internships i ON l.internship_id = i.id
+			 LEFT JOIN companies c ON i.company_id = c.id
+			 WHERE c.user_id = ?
+			 ORDER BY l.created_at DESC`,
+			userIDInt,
+		)
+	} else { // student
+		rows, err = config.DB.Query(
+			`SELECT l.id, l.internship_id, l.title, l.content, 
+			        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
+			        l.created_at, l.updated_at
+			 FROM logbooks l
+			 LEFT JOIN internships i ON l.internship_id = i.id
+			 WHERE i.student_id = ?
+			 ORDER BY l.created_at DESC`,
+			userIDInt,
+		)
+	}
+
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลบันทึกล้มเหลว: " + err.Error()})
 		return
@@ -294,7 +639,6 @@ func GetAllLogbooksHandler(c *gin.Context) {
 			continue
 		}
 
-		// Get student info from internship
 		var studentName string
 		config.DB.QueryRow(
 			"SELECT COALESCE(u.name, '') FROM internships i LEFT JOIN users u ON i.student_id = u.id WHERE i.id = ?",
@@ -324,16 +668,69 @@ func GetAllLogbooksHandler(c *gin.Context) {
 // EVALUATIONS
 // ========================================================
 
-// GetAllEvaluationsHandler fetches all evaluations
+// GetAllEvaluationsHandler fetches all evaluations, filtered by role
 func GetAllEvaluationsHandler(c *gin.Context) {
-	rows, err := config.DB.Query(
-		`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
-		        e.evaluation_type, e.created_at,
-		        COALESCE(u.name, '') as evaluator_name
-		 FROM evaluations e
-		 LEFT JOIN users u ON e.evaluator_id = u.id
-		 ORDER BY e.created_at DESC`,
-	)
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var rows *sql.Rows
+	var err error
+
+	if roleStr == "admin" {
+		rows, err = config.DB.Query(
+			`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
+			        e.evaluation_type, e.created_at,
+			        COALESCE(u.name, '') as evaluator_name
+			 FROM evaluations e
+			 LEFT JOIN users u ON e.evaluator_id = u.id
+			 ORDER BY e.created_at DESC`,
+		)
+	} else if roleStr == "advisor" {
+		var school string
+		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
+
+		rows, err = config.DB.Query(
+			`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
+			        e.evaluation_type, e.created_at,
+			        COALESCE(u.name, '') as evaluator_name
+			 FROM evaluations e
+			 LEFT JOIN users u ON e.evaluator_id = u.id
+			 LEFT JOIN internships i ON e.internship_id = i.id
+			 LEFT JOIN users s ON i.student_id = s.id
+			 WHERE s.school = ? AND s.school <> ''
+			 ORDER BY e.created_at DESC`,
+			school,
+		)
+	} else if roleStr == "company" {
+		rows, err = config.DB.Query(
+			`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
+			        e.evaluation_type, e.created_at,
+			        COALESCE(u.name, '') as evaluator_name
+			 FROM evaluations e
+			 LEFT JOIN users u ON e.evaluator_id = u.id
+			 LEFT JOIN internships i ON e.internship_id = i.id
+			 LEFT JOIN companies c ON i.company_id = c.id
+			 WHERE c.user_id = ?
+			 ORDER BY e.created_at DESC`,
+			userIDInt,
+		)
+	} else { // student
+		rows, err = config.DB.Query(
+			`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
+			        e.evaluation_type, e.created_at,
+			        COALESCE(u.name, '') as evaluator_name
+			 FROM evaluations e
+			 LEFT JOIN users u ON e.evaluator_id = u.id
+			 LEFT JOIN internships i ON e.internship_id = i.id
+			 WHERE i.student_id = ?
+			 ORDER BY e.created_at DESC`,
+			userIDInt,
+		)
+	}
+
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลประเมินล้มเหลว: " + err.Error()})
 		return
@@ -412,7 +809,7 @@ func CreateEvaluationHandler(c *gin.Context) {
 	c.JSON(201, gin.H{"status": 201, "message": "บันทึกการประเมินสำเร็จ"})
 }
 
-// UpdateUserHandler updates user information
+// UpdateUserHandler updates user information with strict role and privilege validation
 func UpdateUserHandler(c *gin.Context) {
 	userID := c.Param("id")
 	var input struct {
@@ -428,17 +825,78 @@ func UpdateUserHandler(c *gin.Context) {
 		return
 	}
 
-	_, err := config.DB.Exec(
-		`UPDATE users SET 
-			name = COALESCE(NULLIF(?,''), name), 
-			email = COALESCE(NULLIF(?,''), email), 
-			phone = ?, 
-			school = ?, 
-			status = COALESCE(NULLIF(?,''), status), 
-			resume_url = ? 
-		 WHERE id = ?`,
-		input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, userID,
-	)
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var targetUserIDInt int
+	fmt.Sscanf(userID, "%d", &targetUserIDInt)
+
+	var targetRole, targetSchool, currentStatus string
+	err := config.DB.QueryRow("SELECT role, COALESCE(school,''), status FROM users WHERE id = ?", targetUserIDInt).Scan(&targetRole, &targetSchool, &currentStatus)
+	if err != nil {
+		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบผู้ใช้"})
+		return
+	}
+
+	if roleStr != "admin" && userIDInt != targetUserIDInt {
+		if roleStr == "advisor" && targetRole == "student" {
+			var advisorSchool string
+			config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&advisorSchool)
+
+			if targetSchool != "" && targetSchool != advisorSchool {
+				c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์แก้ไขข้อมูลนักศึกษานอกสังกัด"})
+				return
+			}
+
+			_, err = config.DB.Exec(
+				"UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ? WHERE id = ?",
+				input.Status, advisorSchool, targetUserIDInt,
+			)
+			if err != nil {
+				c.JSON(500, gin.H{"status": 500, "error": "อัปเดตข้อมูลนักศึกษาไม่สำเร็จ: " + err.Error()})
+				return
+			}
+			c.JSON(200, gin.H{"status": 200, "message": "อนุมัติ/แก้ไขข้อมูลนักศึกษาสำเร็จ"})
+			return
+		}
+
+		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์แก้ไขข้อมูลผู้ใช้อื่น"})
+		return
+	}
+
+	if roleStr != "admin" && userIDInt == targetUserIDInt {
+		if input.Status != "" && input.Status != currentStatus {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์แก้ไขสถานะของตนเอง"})
+			return
+		}
+
+		_, err = config.DB.Exec(
+			`UPDATE users SET 
+				name = COALESCE(NULLIF(?,''), name), 
+				email = COALESCE(NULLIF(?,''), email), 
+				phone = ?, 
+				school = ?, 
+				resume_url = ? 
+			 WHERE id = ?`,
+			input.Name, input.Email, input.Phone, input.School, input.ResumeURL, userIDInt,
+		)
+	} else {
+		_, err = config.DB.Exec(
+			`UPDATE users SET 
+				name = COALESCE(NULLIF(?,''), name), 
+				email = COALESCE(NULLIF(?,''), email), 
+				phone = ?, 
+				school = ?, 
+				status = COALESCE(NULLIF(?,''), status), 
+				resume_url = ? 
+			 WHERE id = ?`,
+			input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, targetUserIDInt,
+		)
+	}
+
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "แก้ไขข้อมูลผู้ใช้ไม่สำเร็จ: " + err.Error()})
 		return

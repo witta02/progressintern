@@ -127,6 +127,30 @@ func GetAllJobsHandler(c *gin.Context) {
 // ========================================================
 func CloseJobHandler(c *gin.Context) {
 	jobID := c.Param("id")
+
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var ownerUserID int
+	err := config.DB.QueryRow(
+		`SELECT c.user_id FROM job_postings j
+		 JOIN companies c ON j.company_id = c.id
+		 WHERE j.id = ?`,
+		jobID,
+	).Scan(&ownerUserID)
+	if err != nil {
+		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบประกาศงานที่ระบุ"})
+		return
+	}
+
+	if roleStr != "admin" && userIDInt != ownerUserID {
+		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการปิดประกาศงานนี้"})
+		return
+	}
+
 	var input struct {
 		Status string `json:"status"`
 	}
@@ -136,7 +160,7 @@ func CloseJobHandler(c *gin.Context) {
 		status = "closed"
 	}
 
-	_, err := config.DB.Exec("UPDATE job_postings SET status = ? WHERE id = ?", status, jobID)
+	_, err = config.DB.Exec("UPDATE job_postings SET status = ? WHERE id = ?", status, jobID)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ปิดรับสมัครงานไม่สำเร็จ"})
 		return

@@ -33,9 +33,15 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(input.Password), 10)
-	status := "active"
+	
+	// Prevent registration as admin
+	if input.Role == "admin" {
+		c.JSON(400, gin.H{"status": 400, "error": "ไม่สามารถสมัครสมาชิกเป็นผู้ดูแลระบบได้"})
+		return
+	}
+
+	status := "pending"
 	if input.Role == "student" {
-		status = "pending"
 		if input.School != "" {
 			var advisorCount int
 			err := config.DB.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'advisor' AND school = ?", input.School).Scan(&advisorCount)
@@ -44,6 +50,7 @@ func RegisterHandler(c *gin.Context) {
 			}
 		}
 	}
+
 
 	// Ensure school is never empty for users table if it's NOT NULL
 	schoolValue := input.School

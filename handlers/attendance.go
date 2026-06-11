@@ -46,7 +46,7 @@ func CheckInHandler(c *gin.Context) {
 
 	// Check if already checked in today
 	var existingID int
-	err := config.DB.QueryRow(
+	err = config.DB.QueryRow(
 		"SELECT id FROM attendances WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()",
 		input.InternshipID, input.StudentID,
 	).Scan(&existingID)

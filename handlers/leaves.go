@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"internship-backend/config"
 	"internship-backend/models"
 	"net/http"
@@ -53,7 +54,7 @@ func CreateLeaveHandler(c *gin.Context) {
 		return
 	}
 
-	_, err := config.DB.Exec(
+	_, err = config.DB.Exec(
 		"INSERT INTO leave_requests (internship_id, student_id, leave_type, start_date, end_date, reason) VALUES (?, ?, ?, ?, ?, ?)",
 		input.InternshipID, input.StudentID, input.LeaveType, input.StartDate, input.EndDate, input.Reason,
 	)
@@ -210,7 +211,7 @@ func UpdateLeaveStatusHandler(c *gin.Context) {
 		approvedAt = time.Now()
 	}
 
-	_, err := config.DB.Exec(
+	_, err = config.DB.Exec(
 		"UPDATE leave_requests SET status = ?, comment = ?, mentor_id = ?, approved_at = ? WHERE id = ?",
 		input.Status, input.Comment, mentorID, approvedAt, id,
 	)

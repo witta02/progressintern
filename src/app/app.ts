@@ -441,16 +441,18 @@ export class App {
   }
 
   protected async login(): Promise<void> {
+    this.loginError = '';
     const email = this.loginForm.email.trim().toLowerCase();
-    const user = await this.data.login(email, this.loginForm.password);
+    const result = await this.data.login(email, this.loginForm.password);
 
-    if (!user) {
-      this.loginError = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
-      this.notifications.error('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 'เข้าสู่ระบบไม่สำเร็จ');
+    if (!result || 'error' in result) {
+      const msg = (result && 'error' in result) ? result.error : 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+      this.loginError = msg;
+      this.notifications.error(msg, 'เข้าสู่ระบบไม่สำเร็จ');
       return;
     }
 
-    this.finishLogin(user);
+    this.finishLogin(result);
   }
 
   protected async register(): Promise<void> {

@@ -105,25 +105,36 @@ export class InternshipDataService {
     return this.users.some((user) => user.email.toLowerCase() === normalized);
   }
 
-  async login(email: string, password: string): Promise<User | null> {
+  async login(email: string, password: string): Promise<User | { error: string }> {
     if (this.api.apiEnabled()) {
-      const user = await firstValueFrom(this.api.login(email, password));
-      if (user) {
-        // Add to local array if not present
-        if (!this.users.some(u => u.id === user.id)) {
-          this.users = [...this.users, user];
-        } else {
-          this.users = this.users.map(u => u.id === user.id ? user : u);
+      try {
+        const user = await firstValueFrom(this.api.login(email, password));
+        if (user) {
+          // Add to local array if not present
+          if (!this.users.some(u => u.id === user.id)) {
+            this.users = [...this.users, user];
+          } else {
+            this.users = this.users.map(u => u.id === user.id ? user : u);
+          }
+          // Refresh local data to ensure we have everything
+          void this.refreshFromApi();
+          return user;
         }
-        // Refresh local data to ensure we have everything
-        void this.refreshFromApi();
+        return { error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' };
+      } catch (err: any) {
+        console.error('[InternshipDataService] Login error', err);
+        const msg = err?.error?.error || err?.message || 'เข้าสู่ระบบไม่สำเร็จ';
+        return { error: msg };
       }
-      return user;
     }
 
-    return this.users.find(
+    const found = this.users.find(
       (item) => item.email.toLowerCase() === email && item.password === password
-    ) ?? null;
+    );
+    if (!found) {
+      return { error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' };
+    }
+    return found;
   }
 
   async register(input: RegisterInput): Promise<{ user: User } | { error: string }> {
@@ -136,28 +147,34 @@ export class InternshipDataService {
     }
 
     if (this.api.apiEnabled()) {
-      const created = await firstValueFrom(
-        this.api.register({
-          name,
-          email,
-          password,
-          role: input.role,
-          phone: input.phone?.trim() || undefined,
-          school: input.school?.trim() || undefined,
-          company_name: input.companyName?.trim(),
-          description: input.description?.trim(),
-          address: input.address?.trim(),
-          contact_email: input.contactEmail?.trim() || email
-        })
-      );
+      try {
+        const created = await firstValueFrom(
+          this.api.register({
+            name,
+            email,
+            password,
+            role: input.role,
+            phone: input.phone?.trim() || undefined,
+            school: input.school?.trim() || undefined,
+            company_name: input.companyName?.trim(),
+            description: input.description?.trim(),
+            address: input.address?.trim(),
+            contact_email: input.contactEmail?.trim() || email
+          })
+        );
 
-      if (!created) {
-        return { error: 'ลงทะเบียนไม่สำเร็จ ตรวจสอบการเชื่อมต่อ API หรืออีเมลอาจซ้ำ' };
+        if (!created) {
+          return { error: 'ลงทะเบียนไม่สำเร็จ ตรวจสอบการเชื่อมต่อ API หรืออีเมลอาจซ้ำ' };
+        }
+
+        await this.refreshFromApi();
+        const user = this.users.find((u) => u.id === created.id) ?? created;
+        return { user };
+      } catch (err: any) {
+        console.error('[InternshipDataService] Register error', err);
+        const msg = err?.error?.error || err?.message || 'ลงทะเบียนไม่สำเร็จ';
+        return { error: msg };
       }
-
-      await this.refreshFromApi();
-      const user = this.users.find((u) => u.id === created.id) ?? created;
-      return { user };
     }
 
     if (this.emailExists(email)) {

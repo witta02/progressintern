@@ -94,9 +94,9 @@ export class InternshipApiService {
     );
   }
 
-  login(email: string, password: string): Observable<User | null> {
+  login(email: string, password: string): Observable<User> {
     if (!this.apiEnabled()) {
-      return of(null);
+      throw new Error('API is disabled');
     }
 
     return this.http
@@ -107,11 +107,10 @@ export class InternshipApiService {
           if (data && data.token) {
             this.setToken(data.token);
           }
-          return data ? mapUser(data) : null;
-        }),
-        catchError((err) => {
-          console.error('[InternshipApi] Login failed', err);
-          return of(null);
+          if (!data) {
+            throw new Error('ข้อมูลผู้ใช้งานไม่ถูกต้อง');
+          }
+          return mapUser(data);
         })
       );
   }
@@ -127,13 +126,12 @@ export class InternshipApiService {
     description?: string;
     address?: string;
     contact_email?: string;
-  }): Observable<User | null> {
+  }): Observable<User> {
     if (!this.apiEnabled()) {
-      return of(null);
+      throw new Error('API is disabled');
     }
     return this.http.post(`${this.base}/auth/register`, body).pipe(
-      switchMap(() => this.login(body.email, body.password)),
-      catchError(() => of(null))
+      switchMap(() => this.login(body.email, body.password))
     );
   }
 

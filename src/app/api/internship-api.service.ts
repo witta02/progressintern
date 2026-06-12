@@ -250,13 +250,15 @@ export class InternshipApiService {
     }, mapAttendance);
   }
 
-  patchAttendance(attendance: Attendance, patch: Partial<Pick<Attendance, 'checkOutTime' | 'status' | 'verificationStatus'>>): Observable<Attendance | null> {
+  patchAttendance(attendance: Attendance, patch: Partial<Pick<Attendance, 'checkOutTime' | 'status' | 'verificationStatus' | 'checkoutLatitude' | 'checkoutLongitude'>>): Observable<Attendance | null> {
     return this.putOne<ApiAttendance, Attendance>('attendance/check-out', {
       id: attendance.id,
       internship_id: attendance.internshipId,
       student_id: attendance.studentId,
       status: patch.status,
-      verification_status: patch.verificationStatus
+      verification_status: patch.verificationStatus,
+      latitude: patch.checkoutLatitude ?? null,
+      longitude: patch.checkoutLongitude ?? null
     }, mapAttendance);
   }
 

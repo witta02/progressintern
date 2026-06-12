@@ -108,6 +108,8 @@ export interface Attendance {
   checkOutTime?: string;
   latitude?: number;
   longitude?: number;
+  checkoutLatitude?: number;
+  checkoutLongitude?: number;
   status: AttendanceStatus;
   verificationStatus: VerificationStatus;
   createdAt?: string;

@@ -616,6 +616,7 @@
                   <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Student</th>
                   <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Clock In</th>
                   <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Clock Out</th>
+                  <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Location</th>
                   <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
                   <th class="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Verification</th>
                 </tr>
@@ -625,6 +626,25 @@
                   <td class="px-10 py-8 font-black text-slate-900 text-lg">{{ userName(att.studentId) }}</td>
                   <td class="px-10 py-8 font-black text-slate-700">{{ formatDateTime(att.checkInTime) }}</td>
                   <td class="px-10 py-8 font-bold text-slate-400">{{ att.checkOutTime ? formatDateTime(att.checkOutTime) : '—' }}</td>
+                  <td class="px-10 py-8">
+                    <div class="flex flex-col gap-2">
+                      <span *ngIf="att.latitude && att.longitude">
+                        <a [href]="'https://www.google.com/maps?q=' + att.latitude + ',' + att.longitude" 
+                           target="_blank" 
+                           class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm transition-all hover:scale-105 w-fit">
+                          📍 In Map
+                        </a>
+                      </span>
+                      <span *ngIf="att.checkoutLatitude && att.checkoutLongitude">
+                        <a [href]="'https://www.google.com/maps?q=' + att.checkoutLatitude + ',' + att.checkoutLongitude" 
+                           target="_blank" 
+                           class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-800 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm transition-all hover:scale-105 w-fit">
+                          📍 Out Map
+                        </a>
+                      </span>
+                      <span *ngIf="!att.latitude && !att.longitude && !att.checkoutLatitude && !att.checkoutLongitude" class="text-slate-300 font-bold">—</span>
+                    </div>
+                  </td>
                   <td class="px-10 py-8">
                     <span class="inline-flex px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm"
                           [class.bg-emerald-500]="att.status === 'present'" [class.text-white]="att.status === 'present'"

@@ -87,6 +87,8 @@ export type ApiAttendance = {
   check_out_time?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  checkout_latitude?: number | null;
+  checkout_longitude?: number | null;
   status: Attendance['status'];
   verification_status: Attendance['verificationStatus'];
   created_at?: string;
@@ -217,6 +219,8 @@ export function mapAttendance(dto: ApiAttendance): Attendance {
     checkOutTime: dto.check_out_time ?? undefined,
     latitude: dto.latitude ?? undefined,
     longitude: dto.longitude ?? undefined,
+    checkoutLatitude: dto.checkout_latitude ?? undefined,
+    checkoutLongitude: dto.checkout_longitude ?? undefined,
     status: dto.status,
     verificationStatus: dto.verification_status,
     createdAt: dto.created_at

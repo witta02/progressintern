@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { environment } from '../environments/environment';
 import { InternshipDataService } from './internship-data.service';
 import { NotificationHostComponent } from './notification-host.component';
@@ -996,6 +997,50 @@ export class App {
       return;
     }
 
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      Swal.fire({
+        title: 'กำลังดึงพิกัด GPS...',
+        text: 'กรุณาอนุญาตให้ระบบเข้าถึงตำแหน่งของคุณหากเบราว์เซอร์ร้องขอ',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          Swal.close();
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          this.executeCheckIn(lat, lon);
+        },
+        (error) => {
+          Swal.close();
+          console.error('[App] Geolocation check-in error', error);
+          Swal.fire({
+            title: 'ไม่สามารถดึงตำแหน่ง GPS ได้',
+            text: 'ระบบไม่สามารถระบุพิกัดในขณะนี้ได้ คุณต้องการลงเวลาเข้างานต่อโดยไม่มีพิกัดแผนที่หรือไม่?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ลงเวลาต่อ',
+            cancelButtonText: 'ยกเลิก'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.executeCheckIn();
+            }
+          });
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } else {
+      this.executeCheckIn();
+    }
+  }
+
+  private executeCheckIn(lat?: number, lon?: number): void {
+    const user = this.currentUser;
+    if (!user || !this.activeInternship) return;
+
     const now = new Date();
     const job = this.jobPostings.find(j => j.id === this.activeInternship?.jobPostingId);
     let status: AttendanceStatus = 'present';
@@ -1018,10 +1063,12 @@ export class App {
       studentId: user.id,
       checkInTime: now.toISOString(),
       status,
-      verificationStatus: 'pending'
+      verificationStatus: 'pending',
+      latitude: lat,
+      longitude: lon
     });
     this.notifications.success(
-      `Check in แล้ว (${this.attendanceStatusLabel(status)})`,
+      `Check in แล้ว (${this.attendanceStatusLabel(status)})` + (lat ? ' พร้อมพิกัด GPS' : ''),
       'ลงเวลา'
     );
   }
@@ -1048,10 +1095,53 @@ export class App {
       return;
     }
 
-    this.data.updateAttendance(openAttendance.id, {
-      checkOutTime: new Date().toISOString()
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      Swal.fire({
+        title: 'กำลังดึงพิกัด GPS...',
+        text: 'กรุณาอนุญาตให้ระบบเข้าถึงตำแหน่งของคุณหากเบราว์เซอร์ร้องขอ',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          Swal.close();
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          this.executeCheckOut(openAttendance.id, lat, lon);
+        },
+        (error) => {
+          Swal.close();
+          console.error('[App] Geolocation check-out error', error);
+          Swal.fire({
+            title: 'ไม่สามารถดึงตำแหน่ง GPS ได้',
+            text: 'ระบบไม่สามารถระบุพิกัดในขณะนี้ได้ คุณต้องการลงเวลาออกงานต่อโดยไม่มีพิกัดแผนที่หรือไม่?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ลงเวลาต่อ',
+            cancelButtonText: 'ยกเลิก'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.executeCheckOut(openAttendance.id);
+            }
+          });
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } else {
+      this.executeCheckOut(openAttendance.id);
+    }
+  }
+
+  private executeCheckOut(attendanceId: number, lat?: number, lon?: number): void {
+    this.data.updateAttendance(attendanceId, {
+      checkOutTime: new Date().toISOString(),
+      checkoutLatitude: lat,
+      checkoutLongitude: lon
     });
-    this.notifications.success('Check out แล้ว', 'ลงเวลา');
+    this.notifications.success('Check out แล้ว' + (lat ? ' พร้อมพิกัด GPS' : ''), 'ลงเวลา');
   }
 
   protected setAttendanceVerification(attendance: Attendance, status: 'approved' | 'rejected'): void {

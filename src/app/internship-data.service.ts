@@ -416,7 +416,9 @@ export class InternshipDataService {
       void firstValueFrom(
         this.api.patchAttendance(attendance, {
           checkOutTime: updates.checkOutTime,
-          status: updates.status
+          status: updates.status,
+          checkoutLatitude: updates.checkoutLatitude,
+          checkoutLongitude: updates.checkoutLongitude
         })
       ).then(() => {
         void this.refreshFromApi();

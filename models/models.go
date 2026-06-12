@@ -192,6 +192,8 @@ type Attendance struct {
 	CheckOutTime       *time.Time `json:"check_out_time" db:"check_out_time"`
 	Latitude           float64    `json:"latitude" db:"latitude"`
 	Longitude          float64    `json:"longitude" db:"longitude"`
+	CheckoutLatitude   *float64   `json:"checkout_latitude" db:"checkout_latitude"`
+	CheckoutLongitude  *float64   `json:"checkout_longitude" db:"checkout_longitude"`
 	Status             string     `json:"status" db:"status"` // present, absent, late, early_leave
 	VerificationStatus string     `json:"verification_status" db:"verification_status"` // pending, approved, rejected
 	Notes              string     `json:"notes" db:"notes"`

@@ -489,7 +489,9 @@ func GetAllAttendancesHandler(c *gin.Context) {
 	if roleStr == "admin" {
 		rows, err = config.DB.Query(
 			`SELECT id, internship_id, student_id, check_in_time, check_out_time, 
-			        COALESCE(latitude, 0), COALESCE(longitude, 0), status, created_at, verification_status 
+			        COALESCE(latitude, 0), COALESCE(longitude, 0), 
+			        COALESCE(checkout_latitude, 0), COALESCE(checkout_longitude, 0),
+			        status, created_at, verification_status 
 			 FROM attendances ORDER BY created_at DESC`,
 		)
 	} else if roleStr == "advisor" {
@@ -498,7 +500,9 @@ func GetAllAttendancesHandler(c *gin.Context) {
 
 		rows, err = config.DB.Query(
 			`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
-			        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), a.status, a.created_at, a.verification_status 
+			        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), 
+			        COALESCE(a.checkout_latitude, 0), COALESCE(a.checkout_longitude, 0),
+			        a.status, a.created_at, a.verification_status 
 			 FROM attendances a
 			 LEFT JOIN users u ON a.student_id = u.id
 			 WHERE u.school = ? AND u.school <> ''
@@ -508,7 +512,9 @@ func GetAllAttendancesHandler(c *gin.Context) {
 	} else if roleStr == "company" {
 		rows, err = config.DB.Query(
 			`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
-			        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), a.status, a.created_at, a.verification_status 
+			        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), 
+			        COALESCE(a.checkout_latitude, 0), COALESCE(a.checkout_longitude, 0),
+			        a.status, a.created_at, a.verification_status 
 			 FROM attendances a
 			 LEFT JOIN internships i ON a.internship_id = i.id
 			 LEFT JOIN companies c ON i.company_id = c.id
@@ -519,7 +525,9 @@ func GetAllAttendancesHandler(c *gin.Context) {
 	} else { // student
 		rows, err = config.DB.Query(
 			`SELECT id, internship_id, student_id, check_in_time, check_out_time, 
-			        COALESCE(latitude, 0), COALESCE(longitude, 0), status, created_at, verification_status 
+			        COALESCE(latitude, 0), COALESCE(longitude, 0), 
+			        COALESCE(checkout_latitude, 0), COALESCE(checkout_longitude, 0),
+			        status, created_at, verification_status 
 			 FROM attendances 
 			 WHERE student_id = ?
 			 ORDER BY created_at DESC`,
@@ -536,10 +544,10 @@ func GetAllAttendancesHandler(c *gin.Context) {
 	var list []gin.H
 	for rows.Next() {
 		var id, intID, stuID int
-		var lat, lng float64
+		var lat, lng, outLat, outLng float64
 		var status, verificationStatus string
 		var checkIn, checkOut, createdAt interface{}
-		rows.Scan(&id, &intID, &stuID, &checkIn, &checkOut, &lat, &lng, &status, &createdAt, &verificationStatus)
+		rows.Scan(&id, &intID, &stuID, &checkIn, &checkOut, &lat, &lng, &outLat, &outLng, &status, &createdAt, &verificationStatus)
 		list = append(list, gin.H{
 			"id":                  id,
 			"internship_id":       intID,
@@ -548,6 +556,8 @@ func GetAllAttendancesHandler(c *gin.Context) {
 			"check_out_time":      checkOut,
 			"latitude":            lat,
 			"longitude":           lng,
+			"checkout_latitude":   outLat,
+			"checkout_longitude":  outLng,
 			"status":              status,
 			"created_at":          createdAt,
 			"verification_status": verificationStatus,

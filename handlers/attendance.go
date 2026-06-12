@@ -97,11 +97,13 @@ func CheckInHandler(c *gin.Context) {
 // ========================================================
 func CheckOutHandler(c *gin.Context) {
 	var input struct {
-		ID                 int    `json:"id"`
-		InternshipID       int    `json:"internship_id" binding:"required"`
-		StudentID          int    `json:"student_id" binding:"required"`
-		Status             string `json:"status"`
-		VerificationStatus string `json:"verification_status"`
+		ID                 int      `json:"id"`
+		InternshipID       int      `json:"internship_id" binding:"required"`
+		StudentID          int      `json:"student_id" binding:"required"`
+		Status             string   `json:"status"`
+		VerificationStatus string   `json:"verification_status"`
+		Latitude           *float64 `json:"latitude"`
+		Longitude          *float64 `json:"longitude"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
@@ -170,8 +172,8 @@ func CheckOutHandler(c *gin.Context) {
 			args = append(args, input.Status, input.ID)
 		} else {
 			// Student checkout
-			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, NOW()) WHERE id = ?"
-			args = append(args, input.ID)
+			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, NOW()), checkout_latitude = ?, checkout_longitude = ? WHERE id = ?"
+			args = append(args, input.Latitude, input.Longitude, input.ID)
 		}
 	} else {
 		if input.VerificationStatus != "" {
@@ -189,8 +191,8 @@ func CheckOutHandler(c *gin.Context) {
 			args = append(args, input.Status, input.InternshipID, input.StudentID)
 		} else {
 			// Student checkout
-			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, NOW()) WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()"
-			args = append(args, input.InternshipID, input.StudentID)
+			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, NOW()), checkout_latitude = ?, checkout_longitude = ? WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()"
+			args = append(args, input.Latitude, input.Longitude, input.InternshipID, input.StudentID)
 		}
 	}
 

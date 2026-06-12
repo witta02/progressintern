@@ -206,3 +206,64 @@ func DeleteJobHandler(c *gin.Context) {
 
 	c.JSON(200, gin.H{"status": 200, "message": "ลบประกาศรับสมัครงานเรียบร้อย"})
 }
+
+// ========================================================
+// [PUT] บริษัทแก้ไขประกาศงาน
+// ========================================================
+func UpdateJobHandler(c *gin.Context) {
+	jobID := c.Param("id")
+
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	var ownerUserID int
+	err := config.DB.QueryRow(
+		`SELECT c.user_id FROM job_postings j
+		 JOIN companies c ON j.company_id = c.id
+		 WHERE j.id = ?`,
+		jobID,
+	).Scan(&ownerUserID)
+	if err != nil {
+		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบประกาศงานที่ระบุ"})
+		return
+	}
+
+	if roleStr != "admin" && userIDInt != ownerUserID {
+		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการแก้ไขประกาศงานนี้"})
+		return
+	}
+
+	var input struct {
+		Title        string `json:"title" binding:"required"`
+		Description  string `json:"description" binding:"required"`
+		Requirements string `json:"requirements"`
+		Benefits     string `json:"benefits"`
+		Slots        int    `json:"slots" binding:"required"`
+		CheckinTime  string `json:"checkin_time"`
+		CheckoutTime string `json:"checkout_time"`
+		LatedTime    string `json:"lated_time"`
+		WorkDays     string `json:"work_days"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
+		return
+	}
+
+	_, err = config.DB.Exec(
+		`UPDATE job_postings 
+		 SET title = ?, description = ?, requirements = ?, benefits = ?, slots = ?, 
+		     checkin_time = ?, checkout_time = ?, lated_time = ?, work_days = ?
+		 WHERE id = ?`,
+		input.Title, input.Description, input.Requirements, input.Benefits, input.Slots,
+		input.CheckinTime, input.CheckoutTime, input.LatedTime, input.WorkDays, jobID,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "แก้ไขประกาศงานไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"status": 200, "message": "แก้ไขประกาศงานสำเร็จ"})
+}

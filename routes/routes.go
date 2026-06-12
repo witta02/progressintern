@@ -65,6 +65,7 @@ func SetupRoutes(router *gin.Engine) {
 		jobGroup.POST("", middleware.AuthMiddleware(), middleware.RequireRole("company", "admin"), handlers.CreateJobHandler)
 		jobGroup.GET("", handlers.GetAllJobsHandler)
 		jobGroup.PUT("/:id/status", middleware.AuthMiddleware(), middleware.RequireRole("company", "admin"), handlers.CloseJobHandler)
+		jobGroup.PUT("/:id", middleware.AuthMiddleware(), middleware.RequireRole("company", "admin"), handlers.UpdateJobHandler)
 		jobGroup.DELETE("/:id", middleware.AuthMiddleware(), middleware.RequireRole("company", "admin"), handlers.DeleteJobHandler)
 	}
 

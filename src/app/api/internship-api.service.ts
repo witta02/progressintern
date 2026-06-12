@@ -411,4 +411,19 @@ export class InternshipApiService {
       })
     );
   }
+
+  getAdminTables(): Observable<string[]> {
+    return this.http.get<any>(`${this.base}/admin/tables`, this.authOptions()).pipe(
+      map((res) => res?.data || []),
+      catchError(() => of([]))
+    );
+  }
+
+  executeAdminQuery(query: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/admin/query`, { query }, this.authOptions()).pipe(
+      catchError((err) => {
+        throw err;
+      })
+    );
+  }
 }

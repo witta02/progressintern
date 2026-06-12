@@ -634,6 +634,58 @@ export class InternshipDataService {
     return { status: 200 };
   }
 
+  async getAdminTables(): Promise<string[]> {
+    if (this.api.apiEnabled()) {
+      return firstValueFrom(this.api.getAdminTables());
+    }
+    return ['users', 'companies', 'job_postings', 'applications', 'internships', 'attendances', 'logbooks', 'evaluations', 'leave_requests', 'schools', 'enrollment_codes'];
+  }
+
+  async executeAdminQuery(query: string): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        return await firstValueFrom(this.api.executeAdminQuery(query));
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'Query execution failed' };
+      }
+    }
+
+    const clean = query.trim().toUpperCase();
+    if (clean.startsWith('SELECT')) {
+      let targetTable = '';
+      if (clean.includes('FROM USERS')) targetTable = 'users';
+      else if (clean.includes('FROM COMPANIES')) targetTable = 'companies';
+      else if (clean.includes('FROM JOB_POSTINGS') || clean.includes('FROM JOBS')) targetTable = 'jobPostings';
+      else if (clean.includes('FROM APPLICATIONS')) targetTable = 'applications';
+      else if (clean.includes('FROM INTERNSHIPS')) targetTable = 'internships';
+      else if (clean.includes('FROM ATTENDANCES') || clean.includes('FROM ATTENDANCE')) targetTable = 'attendances';
+      else if (clean.includes('FROM LOGBOOKS')) targetTable = 'logbooks';
+      else if (clean.includes('FROM EVALUATIONS')) targetTable = 'evaluations';
+      else if (clean.includes('FROM LEAVE_REQUESTS') || clean.includes('FROM LEAVES')) targetTable = 'leaves';
+      else if (clean.includes('FROM SCHOOLS')) targetTable = 'schools';
+      else if (clean.includes('FROM ENROLLMENT_CODES') || clean.includes('FROM CODES')) targetTable = 'enrollmentCodes';
+
+      if (targetTable) {
+        const list = (this as any)[targetTable] || [];
+        const columns = list.length > 0 ? Object.keys(list[0]) : ['id'];
+        return {
+          status: 200,
+          type: 'select',
+          columns,
+          data: list
+        };
+      }
+      return { status: 200, type: 'select', columns: ['msg'], data: [{ msg: 'Mock execution successful for: ' + query }] };
+    }
+
+    return {
+      status: 200,
+      type: 'exec',
+      rows_affected: 1,
+      last_insert_id: 0
+    };
+  }
+
   private nextId(items: { id: number }[]): number {
     return Math.max(0, ...items.map((item) => item.id)) + 1;
   }

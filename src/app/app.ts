@@ -191,6 +191,12 @@ export class App {
   protected adminUserRoleFilter = '';
   protected adminUserStatusFilter = '';
 
+  protected adminQueryText = 'SELECT * FROM users';
+  protected adminQueryResults: any = null;
+  protected adminTables: string[] = [];
+  protected selectedAdminTable = '';
+  protected adminQueryError = '';
+
   protected readonly viewLabels: Record<string, string> = {
     dashboard: 'ภาพรวม',
     admin_users: 'จัดการผู้ใช้',
@@ -265,7 +271,7 @@ export class App {
 
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
-      admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
+      admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit', 'schema'],
       advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit']
@@ -624,6 +630,10 @@ export class App {
         school: user.school ?? '',
         resumeUrl: user.resumeUrl ?? ''
       };
+    }
+
+    if (this.activeView === 'schema') {
+      void this.loadAdminTables();
     }
 
     this.closeSidebar();
@@ -1346,5 +1356,42 @@ export class App {
         this.notifications.success(`ลบรหัสเชิญ "${code.code}" สำเร็จ`, 'จัดการรหัสเชิญ');
       }
     }
+  }
+
+  protected async loadAdminTables(): Promise<void> {
+    this.adminTables = await this.data.getAdminTables();
+  }
+
+  protected async executeAdminQuery(): Promise<void> {
+    if (!this.adminQueryText.trim()) {
+      this.notifications.warning('กรุณากรอกคำสั่ง SQL', 'จัดการฐานข้อมูล');
+      return;
+    }
+
+    this.adminQueryError = '';
+    this.adminQueryResults = null;
+
+    const res = await this.data.executeAdminQuery(this.adminQueryText.trim());
+    if (res && res.error) {
+      this.adminQueryError = res.error;
+      this.notifications.error(res.error, 'ผลการทำงานล้มเหลว');
+    } else {
+      this.adminQueryResults = res;
+      this.notifications.success('รันคำสั่ง SQL สำเร็จ', 'ผลการทำงาน');
+      // Refresh local database caches if write operation succeeded
+      if (res.type === 'exec') {
+        void this.data.refreshFromApi();
+      }
+    }
+  }
+
+  protected selectQuickTable(table: string): void {
+    this.selectedAdminTable = table;
+    this.adminQueryText = `SELECT * FROM ${table} LIMIT 100`;
+    void this.executeAdminQuery();
+  }
+
+  protected getQueryResultRows(results: any): any[] {
+    return results?.data || [];
   }
 }

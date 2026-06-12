@@ -38,6 +38,8 @@ export class App {
 
   private readonly sessionKey = 'intern-manager-session-v1';
 
+  private codeDebounceTimer: any = null;
+
   protected currentUserId: number | null = null;
   protected initialized = false;
 
@@ -537,7 +539,7 @@ export class App {
     this.notifications.success(`ยินดีต้อนรับ ${result.user.name}`, 'สมัครสมาชิกสำเร็จ');
   }
 
-  protected async onCodeChange(code: string): Promise<void> {
+  protected onCodeChange(code: string): void {
     this.codeValidationError = '';
     this.detectedRoleName = '';
     this.registerForm.role = '';
@@ -548,29 +550,36 @@ export class App {
       return;
     }
 
+    if (this.codeDebounceTimer) {
+      clearTimeout(this.codeDebounceTimer);
+    }
+
     this.validatingCode = true;
-    const res = await this.data.validateCode(cleanCode);
-    this.validatingCode = false;
+    this.codeDebounceTimer = setTimeout(async () => {
+      const res = await this.data.validateCode(cleanCode);
+      this.validatingCode = false;
 
-    if (!res || 'error' in res) {
-      this.codeValidationError = res?.error || 'รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง';
-      return;
-    }
+      if (!res || 'error' in res) {
+        this.codeValidationError = res?.error || 'รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง';
+        this.cdr.markForCheck();
+        return;
+      }
 
-    const { role, school_name } = res.data;
-    this.registerForm.role = role as RegisterRole;
-    if (school_name) {
-      this.registerForm.school = school_name;
-    }
+      const { role, school_name } = res.data;
+      this.registerForm.role = role as RegisterRole;
+      if (school_name) {
+        this.registerForm.school = school_name;
+      }
 
-    if (role === 'student') {
-      this.detectedRoleName = `นักศึกษา (Student) - ${school_name || ''}`;
-    } else if (role === 'advisor') {
-      this.detectedRoleName = `อาจารย์ / ผู้ดูแลฝึกงาน (Advisor) - ${school_name || ''}`;
-    } else if (role === 'company') {
-      this.detectedRoleName = `สถานประกอบการ (Company) ${school_name ? '- เชิญโดย ' + school_name : ''}`;
-    }
-    this.cdr.markForCheck();
+      if (role === 'student') {
+        this.detectedRoleName = `นักศึกษา (Student) - ${school_name || ''}`;
+      } else if (role === 'advisor') {
+        this.detectedRoleName = `อาจารย์ / ผู้ดูแลฝึกงาน (Advisor) - ${school_name || ''}`;
+      } else if (role === 'company') {
+        this.detectedRoleName = `สถานประกอบการ (Company) ${school_name ? '- เชิญโดย ' + school_name : ''}`;
+      }
+      this.cdr.markForCheck();
+    }, 500);
   }
 
   protected logout(): void {

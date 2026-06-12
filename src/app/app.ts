@@ -265,7 +265,7 @@ export class App {
 
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
-      admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit', 'schema'],
+      admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit']

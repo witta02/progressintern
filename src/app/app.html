@@ -1197,96 +1197,159 @@
         </article>
       </section>
 
-      <!-- DATABASE / SQL MANAGER -->
-      <section *ngIf="activeView === 'schema' && currentUser?.role === 'admin'" class="grid grid-cols-1 lg:grid-cols-4 gap-10">
-        <!-- Tables List Sidebar -->
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 h-fit space-y-6">
-          <div>
-            <h3 class="text-2xl font-black text-slate-900 tracking-tight">ตารางฐานข้อมูล</h3>
-            <p class="text-xs font-bold text-slate-400 mt-1">คลิกที่ชื่อตารางเพื่อดึงข้อมูลอย่างรวดเร็ว</p>
+      <!-- DATABASE / SQL WORKBENCH -->
+      <section *ngIf="activeView === 'schema' && currentUser?.role === 'admin'" class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Workbench Left Sidebar: Schemas Explorer -->
+        <article class="bg-white rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-8 h-fit space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <h3 class="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
+              Schemas Explorer
+            </h3>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">database: internship_db</p>
           </div>
 
-          <div class="space-y-3">
-            <button *ngFor="let tbl of adminTables" (click)="selectQuickTable(tbl)"
-                    class="w-full px-5 py-4 bg-slate-50 hover:bg-blue-50 text-slate-800 hover:text-blue-600 rounded-2xl border border-slate-100 hover:border-blue-100 transition-all font-black text-left flex items-center justify-between"
-                    [class.bg-blue-50]="selectedAdminTable === tbl" [class.border-blue-200]="selectedAdminTable === tbl" [class.text-blue-600]="selectedAdminTable === tbl">
-              <span>{{ tbl }}</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
-            </button>
+          <div class="space-y-4">
+            <div *ngFor="let tbl of adminTables" class="border border-slate-100 rounded-2xl p-4 hover:border-blue-200 transition-all"
+                 [class.bg-blue-50/20]="selectedAdminTable === tbl" [class.border-blue-200]="selectedAdminTable === tbl">
+              <div class="flex items-center justify-between font-black text-sm text-slate-800 mb-3">
+                <span class="truncate">{{ tbl }}</span>
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-300" [class.bg-blue-500]="selectedAdminTable === tbl"></span>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <button (click)="selectQuickTable(tbl)" class="py-2 px-3 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border border-slate-100 text-center">
+                  🔍 View Data
+                </button>
+                <button (click)="describeTable(tbl)" class="py-2 px-3 bg-slate-50 hover:bg-purple-50 hover:text-purple-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border border-slate-100 text-center">
+                  🛠 Columns
+                </button>
+              </div>
+            </div>
           </div>
         </article>
 
-        <!-- SQL Query Editor and Table view -->
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 lg:col-span-3 space-y-8">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-2xl font-black text-slate-900 tracking-tight">เครื่องมือรันคำสั่ง SQL (SQL Query Editor)</h3>
-              <p class="text-xs font-bold text-slate-400 mt-1">สามารถพิมพ์และรันคำสั่ง SELECT, UPDATE, DELETE ได้โดยตรง</p>
-            </div>
+        <!-- Workbench Right Content: Editor, Tabs, & Results -->
+        <article class="bg-white rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-8 lg:col-span-3 space-y-6">
+          <!-- Workbench Tab Bar -->
+          <div class="flex p-1 bg-slate-100 rounded-xl" role="tablist">
+            <button
+              type="button"
+              class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all"
+              [class.bg-white]="workbenchTab === 'query'"
+              [class.text-blue-600]="workbenchTab === 'query'"
+              [class.shadow-sm]="workbenchTab === 'query'"
+              [class.text-slate-500]="workbenchTab !== 'query'"
+              (click)="workbenchTab = 'query'"
+            >
+              ⚡️ SQL Query Editor
+            </button>
+            <button
+              type="button"
+              [disabled]="!tableSchemaInfo"
+              class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              [class.bg-white]="workbenchTab === 'schema'"
+              [class.text-blue-600]="workbenchTab === 'schema'"
+              [class.shadow-sm]="workbenchTab === 'schema'"
+              [class.text-slate-500]="workbenchTab !== 'schema'"
+              (click)="workbenchTab = 'schema'"
+            >
+              🛠 Table Structure
+            </button>
           </div>
 
-          <form (ngSubmit)="executeAdminQuery()" class="space-y-6">
-            <div class="space-y-2">
-              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คำสั่ง SQL (SQL Statement)</label>
-              <textarea name="queryText" [(ngModel)]="adminQueryText" placeholder="SELECT * FROM users LIMIT 10;" rows="5" required
-                        class="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-3xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-mono text-sm text-slate-800 transition-all outline-none leading-relaxed"></textarea>
+          <!-- TAB CONTENT: SQL QUERY EDITOR -->
+          <div *ngIf="workbenchTab === 'query'" class="space-y-6">
+            <form (ngSubmit)="executeAdminQuery()" class="space-y-4">
+              <div class="space-y-2">
+                <textarea name="queryText" [(ngModel)]="adminQueryText" placeholder="SELECT * FROM users LIMIT 10;" rows="6" required
+                          class="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-mono text-sm text-slate-800 transition-all outline-none leading-relaxed"></textarea>
+              </div>
+
+              <div class="flex justify-between items-center">
+                <div class="text-xs font-bold text-slate-400">
+                  <span *ngIf="queryDuration > 0">Query took {{ queryDuration }} ms</span>
+                </div>
+                <button type="submit" class="px-6 py-3.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center gap-2">
+                  Execute Query
+                </button>
+              </div>
+            </form>
+
+            <!-- Error Notification -->
+            <div *ngIf="adminQueryError" class="bg-rose-50 border border-rose-100 rounded-2xl p-6 flex items-start gap-4">
+              <span class="text-rose-500 font-black text-xl">⚠️</span>
+              <div>
+                <h4 class="font-black text-rose-900 text-sm">Execution Error</h4>
+                <p class="text-xs text-rose-800 font-bold mt-1 font-mono leading-relaxed">{{ adminQueryError }}</p>
+              </div>
             </div>
 
-            <div class="flex justify-end gap-3">
-              <button type="submit" class="px-8 py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-slate-200 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                รันคำสั่ง SQL (Execute)
-              </button>
+            <!-- Exec Response (Affected rows) -->
+            <div *ngIf="adminQueryResults?.type === 'exec'" class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex items-start gap-4">
+              <span class="text-emerald-600 font-black text-xl">✓</span>
+              <div>
+                <h4 class="font-black text-emerald-900 text-sm">Query Executed Successfully</h4>
+                <div class="text-xs text-emerald-800 font-bold mt-1 space-y-1">
+                  <div>Rows Affected: {{ adminQueryResults.rows_affected }}</div>
+                  <div *ngIf="adminQueryResults.last_insert_id > 0">Last Insert ID: {{ adminQueryResults.last_insert_id }}</div>
+                </div>
+              </div>
             </div>
-          </form>
 
-          <!-- Error Alert -->
-          <div *ngIf="adminQueryError" class="bg-rose-50 border border-rose-200 rounded-[2rem] p-8 flex items-start gap-4">
-            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-rose-500 shrink-0 shadow-md">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            </div>
-            <div>
-              <h4 class="font-black text-rose-900">Execution Error</h4>
-              <p class="text-sm text-rose-800 font-bold mt-1 font-mono leading-relaxed">{{ adminQueryError }}</p>
-            </div>
-          </div>
+            <!-- Select Query Results -->
+            <div *ngIf="adminQueryResults?.type === 'select'" class="space-y-4 pt-4 border-t border-slate-100">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-sm font-black text-slate-800">Result Grid ({{ getQueryResultRows(adminQueryResults).length }} rows)</h4>
+                </div>
+                <button (click)="exportToCSV()" class="px-4 py-2 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 border border-transparent hover:border-emerald-200 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all">
+                  📤 Export CSV
+                </button>
+              </div>
 
-          <!-- Exec Response (Affected rows) -->
-          <div *ngIf="adminQueryResults?.type === 'exec'" class="bg-emerald-50 border border-emerald-200 rounded-[2rem] p-8 flex items-start gap-4">
-            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-500 shrink-0 shadow-md">
-              <span>✓</span>
-            </div>
-            <div>
-              <h4 class="font-black text-emerald-900">Execution Successful</h4>
-              <div class="text-sm text-emerald-800 font-bold mt-1 space-y-1">
-                <div>แถวที่ได้รับผลกระทบ (Rows Affected): {{ adminQueryResults.rows_affected }}</div>
-                <div *ngIf="adminQueryResults.last_insert_id > 0">ID ล่าสุดที่เพิ่ม (Last Insert ID): {{ adminQueryResults.last_insert_id }}</div>
+              <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm max-h-[380px] scrollbar-thin">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50/50">
+                      <th class="px-4 py-3 border-r border-b border-slate-200 text-[10px] font-black text-slate-400 text-center w-12 bg-slate-100">#</th>
+                      <th *ngFor="let col of adminQueryResults.columns" class="px-6 py-3 border-r border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">{{ col }}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 bg-white">
+                    <tr *ngFor="let row of getQueryResultRows(adminQueryResults); let idx = index" class="hover:bg-slate-50/40 transition-colors font-mono text-xs">
+                      <td class="px-4 py-3 border-r border-slate-200 text-center font-bold text-slate-400 bg-slate-50/50">{{ idx + 1 }}</td>
+                      <td *ngFor="let col of adminQueryResults.columns" class="px-6 py-3 border-r border-slate-200 text-slate-600 truncate max-w-xs" [title]="row[col] !== null ? row[col] : 'NULL'">
+                        {{ row[col] !== null ? row[col] : 'NULL' }}
+                      </td>
+                    </tr>
+                    <tr *ngIf="getQueryResultRows(adminQueryResults).length === 0">
+                      <td [attr.colspan]="adminQueryResults.columns.length + 1" class="px-6 py-12 text-center text-slate-400 font-bold">
+                        Empty Set (Query returned 0 rows)
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
 
-          <!-- Select Query Results -->
-          <div *ngIf="adminQueryResults?.type === 'select'" class="space-y-4">
-            <div class="flex items-center justify-between">
-              <h4 class="text-lg font-black text-slate-800">ผลการแสดงข้อมูล (พบ {{ getQueryResultRows(adminQueryResults).length }} รายการ)</h4>
+          <!-- TAB CONTENT: TABLE STRUCTURE -->
+          <div *ngIf="workbenchTab === 'schema' && tableSchemaInfo" class="space-y-4">
+            <div>
+              <h4 class="text-sm font-black text-slate-800">Table Schema Details: {{ selectedAdminTable }}</h4>
             </div>
 
-            <div class="overflow-x-auto border border-slate-200/80 rounded-[2rem] shadow-sm max-h-[450px]">
+            <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm">
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-slate-50/50">
-                    <th *ngFor="let col of adminQueryResults.columns" class="px-6 py-4 font-black uppercase text-slate-400 text-xs tracking-wider border-b border-slate-100 whitespace-nowrap">{{ col }}</th>
+                    <th *ngFor="let col of tableSchemaInfo.columns" class="px-6 py-4 font-black uppercase text-slate-400 text-xs tracking-wider border-b border-slate-200">{{ col }}</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white">
-                  <tr *ngFor="let row of getQueryResultRows(adminQueryResults)" class="hover:bg-slate-50/40 transition-colors">
-                    <td *ngFor="let col of adminQueryResults.columns" class="px-6 py-4 font-bold text-slate-600 max-w-xs truncate font-mono text-xs">
+                  <tr *ngFor="let row of getQueryResultRows(tableSchemaInfo)" class="hover:bg-slate-50/40 transition-colors font-mono text-xs">
+                    <td *ngFor="let col of tableSchemaInfo.columns" class="px-6 py-4 text-slate-600 font-bold">
                       {{ row[col] !== null ? row[col] : 'NULL' }}
-                    </td>
-                  </tr>
-                  <tr *ngIf="getQueryResultRows(adminQueryResults).length === 0">
-                    <td [attr.colspan]="adminQueryResults.columns.length" class="px-6 py-12 text-center text-slate-400 font-bold">
-                      การค้นหาสำเร็จ แต่ไม่มีข้อมูลตอบกลับ (Empty Set)
                     </td>
                   </tr>
                 </tbody>

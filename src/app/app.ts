@@ -196,6 +196,9 @@ export class App {
   protected adminTables: string[] = [];
   protected selectedAdminTable = '';
   protected adminQueryError = '';
+  protected workbenchTab: 'query' | 'schema' = 'query';
+  protected tableSchemaInfo: any = null;
+  protected queryDuration = 0;
 
   protected readonly viewLabels: Record<string, string> = {
     dashboard: 'ภาพรวม',
@@ -1370,8 +1373,13 @@ export class App {
 
     this.adminQueryError = '';
     this.adminQueryResults = null;
+    this.workbenchTab = 'query';
 
+    const startTime = performance.now();
     const res = await this.data.executeAdminQuery(this.adminQueryText.trim());
+    const endTime = performance.now();
+    this.queryDuration = Math.round(endTime - startTime);
+
     if (res && res.error) {
       this.adminQueryError = res.error;
       this.notifications.error(res.error, 'ผลการทำงานล้มเหลว');
@@ -1389,6 +1397,47 @@ export class App {
     this.selectedAdminTable = table;
     this.adminQueryText = `SELECT * FROM ${table} LIMIT 100`;
     void this.executeAdminQuery();
+  }
+
+  protected async describeTable(tableName: string): Promise<void> {
+    this.selectedAdminTable = tableName;
+    this.workbenchTab = 'schema';
+    this.adminQueryError = '';
+    this.tableSchemaInfo = null;
+
+    const res = await this.data.executeAdminQuery(`DESCRIBE ${tableName}`);
+    if (res && res.error) {
+      this.adminQueryError = res.error;
+      this.notifications.error(res.error, 'ไม่สามารถดึงโครงสร้างตารางได้');
+    } else {
+      this.tableSchemaInfo = res;
+    }
+  }
+
+  protected exportToCSV(): void {
+    if (!this.adminQueryResults || this.adminQueryResults.type !== 'select') return;
+    const columns = this.adminQueryResults.columns;
+    const rows = this.adminQueryResults.data;
+
+    let csvContent = columns.join(',') + '\n';
+    rows.forEach((row: any) => {
+      const line = columns.map((col: string) => {
+        let val = row[col] !== null ? String(row[col]) : '';
+        // Escape quotes
+        val = val.replace(/"/g, '""');
+        return `"${val}"`;
+      }).join(',');
+      csvContent += line + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `${this.selectedAdminTable || 'query_results'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    this.notifications.success('ส่งออกผลลัพธ์เป็น CSV สำเร็จ', 'Export CSV');
   }
 
   protected getQueryResultRows(results: any): any[] {

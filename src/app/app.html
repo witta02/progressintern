@@ -327,13 +327,22 @@
         <article *ngIf="currentUser?.role === 'company'" class="bg-white rounded-[2.5rem] p-12 text-slate-900 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
           <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
-            <div class="lg:col-span-4">
+            <div class="lg:col-span-4" *ngIf="!selectedJobToEdit">
               <h3 class="text-4xl font-black mb-4 tracking-tight">Open a new position</h3>
               <p class="text-slate-500 font-medium text-lg leading-relaxed">Start finding the next generation of talent for your organization today.</p>
             </div>
-            <form class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-5" (ngSubmit)="addJob()">
-              <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
-              <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+            <div class="lg:col-span-4" *ngIf="selectedJobToEdit">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-4xl font-black tracking-tight text-blue-600">Edit position</h3>
+                <button type="button" (click)="cancelEditJob()" class="text-slate-400 hover:text-slate-900 font-bold text-sm">Cancel</button>
+              </div>
+              <p class="text-slate-500 font-medium text-lg leading-relaxed">Update the details of your job posting below.</p>
+            </div>
+
+            <!-- Create Form -->
+            <form *ngIf="!selectedJobToEdit" class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-5" (ngSubmit)="addJob()">
+              <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
               
               <div class="grid grid-cols-4 gap-3 md:col-span-2">
                 <div class="space-y-1">
@@ -354,10 +363,51 @@
                 </div>
               </div>
 
-              <textarea name="jobDescription" [(ngModel)]="newJob.description" rows="1" placeholder="Short Summary" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="jobDescription" [(ngModel)]="newJob.description" rows="2" placeholder="Short Summary / Description" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required></textarea>
+              <textarea name="jobRequirements" [(ngModel)]="newJob.requirements" rows="2" placeholder="Job Requirements (เช่น ทักษะที่ต้องการ, คุณสมบัติ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="jobBenefits" [(ngModel)]="newJob.benefits" rows="2" placeholder="Benefits (เช่น เบี้ยเลี้ยง, สวัสดิการ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+
               <button type="submit" class="md:col-span-2 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/30">
                 Create Posting
               </button>
+            </form>
+
+            <!-- Edit Form -->
+            <form *ngIf="selectedJobToEdit" class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-5" (ngSubmit)="updateJob()">
+              <input name="editJobTitle" [(ngModel)]="editJobForm.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="editJobSlots" type="number" min="1" [(ngModel)]="editJobForm.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              
+              <div class="grid grid-cols-4 gap-3 md:col-span-2">
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Work Days</label>
+                  <input name="editJobWorkDays" [(ngModel)]="editJobForm.workDays" placeholder="Mon-Fri" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-in</label>
+                  <input name="editJobCheckin" type="time" [(ngModel)]="editJobForm.checkinTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-out</label>
+                  <input name="editJobCheckout" type="time" [(ngModel)]="editJobForm.checkoutTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Late After</label>
+                  <input name="editJobLated" type="time" [(ngModel)]="editJobForm.latedTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                </div>
+              </div>
+
+              <textarea name="editJobDescription" [(ngModel)]="editJobForm.description" rows="2" placeholder="Short Summary / Description" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required></textarea>
+              <textarea name="editJobRequirements" [(ngModel)]="editJobForm.requirements" rows="2" placeholder="Job Requirements (เช่น ทักษะที่ต้องการ, คุณสมบัติ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="editJobBenefits" [(ngModel)]="editJobForm.benefits" rows="2" placeholder="Benefits (เช่น เบี้ยเลี้ยง, สวัสดิการ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+
+              <div class="md:col-span-2 flex gap-4">
+                <button type="submit" class="flex-1 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-blue-500/20">
+                  Save Changes
+                </button>
+                <button type="button" (click)="cancelEditJob()" class="px-8 py-5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-xl transition-all">
+                  Cancel
+                </button>
+              </div>
             </form>
           </div>
         </article>
@@ -370,6 +420,15 @@
                   <span class="px-5 py-2 bg-blue-50 text-blue-600 rounded-full text-[11px] font-black uppercase tracking-[0.2em] border border-blue-100 shadow-sm">
                     {{ job.status }}
                   </span>
+                  <button *ngIf="currentUser?.role === 'company' && job.companyId === currentCompanyId" 
+                          type="button" 
+                          (click)="editJob(job)" 
+                          class="p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all"
+                          title="แก้ไขประกาศรับสมัครงาน">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
                   <button *ngIf="currentUser?.role === 'company' && job.companyId === currentCompanyId" 
                           type="button" 
                           (click)="deleteJob(job)" 
@@ -402,8 +461,19 @@
                 </div>
               </div>
 
-              <div class="bg-slate-50 rounded-3xl p-8 mb-10 border border-slate-100">
-                <p class="text-slate-600 font-medium italic leading-relaxed text-lg line-clamp-3">"{{ jobSummary(job) }}"</p>
+              <div class="bg-slate-50 rounded-3xl p-8 mb-10 border border-slate-100 space-y-4">
+                <div>
+                  <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">รายละเอียดงาน (Description)</h4>
+                  <p class="text-slate-700 font-bold leading-relaxed text-base">{{ job.description }}</p>
+                </div>
+                <div *ngIf="job.requirements">
+                  <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">คุณสมบัติ/ความต้องการ (Requirements)</h4>
+                  <p class="text-slate-600 font-semibold leading-relaxed text-sm whitespace-pre-line">{{ job.requirements }}</p>
+                </div>
+                <div *ngIf="job.benefits">
+                  <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">สวัสดิการ/เบี้ยเลี้ยง (Benefits)</h4>
+                  <p class="text-slate-600 font-semibold leading-relaxed text-sm whitespace-pre-line">{{ job.benefits }}</p>
+                </div>
               </div>
             </div>
             <button *ngIf="canApply(job)" (click)="applyJob(job)" 

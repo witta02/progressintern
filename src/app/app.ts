@@ -189,6 +189,20 @@ export class App {
     isActive: true
   };
 
+  protected selectedJobToEdit: JobPosting | null = null;
+
+  protected editJobForm = {
+    title: '',
+    description: '',
+    requirements: '',
+    benefits: '',
+    checkinTime: '09:00',
+    checkoutTime: '17:00',
+    latedTime: '09:15',
+    workDays: 'Monday - Friday',
+    slots: 1
+  };
+
   protected adminUserSearchQuery = '';
   protected adminUserRoleFilter = '';
   protected adminUserStatusFilter = '';
@@ -901,6 +915,56 @@ export class App {
       slots: 1 
     };
     this.notifications.success(`โพสต์ตำแหน่ง ${title} แล้ว`, 'ตำแหน่งงาน');
+  }
+
+  protected editJob(job: JobPosting): void {
+    this.selectedJobToEdit = job;
+    this.editJobForm = {
+      title: job.title,
+      description: job.description ?? '',
+      requirements: job.requirements ?? '',
+      benefits: job.benefits ?? '',
+      checkinTime: job.checkinTime ? job.checkinTime.slice(0, 5) : '09:00',
+      checkoutTime: job.checkoutTime ? job.checkoutTime.slice(0, 5) : '17:00',
+      latedTime: job.latedTime ? job.latedTime.slice(0, 5) : '09:15',
+      workDays: job.workDays || 'Monday - Friday',
+      slots: job.slots || 1
+    };
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  protected cancelEditJob(): void {
+    this.selectedJobToEdit = null;
+  }
+
+  protected updateJob(): void {
+    if (!this.selectedJobToEdit || !this.editJobForm.title.trim()) {
+      this.notifications.warning('กรุณากรอกชื่อตำแหน่งงาน', 'โพสต์งาน');
+      return;
+    }
+
+    const title = this.editJobForm.title.trim();
+    const ensureSeconds = (timeStr: string) => {
+      return timeStr.length === 5 ? timeStr + ':00' : timeStr;
+    };
+
+    this.data.updateJob(this.selectedJobToEdit.id, {
+      companyId: this.selectedJobToEdit.companyId,
+      title,
+      description: this.editJobForm.description.trim() || 'รายละเอียดงานฝึกงาน',
+      requirements: this.editJobForm.requirements.trim() || 'พร้อมเรียนรู้งาน',
+      benefits: this.editJobForm.benefits.trim() || undefined,
+      checkinTime: ensureSeconds(this.editJobForm.checkinTime),
+      checkoutTime: ensureSeconds(this.editJobForm.checkoutTime),
+      latedTime: ensureSeconds(this.editJobForm.latedTime),
+      workDays: this.editJobForm.workDays.trim() || 'Monday - Friday',
+      slots: Number(this.editJobForm.slots) || 1
+    });
+
+    this.selectedJobToEdit = null;
+    this.notifications.success(`แก้ไขประกาศตำแหน่ง ${title} แล้ว`, 'ตำแหน่งงาน');
   }
 
   protected deleteJob(job: JobPosting): void {

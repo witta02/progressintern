@@ -199,6 +199,21 @@ export class InternshipApiService {
     }, mapJobPosting);
   }
 
+  updateJob(id: number, body: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Observable<JobPosting | null> {
+    return this.putOne<ApiJobPosting, JobPosting>(`jobs/${id}`, {
+      company_id: body.companyId,
+      title: body.title,
+      description: body.description ?? '',
+      requirements: body.requirements ?? '',
+      benefits: body.benefits ?? '',
+      checkin_time: body.checkinTime,
+      checkout_time: body.checkoutTime,
+      lated_time: body.latedTime,
+      work_days: body.workDays,
+      slots: body.slots ?? 1
+    }, mapJobPosting);
+  }
+
   deleteJob(id: number): Observable<any> {
     if (!this.apiEnabled()) {
       return of(null);

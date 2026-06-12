@@ -309,6 +309,19 @@ export class InternshipDataService {
     }
   }
 
+  updateJob(id: number, job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): void {
+    if (this.api.apiEnabled()) {
+      void firstValueFrom(this.api.updateJob(id, job)).then(() => {
+        void this.refreshFromApi();
+      });
+    } else {
+      this.jobPostings = this.jobPostings.map((item) =>
+        item.id === id ? { ...item, ...job } : item
+      );
+      this.persist();
+    }
+  }
+
   deleteJob(id: number): void {
     if (this.api.apiEnabled()) {
       void firstValueFrom(this.api.deleteJob(id)).then(() => {

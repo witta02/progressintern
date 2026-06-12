@@ -142,6 +142,8 @@ func SetupRoutes(router *gin.Engine) {
 		adminGroup.POST("/codes", handlers.CreateCodeHandler)
 		adminGroup.PUT("/codes/:id", handlers.UpdateCodeHandler)
 		adminGroup.DELETE("/codes/:id", handlers.DeleteCodeHandler)
+		adminGroup.GET("/tables", handlers.GetTablesHandler)
+		adminGroup.POST("/query", handlers.ExecuteQueryHandler)
 	}
 }
 

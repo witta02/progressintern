@@ -263,3 +263,114 @@ func DeleteCodeHandler(c *gin.Context) {
 		"message": "ลบรหัสเชิญสำเร็จ",
 	})
 }
+
+// GetTablesHandler returns list of all tables in the current database
+func GetTablesHandler(c *gin.Context) {
+	rows, err := config.DB.Query("SHOW TABLES")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ดึงข้อมูลตารางล้มเหลว: " + err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var tables []string
+	for rows.Next() {
+		var table string
+		if err := rows.Scan(&table); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "การดึงข้อมูลผิดพลาด: " + err.Error()})
+			return
+		}
+		tables = append(tables, table)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  200,
+		"message": "ดึงข้อมูลตารางสำเร็จ",
+		"data":    tables,
+	})
+}
+
+// ExecuteQueryHandler runs arbitrary SQL query (Admin only)
+func ExecuteQueryHandler(c *gin.Context) {
+	var input struct {
+		Query string `json:"query" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
+		return
+	}
+
+	query := strings.TrimSpace(input.Query)
+	upperQuery := strings.ToUpper(query)
+	isSelect := strings.HasPrefix(upperQuery, "SELECT") || strings.HasPrefix(upperQuery, "SHOW") || strings.HasPrefix(upperQuery, "DESCRIBE") || strings.HasPrefix(upperQuery, "EXPLAIN")
+
+	if isSelect {
+		rows, err := config.DB.Query(query)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "Query execution failed: " + err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		columns, err := rows.Columns()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "Columns retrieval failed: " + err.Error()})
+			return
+		}
+
+		var result []map[string]interface{}
+		for rows.Next() {
+			values := make([]interface{}, len(columns))
+			valuePtrs := make([]interface{}, len(columns))
+			for i := range columns {
+				valuePtrs[i] = &values[i]
+			}
+
+			if err := rows.Scan(valuePtrs...); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "Scan failed: " + err.Error()})
+				return
+			}
+
+			rowMap := make(map[string]interface{})
+			for i, col := range columns {
+				val := values[i]
+				b, ok := val.([]byte)
+				if ok {
+					rowMap[col] = string(b)
+				} else {
+					rowMap[col] = val
+				}
+			}
+			result = append(result, rowMap)
+		}
+
+		if result == nil {
+			result = []map[string]interface{}{}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  200,
+			"message": "Query executed successfully",
+			"type":    "select",
+			"columns": columns,
+			"data":    result,
+		})
+	} else {
+		res, err := config.DB.Exec(query)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "Exec failed: " + err.Error()})
+			return
+		}
+
+		rowsAffected, _ := res.RowsAffected()
+		lastInsertID, _ := res.LastInsertId()
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":        200,
+			"message":       "Query executed successfully",
+			"type":          "exec",
+			"rows_affected": rowsAffected,
+			"last_insert_id": lastInsertID,
+		})
+	}
+}

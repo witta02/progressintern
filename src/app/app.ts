@@ -552,6 +552,7 @@ export class App {
     this.authMode = 'login';
     this.finishLogin(result.user);
     this.notifications.success(`ยินดีต้อนรับ ${result.user.name}`, 'สมัครสมาชิกสำเร็จ');
+    window.location.reload();
   }
 
   protected onCodeChange(code: string): void {
@@ -768,6 +769,7 @@ export class App {
       'ส่งใบสมัคร'
     );
     this.setActiveView('applications');
+    window.location.reload();
   }
 
   protected updateApplication(application: Application, status: ApplicationStatus): void {
@@ -822,6 +824,7 @@ export class App {
       `สร้างฝึกงานให้ ${student} ตำแหน่ง ${job.title} แล้ว`,
       'ฝึกงาน'
     );
+    window.location.reload();
   }
 
   protected addStudent(): void {
@@ -852,6 +855,7 @@ export class App {
     });
     this.notifications.success(`สร้างบัญชีนักศึกษา ${name} แล้ว`, 'เพิ่มนักศึกษา');
     this.newStudent = { name: '', email: '', password: 'student123' };
+    window.location.reload();
   }
   
   protected approveStudent(student: User): void {
@@ -863,11 +867,13 @@ export class App {
     }
     this.data.updateUser(student.id, updates);
     this.notifications.success(`อนุมัติผู้ใช้ ${student.name} เรียบร้อยแล้ว`, 'จัดการผู้ใช้');
+    window.location.reload();
   }
   
   protected rejectStudent(student: User): void {
     this.data.updateUser(student.id, { status: 'rejected' });
     this.notifications.warning(`ปฏิเสธบัญชีของ ${student.name} แล้ว`, 'จัดการผู้ใช้');
+    window.location.reload();
   }
   
   protected claimStudent(student: User): void {
@@ -875,6 +881,7 @@ export class App {
     if (!user) return;
     this.data.updateUser(student.id, { school: user.school, status: 'active' });
     this.notifications.success(`แก้ไขโรงเรียนและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
+    window.location.reload();
   }
 
   protected saveProfile(): void {
@@ -888,6 +895,7 @@ export class App {
       resumeUrl: this.profileDraft.resumeUrl
     });
     this.notifications.success('บันทึกข้อมูลส่วนตัวแล้ว', 'โปรไฟล์');
+    window.location.reload();
   }
 
   protected addJob(): void {
@@ -966,12 +974,14 @@ export class App {
 
     this.selectedJobToEdit = null;
     this.notifications.success(`แก้ไขประกาศตำแหน่ง ${title} แล้ว`, 'ตำแหน่งงาน');
+    window.location.reload();
   }
 
   protected deleteJob(job: JobPosting): void {
     if (confirm(`คุณแน่ใจหรือไม่ที่จะลบประกาศรับสมัครงาน "${job.title}"?`)) {
       this.data.deleteJob(job.id);
       this.notifications.warning(`ลบประกาศรับสมัครงาน "${job.title}" แล้ว`, 'ตำแหน่งงาน');
+      window.location.reload();
     }
   }
 
@@ -1016,21 +1026,26 @@ export class App {
         },
         (error) => {
           Swal.close();
-          console.error('[App] Geolocation check-in error', error);
-          Swal.fire({
-            title: 'ไม่สามารถดึงตำแหน่ง GPS ได้',
-            text: 'ระบบไม่สามารถระบุพิกัดในขณะนี้ได้ คุณต้องการลงเวลาเข้างานต่อโดยไม่มีพิกัดแผนที่หรือไม่?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'ลงเวลาต่อ',
-            cancelButtonText: 'ยกเลิก'
-          }).then((result) => {
-            if (result.isConfirmed) {
-              this.executeCheckIn();
+          console.error('[App] Geolocation check-in error — trying IP fallback', error);
+          // PC fallback: use IP-based geolocation
+          this.getIpLocation().then(coords => {
+            if (coords) {
+              this.executeCheckIn(coords.lat, coords.lon);
+            } else {
+              Swal.fire({
+                title: 'ไม่สามารถดึงตำแหน่งได้',
+                text: 'ระบบไม่สามารถระบุพิกัดได้ คุณต้องการลงเวลาเข้างานต่อโดยไม่มีพิกัดหรือไม่?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'ลงเวลาต่อ',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.isConfirmed) this.executeCheckIn();
+              });
             }
           });
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
       this.executeCheckIn();
@@ -1114,21 +1129,26 @@ export class App {
         },
         (error) => {
           Swal.close();
-          console.error('[App] Geolocation check-out error', error);
-          Swal.fire({
-            title: 'ไม่สามารถดึงตำแหน่ง GPS ได้',
-            text: 'ระบบไม่สามารถระบุพิกัดในขณะนี้ได้ คุณต้องการลงเวลาออกงานต่อโดยไม่มีพิกัดแผนที่หรือไม่?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'ลงเวลาต่อ',
-            cancelButtonText: 'ยกเลิก'
-          }).then((result) => {
-            if (result.isConfirmed) {
-              this.executeCheckOut(openAttendance.id);
+          console.error('[App] Geolocation check-out error — trying IP fallback', error);
+          // PC fallback: use IP-based geolocation
+          this.getIpLocation().then(coords => {
+            if (coords) {
+              this.executeCheckOut(openAttendance.id, coords.lat, coords.lon);
+            } else {
+              Swal.fire({
+                title: 'ไม่สามารถดึงตำแหน่งได้',
+                text: 'ระบบไม่สามารถระบุพิกัดได้ คุณต้องการลงเวลาออกงานต่อโดยไม่มีพิกัดหรือไม่?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'ลงเวลาต่อ',
+                cancelButtonText: 'ยกเลิก'
+              }).then((result) => {
+                if (result.isConfirmed) this.executeCheckOut(openAttendance.id);
+              });
             }
           });
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
       this.executeCheckOut(openAttendance.id);
@@ -1151,6 +1171,21 @@ export class App {
       this.notifications.success(`อนุมัติการลงเวลาของ ${student} แล้ว`, 'อนุมัติ');
     } else {
       this.notifications.warning(`ปฏิเสธการลงเวลาของ ${student} แล้ว (เปลี่ยนเป็น ขาด)`, 'ปฏิเสธ');
+    }
+  }
+
+  /** IP-based geolocation fallback for desktop browsers where GPS is inaccurate */
+  private async getIpLocation(): Promise<{ lat: number; lon: number } | null> {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.latitude && data.longitude) {
+        return { lat: data.latitude, lon: data.longitude };
+      }
+      return null;
+    } catch {
+      return null;
     }
   }
 
@@ -1200,6 +1235,7 @@ export class App {
     this.logbookTitle = '';
     this.logbookText = '';
     this.notifications.success('ส่งบันทึกแล้ว (รออนุมัติ)', 'บันทึก');
+    window.location.reload();
   }
 
   protected reviewLogbook(logbook: Logbook, status: LogbookStatus): void {
@@ -1240,6 +1276,7 @@ export class App {
     
     this.leaveForm.reason = '';
     this.notifications.success('ส่งคำขอลาแล้ว (รออนุมัติ)', 'การลา');
+    window.location.reload();
   }
 
   protected setLeaveStatus(leave: LeaveRequest, status: 'approved' | 'rejected'): void {
@@ -1251,6 +1288,7 @@ export class App {
     } else {
       this.notifications.warning(`ปฏิเสธคำขอลาของ ${student} แล้ว`, 'การลา');
     }
+    window.location.reload();
   }
 
   protected addEvaluation(): void {
@@ -1277,6 +1315,7 @@ export class App {
     this.evaluationFeedback = '';
     this.evaluationScore = 85;
     this.notifications.success(`บันทึกการประเมิน ${student} คะแนน ${score}`, 'ประเมินผล');
+    window.location.reload();
   }
 
   protected hasOpenAttendance(): boolean {
@@ -1464,6 +1503,7 @@ export class App {
     }
     this.data.updateUser(user.id, { status: newStatus });
     this.notifications.success(`ปรับปรุงสถานะของ ${user.name} เป็น ${newStatus} แล้ว`, 'จัดการผู้ใช้');
+    window.location.reload();
   }
 
   protected async createAdminSchool(): Promise<void> {
@@ -1479,6 +1519,7 @@ export class App {
       this.notifications.success(`เพิ่มสถานศึกษา ${name} สำเร็จ`, 'จัดการสถานศึกษา');
       this.adminSchoolInput.name = '';
     }
+    window.location.reload();
   }
 
   protected async createAdminCode(): Promise<void> {
@@ -1502,6 +1543,7 @@ export class App {
       this.adminCodeForm.maxUses = null;
       this.adminCodeForm.expiresAt = null;
     }
+    window.location.reload();
   }
 
   protected editCode(code: any): void {
@@ -1538,6 +1580,7 @@ export class App {
       this.notifications.success(`อัปเดตรหัสเชิญเรียบร้อยแล้ว`, 'จัดการรหัสเชิญ');
       this.selectedCodeToEdit = null;
     }
+    window.location.reload();
   }
 
   protected async deleteAdminCode(code: any): Promise<void> {
@@ -1548,6 +1591,7 @@ export class App {
       } else {
         this.notifications.success(`ลบรหัสเชิญ "${code.code}" สำเร็จ`, 'จัดการรหัสเชิญ');
       }
+      window.location.reload();
     }
   }
 
@@ -1581,6 +1625,7 @@ export class App {
         void this.data.refreshFromApi();
       }
     }
+    window.location.reload();
   }
 
   protected selectQuickTable(table: string): void {
@@ -1602,6 +1647,7 @@ export class App {
     } else {
       this.tableSchemaInfo = res;
     }
+    window.location.reload();
   }
 
   protected exportToCSV(): void {
@@ -1628,6 +1674,7 @@ export class App {
     link.click();
     document.body.removeChild(link);
     this.notifications.success('ส่งออกผลลัพธ์เป็น CSV สำเร็จ', 'Export CSV');
+    window.location.reload();
   }
 
   protected getQueryResultRows(results: any): any[] {

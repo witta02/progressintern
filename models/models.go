@@ -32,13 +32,21 @@ type RegisterInput struct {
 	Name         string `json:"name" binding:"required,min=2,max=255"`
 	Email        string `json:"email" binding:"required,email"`
 	Password     string `json:"password" binding:"required,min=6"`
-	Role         string `json:"role" binding:"required,oneof=student company advisor admin"`
+	Code         string `json:"code" binding:"required"` // รหัสลงทะเบียน / รหัสเชิญ
+	Role         string `json:"role" binding:"omitempty,oneof=student company advisor admin"`
 	Phone        string `json:"phone" binding:"omitempty"`
 	School       string `json:"school"`
 	CompanyName  string `json:"company_name"`
 	Description  string `json:"description"`
 	Address      string `json:"address"`
 	ContactEmail string `json:"contact_email"`
+}
+
+type ValidateCodeResponse struct {
+	Code       string `json:"code"`
+	Role       string `json:"role"`
+	SchoolName string `json:"school_name,omitempty"`
+	SchoolID   int    `json:"school_id,omitempty"`
 }
 
 type JWTResponse struct {
@@ -351,4 +359,44 @@ type PaginatedResponse struct {
 	Page     int         `json:"page"`
 	PageSize int         `json:"page_size"`
 	Total    int64       `json:"total"`
+}
+
+// ==================== School & Codes ====================
+
+type School struct {
+	ID        int       `json:"id" db:"id"`
+	Name      string    `json:"name" db:"name"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+}
+
+type EnrollmentCode struct {
+	ID         int        `json:"id" db:"id"`
+	SchoolID   *int       `json:"school_id" db:"school_id"`
+	SchoolName string     `json:"school_name,omitempty" db:"school_name"`
+	Role       string     `json:"role" db:"role"`
+	Code       string     `json:"code" db:"code"`
+	MaxUses    *int       `json:"max_uses" db:"max_uses"`
+	UsedCount  int        `json:"used_count" db:"used_count"`
+	ExpiresAt  *time.Time `json:"expires_at" db:"expires_at"`
+	IsActive   bool       `json:"is_active" db:"is_active"`
+	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
+}
+
+type CreateSchoolInput struct {
+	Name string `json:"name" binding:"required,min=2,max=255"`
+}
+
+type CreateCodeInput struct {
+	SchoolID  *int       `json:"school_id"`
+	Role      string     `json:"role" binding:"required,oneof=student advisor company"`
+	Code      string     `json:"code" binding:"required,min=3,max=100"`
+	MaxUses   *int       `json:"max_uses"`
+	ExpiresAt *time.Time `json:"expires_at"`
+}
+
+type UpdateCodeInput struct {
+	Code      string     `json:"code" binding:"required,min=3,max=100"`
+	MaxUses   *int       `json:"max_uses"`
+	ExpiresAt *time.Time `json:"expires_at"`
+	IsActive  *bool      `json:"is_active"`
 }

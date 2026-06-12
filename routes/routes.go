@@ -35,6 +35,7 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		authGroup.POST("/register", handlers.RegisterHandler)
 		authGroup.POST("/login", handlers.LoginHandler)
+		authGroup.GET("/validate-code", handlers.ValidateCodeHandler)
 	}
 
 	// ========================================================
@@ -128,5 +129,19 @@ func SetupRoutes(router *gin.Engine) {
 		leaveGroup.GET("", handlers.GetAllLeavesHandler)
 		leaveGroup.PUT("/:id/status", handlers.UpdateLeaveStatusHandler)
 	}
+
+	// ========================================================
+	// 👑 Admin Management Routes
+	// ========================================================
+	adminGroup := router.Group("/api/admin")
+	adminGroup.Use(middleware.AuthMiddleware(), middleware.RequireRole("admin"))
+	{
+		adminGroup.GET("/schools", handlers.GetAllSchoolsHandler)
+		adminGroup.POST("/schools", handlers.CreateSchoolHandler)
+		adminGroup.GET("/codes", handlers.GetAllCodesHandler)
+		adminGroup.POST("/codes", handlers.CreateCodeHandler)
+		adminGroup.PUT("/codes/:id", handlers.UpdateCodeHandler)
+		adminGroup.DELETE("/codes/:id", handlers.DeleteCodeHandler)
 	}
+}
 

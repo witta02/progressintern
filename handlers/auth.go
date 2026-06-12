@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"fmt"
 	"internship-backend/config"
 	"internship-backend/models"
@@ -24,6 +25,72 @@ func getJWTKey() []byte {
 }
 
 // ========================================================
+// [GET] ตรวจสอบรหัสลงทะเบียน/รหัสเชิญ
+// ========================================================
+func ValidateCodeHandler(c *gin.Context) {
+	code := c.Query("code")
+	if code == "" {
+		c.JSON(400, gin.H{"status": 400, "error": "กรุณาระบุรหัสสมัครเรียนหรือรหัสเชิญ"})
+		return
+	}
+
+	var role string
+	var schoolID sql.NullInt64
+	var schoolName sql.NullString
+	var maxUses sql.NullInt64
+	var usedCount int
+	var expiresAt *time.Time
+	var isActive bool
+
+	err := config.DB.QueryRow(`
+		SELECT ec.role, ec.school_id, s.name, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active 
+		FROM enrollment_codes ec
+		LEFT JOIN schools s ON ec.school_id = s.id
+		WHERE ec.code = ?
+	`, code).Scan(&role, &schoolID, &schoolName, &maxUses, &usedCount, &expiresAt, &isActive)
+
+	if err == sql.ErrNoRows {
+		c.JSON(404, gin.H{"status": 404, "error": "รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง"})
+		return
+	} else if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "ข้อผิดพลาดระบบ: " + err.Error()})
+		return
+	}
+
+	if !isActive {
+		c.JSON(400, gin.H{"status": 400, "error": "รหัสนี้ถูกระงับการใช้งานแล้ว"})
+		return
+	}
+
+	if expiresAt != nil && expiresAt.Before(time.Now()) {
+		c.JSON(400, gin.H{"status": 400, "error": "รหัสนี้หมดอายุการใช้งานแล้ว"})
+		return
+	}
+
+	if maxUses.Valid && int64(usedCount) >= maxUses.Int64 {
+		c.JSON(400, gin.H{"status": 400, "error": "รหัสนี้มีการใช้ครบกำหนดแล้ว"})
+		return
+	}
+
+	resp := models.ValidateCodeResponse{
+		Code: code,
+		Role: role,
+	}
+	if schoolID.Valid {
+		resp.SchoolID = int(schoolID.Int64)
+	}
+	if schoolName.Valid {
+		resp.SchoolName = schoolName.String
+	}
+
+	c.JSON(200, gin.H{
+		"status":  200,
+		"message": "รหัสถูกต้อง",
+		"data":    resp,
+	})
+}
+
+// ========================================================
 // [POST] สมัครสมาชิก
 // ========================================================
 func RegisterHandler(c *gin.Context) {
@@ -40,38 +107,87 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(input.Password), 10)
-	
-	// Prevent registration as admin
-	if input.Role == "admin" {
+
+	// Validate Enrollment Code using transaction
+	tx, err := config.DB.Begin()
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "ไม่สามารถทำรายการได้: " + err.Error()})
+		return
+	}
+	defer tx.Rollback()
+
+	var codeID int
+	var role string
+	var schoolID sql.NullInt64
+	var schoolName sql.NullString
+	var maxUses sql.NullInt64
+	var usedCount int
+	var expiresAt *time.Time
+	var isActive bool
+
+	err = tx.QueryRow(`
+		SELECT ec.id, ec.role, ec.school_id, s.name, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active 
+		FROM enrollment_codes ec
+		LEFT JOIN schools s ON ec.school_id = s.id
+		WHERE ec.code = ? FOR UPDATE
+	`, input.Code).Scan(&codeID, &role, &schoolID, &schoolName, &maxUses, &usedCount, &expiresAt, &isActive)
+
+	if err == sql.ErrNoRows {
+		c.JSON(400, gin.H{"status": 400, "error": "รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง"})
+		return
+	} else if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "ข้อผิดพลาดฐานข้อมูล: " + err.Error()})
+		return
+	}
+
+	if !isActive {
+		c.JSON(400, gin.H{"status": 400, "error": "รหัสนี้ถูกระงับการใช้งานแล้ว"})
+		return
+	}
+
+	if expiresAt != nil && expiresAt.Before(time.Now()) {
+		c.JSON(400, gin.H{"status": 400, "error": "รหัสนี้หมดอายุการใช้งานแล้ว"})
+		return
+	}
+
+	if maxUses.Valid && int64(usedCount) >= maxUses.Int64 {
+		c.JSON(400, gin.H{"status": 400, "error": "รหัสนี้มีการใช้ครบกำหนดแล้ว"})
+		return
+	}
+
+	resolvedRole := role
+	var resolvedSchoolID interface{}
+	var resolvedSchoolName string
+
+	if schoolID.Valid {
+		resolvedSchoolID = schoolID.Int64
+	} else {
+		resolvedSchoolID = nil
+	}
+
+	if schoolName.Valid {
+		resolvedSchoolName = schoolName.String
+	} else {
+		resolvedSchoolName = "-" // Default for non-school users
+	}
+
+	if resolvedRole == "admin" {
 		c.JSON(400, gin.H{"status": 400, "error": "ไม่สามารถสมัครสมาชิกเป็นผู้ดูแลระบบได้"})
 		return
 	}
 
-	status := "pending"
-	if input.Role == "student" {
-		if input.School != "" {
-			var advisorCount int
-			err := config.DB.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'advisor' AND school = ?", input.School).Scan(&advisorCount)
-			if err == nil && advisorCount > 0 {
-				status = "active"
-			}
-		}
+	status := "active"
+	if resolvedRole == "advisor" {
+		status = "pending"
 	}
 
-
-	// Ensure school is never empty for users table if it's NOT NULL
-	schoolValue := input.School
-	if schoolValue == "" {
-		schoolValue = "-" // Default value for non-student/advisor roles
-	}
-
-	result, err := config.DB.Exec(
-		"INSERT INTO users (name, email, password, role, phone, school, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		input.Name, input.Email, string(hashed), input.Role, input.Phone, schoolValue, status,
+	result, err := tx.Exec(`
+		INSERT INTO users (name, email, password, role, phone, school, school_id, status) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		input.Name, input.Email, string(hashed), resolvedRole, input.Phone, resolvedSchoolName, resolvedSchoolID, status,
 	)
 	if err != nil {
 		fmt.Printf("❌ Register DB error: %v\n", err)
-		// Check for duplicate entry error (standard MySQL error code 1062)
 		if strings.Contains(err.Error(), "1062") || strings.Contains(err.Error(), "Duplicate entry") {
 			c.JSON(409, gin.H{"status": 409, "error": "อีเมลนี้ถูกใช้งานไปแล้ว"})
 		} else {
@@ -81,10 +197,8 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	userID, _ := result.LastInsertId()
-	writeAuditLog(int(userID), "REGISTER", c.ClientIP())
 
-	// Auto-create company profile when role=company
-	if input.Role == "company" {
+	if resolvedRole == "company" {
 		companyName := input.CompanyName
 		if companyName == "" {
 			companyName = input.Name
@@ -94,7 +208,7 @@ func RegisterHandler(c *gin.Context) {
 			contactEmail = input.Email
 		}
 		
-		_, compErr := config.DB.Exec(
+		_, compErr := tx.Exec(
 			"INSERT INTO companies (user_id, company_name, description, address, contact_email) VALUES (?, ?, ?, ?, ?)",
 			userID, companyName, input.Description, input.Address, contactEmail,
 		)
@@ -102,6 +216,19 @@ func RegisterHandler(c *gin.Context) {
 			fmt.Printf("⚠️ Could not create company profile: %v\n", compErr)
 		}
 	}
+
+	_, err = tx.Exec("UPDATE enrollment_codes SET used_count = used_count + 1 WHERE id = ?", codeID)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "ไม่สามารถอัปเดตข้อมูลรหัสเชิญได้: " + err.Error()})
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "บันทึกรายการไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	writeAuditLog(int(userID), "REGISTER", c.ClientIP())
 
 	c.JSON(201, gin.H{"status": 201, "message": "สมัครสมาชิกสำเร็จ"})
 }

@@ -31,7 +31,7 @@ func SetupRoutes(router *gin.Engine) {
 	// 🔐 Authentication Routes (ไม่ต้อง token)
 	// ========================================================
 	authGroup := router.Group("/api/auth")
-	authGroup.Use(middleware.RateLimiter(5, time.Minute))
+	authGroup.Use(middleware.RateLimiter(30, time.Minute))
 	{
 		authGroup.POST("/register", handlers.RegisterHandler)
 		authGroup.POST("/login", handlers.LoginHandler)

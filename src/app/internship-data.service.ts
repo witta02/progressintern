@@ -19,7 +19,9 @@ import {
   Role,
   User,
   UserStatus,
-  VerificationStatus
+  VerificationStatus,
+  School,
+  EnrollmentCode
 } from './internship.models';
 
 @Injectable({ providedIn: 'root' })
@@ -40,6 +42,9 @@ export class InternshipDataService {
   /** Set after API load attempt */
   apiConnected = false;
   apiLoadError = '';
+
+  schools: School[] = [];
+  enrollmentCodes: EnrollmentCode[] = [];
 
   constructor() {
     if (environment.useMockData) {
@@ -72,6 +77,17 @@ export class InternshipDataService {
     this.leaves = snapshot.leaves;
     this.apiConnected = true;
     this.apiLoadError = '';
+
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('intern-manager-api-token-v1')) {
+      try {
+        const schools = await firstValueFrom(this.api.getAdminSchools());
+        this.schools = schools || [];
+        const codes = await firstValueFrom(this.api.getAdminCodes());
+        this.enrollmentCodes = codes || [];
+      } catch (e) {
+        // Safe fail if user is not admin
+      }
+    }
   }
 
   companyForUser(userId: number): Company | undefined {
@@ -85,10 +101,12 @@ export class InternshipDataService {
   addStudent(student: Omit<User, 'id' | 'role' | 'status' | 'password'> & { password?: string, advisorId: number }): void {
     const payload = { ...student, role: 'student' as Role, status: 'active' as UserStatus };
     if (this.api.apiEnabled()) {
+      const code = student.school?.toLowerCase().includes('chula') ? 'CU-STU-2026' : 'BU-STU-2026';
       void firstValueFrom(this.api.registerWithoutLogin({
         name: student.name,
         email: student.email,
         password: student.password || 'student123',
+        code: code,
         role: 'student',
         school: student.school
       })).then(() => {
@@ -141,9 +159,10 @@ export class InternshipDataService {
     const name = input.name.trim();
     const email = input.email.trim().toLowerCase();
     const password = input.password;
+    const code = input.code.trim();
 
-    if (!name || !email || !password) {
-      return { error: 'กรุณากรอกชื่อ อีเมล และรหัสผ่าน' };
+    if (!name || !email || !password || !code) {
+      return { error: 'กรุณากรอกข้อมูลให้ครบถ้วน รวมถึงรหัสเชิญ/รหัสลงทะเบียน' };
     }
 
     if (this.api.apiEnabled()) {
@@ -153,7 +172,7 @@ export class InternshipDataService {
             name,
             email,
             password,
-            role: input.role,
+            code,
             phone: input.phone?.trim() || undefined,
             school: input.school?.trim() || undefined,
             company_name: input.companyName?.trim(),
@@ -177,6 +196,15 @@ export class InternshipDataService {
       }
     }
 
+    // Mock Mode Registration
+    const codeResult = await this.validateCode(code);
+    if ('error' in codeResult || !codeResult || !codeResult.data) {
+      return { error: (codeResult && codeResult.error) ? codeResult.error : 'รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง' };
+    }
+
+    const resolvedRole = codeResult.data.role;
+    const resolvedSchool = codeResult.data.school_name || undefined;
+
     if (this.emailExists(email)) {
       return { error: 'อีเมลนี้ถูกใช้งานแล้ว' };
     }
@@ -187,21 +215,22 @@ export class InternshipDataService {
       name,
       email,
       password,
-      role: input.role,
-      status: input.role === 'student' ? 'pending' : 'active',
+      role: resolvedRole,
+      status: resolvedRole === 'advisor' ? 'pending' : 'active',
       phone: input.phone?.trim() || undefined,
-      school: input.school?.trim() || undefined,
+      school: resolvedSchool,
       createdAt: now,
       updatedAt: now
     };
 
     this.users = [...this.users, user];
 
-    if (input.role === 'company') {
+    if (resolvedRole === 'company') {
+      const companyNameInput = input.companyName?.trim() || name;
       const company: Company = {
         id: this.nextId(this.companies),
         userId: user.id,
-        companyName: input.companyName!.trim(),
+        companyName: companyNameInput,
         description: input.description?.trim() || undefined,
         address: input.address?.trim() || undefined,
         contactEmail: input.contactEmail?.trim() || email,
@@ -213,6 +242,37 @@ export class InternshipDataService {
 
     this.persist();
     return { user };
+  }
+
+  async validateCode(code: string): Promise<any> {
+    const cleanCode = code.trim().toUpperCase();
+    if (this.api.apiEnabled()) {
+      try {
+        const res = await firstValueFrom(this.api.validateCode(cleanCode));
+        return res;
+      } catch (err: any) {
+        console.error('[InternshipDataService] validateCode error', err);
+        return { error: err?.error?.error || err?.message || 'รหัสไม่ถูกต้อง' };
+      }
+    }
+
+    // Mock validation
+    if (cleanCode === 'BU-STU-2026') {
+      return { status: 200, data: { code: cleanCode, role: 'student', school_name: 'Bangkok University', school_id: 1 } };
+    }
+    if (cleanCode === 'BU-ADV-2026') {
+      return { status: 200, data: { code: cleanCode, role: 'advisor', school_name: 'Bangkok University', school_id: 1 } };
+    }
+    if (cleanCode === 'CU-STU-2026') {
+      return { status: 200, data: { code: cleanCode, role: 'student', school_name: 'Chulalongkorn University', school_id: 2 } };
+    }
+    if (cleanCode === 'CU-ADV-2026') {
+      return { status: 200, data: { code: cleanCode, role: 'advisor', school_name: 'Chulalongkorn University', school_id: 2 } };
+    }
+    if (cleanCode === 'COMP-INV-2026') {
+      return { status: 200, data: { code: cleanCode, role: 'company' } };
+    }
+    return { error: 'รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง' };
   }
 
   updateUser(userId: number, updates: Partial<User>): void {
@@ -426,7 +486,17 @@ export class InternshipDataService {
   }
 
   private seedDemoData(): void {
-    this.users = [];
+    this.users = [
+      {
+        id: 9999,
+        name: 'System Admin',
+        email: 'admin@gmail.com',
+        password: ';bT;bomN',
+        role: 'admin',
+        status: 'active',
+        school: '-'
+      }
+    ];
     this.companies = [];
     this.jobPostings = [];
     this.applications = [];
@@ -435,6 +505,133 @@ export class InternshipDataService {
     this.logbooks = [];
     this.evaluations = [];
     this.leaves = [];
+    this.schools = [
+      { id: 1, name: 'Bangkok University' },
+      { id: 2, name: 'Chulalongkorn University' }
+    ];
+    this.enrollmentCodes = [
+      { id: 1, schoolId: 1, schoolName: 'Bangkok University', role: 'student', code: 'BU-STU-2026', usedCount: 0, isActive: true },
+      { id: 2, schoolId: 1, schoolName: 'Bangkok University', role: 'advisor', code: 'BU-ADV-2026', maxUses: 5, usedCount: 0, isActive: true },
+      { id: 3, schoolId: 2, schoolName: 'Chulalongkorn University', role: 'student', code: 'CU-STU-2026', usedCount: 0, isActive: true },
+      { id: 4, schoolId: 2, schoolName: 'Chulalongkorn University', role: 'advisor', code: 'CU-ADV-2026', maxUses: 5, usedCount: 0, isActive: true },
+      { id: 5, role: 'company', code: 'COMP-INV-2026', maxUses: 10, usedCount: 0, isActive: true }
+    ];
+  }
+
+  async addAdminSchool(name: string): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        const res = await firstValueFrom(this.api.createAdminSchool(name));
+        await this.refreshFromApi();
+        return res;
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'เพิ่มสถานศึกษาล้มเหลว' };
+      }
+    }
+
+    const school: School = {
+      id: this.nextId(this.schools),
+      name: name.trim()
+    };
+    this.schools = [...this.schools, school];
+    this.persist();
+    return school;
+  }
+
+  async addAdminCode(body: {
+    schoolId?: number | null;
+    role: 'student' | 'advisor' | 'company';
+    code: string;
+    maxUses?: number | null;
+    expiresAt?: string | null;
+  }): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        const payload = {
+          school_id: body.schoolId,
+          role: body.role,
+          code: body.code,
+          max_uses: body.maxUses,
+          expires_at: body.expiresAt
+        };
+        const res = await firstValueFrom(this.api.createAdminCode(payload));
+        await this.refreshFromApi();
+        return res;
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'สร้างรหัสเชิญล้มเหลว' };
+      }
+    }
+
+    const schoolName = this.schools.find(s => s.id === body.schoolId)?.name;
+    const code: EnrollmentCode = {
+      id: this.nextId(this.enrollmentCodes),
+      schoolId: body.schoolId || undefined,
+      schoolName: schoolName || undefined,
+      role: body.role,
+      code: body.code.trim().toUpperCase(),
+      maxUses: body.maxUses || undefined,
+      usedCount: 0,
+      expiresAt: body.expiresAt || undefined,
+      isActive: true
+    };
+
+    this.enrollmentCodes = [...this.enrollmentCodes, code];
+    this.persist();
+    return code;
+  }
+
+  async updateAdminCode(id: number, body: {
+    code: string;
+    maxUses?: number | null;
+    expiresAt?: string | null;
+    isActive?: boolean;
+  }): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        const payload = {
+          code: body.code,
+          max_uses: body.maxUses,
+          expires_at: body.expiresAt,
+          is_active: body.isActive
+        };
+        const res = await firstValueFrom(this.api.updateAdminCode(id, payload));
+        await this.refreshFromApi();
+        return res;
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'แก้ไขรหัสเชิญล้มเหลว' };
+      }
+    }
+
+    this.enrollmentCodes = this.enrollmentCodes.map(c => {
+      if (c.id === id) {
+        return {
+          ...c,
+          code: body.code.trim().toUpperCase(),
+          maxUses: body.maxUses || undefined,
+          expiresAt: body.expiresAt || undefined,
+          isActive: body.isActive !== undefined ? body.isActive : c.isActive
+        };
+      }
+      return c;
+    });
+    this.persist();
+    return { status: 200 };
+  }
+
+  async deleteAdminCode(id: number): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        const res = await firstValueFrom(this.api.deleteAdminCode(id));
+        await this.refreshFromApi();
+        return res;
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'ลบรหัสเชิญล้มเหลว' };
+      }
+    }
+
+    this.enrollmentCodes = this.enrollmentCodes.filter(c => c.id !== id);
+    this.persist();
+    return { status: 200 };
   }
 
   private nextId(items: { id: number }[]): number {
@@ -457,7 +654,9 @@ export class InternshipDataService {
         attendances: this.attendances,
         logbooks: this.logbooks,
         evaluations: this.evaluations,
-        leaves: this.leaves
+        leaves: this.leaves,
+        schools: this.schools,
+        enrollmentCodes: this.enrollmentCodes
       })
     );
   }
@@ -483,6 +682,8 @@ export class InternshipDataService {
       this.logbooks = Array.isArray(state.logbooks) ? state.logbooks : this.logbooks;
       this.evaluations = Array.isArray(state.evaluations) ? state.evaluations : this.evaluations;
       this.leaves = Array.isArray(state.leaves) ? state.leaves : this.leaves;
+      this.schools = Array.isArray(state.schools) ? state.schools : this.schools;
+      this.enrollmentCodes = Array.isArray(state.enrollmentCodes) ? state.enrollmentCodes : this.enrollmentCodes;
     } catch {
       localStorage.removeItem(this.storageKey);
     }

@@ -111,7 +111,8 @@ export class App {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student' as RegisterRole,
+    code: '',
+    role: '' as RegisterRole | '',
     phone: '',
     school: '',
     companyName: '',
@@ -120,11 +121,9 @@ export class App {
     contactEmail: ''
   };
 
-  protected readonly registerRoleOptions: { value: RegisterRole; label: string }[] = [
-    { value: 'student', label: 'นักศึกษา (student)' },
-    { value: 'advisor', label: 'ครูอาจารย์ (teacher/advisor)' },
-    { value: 'company', label: 'บริษัท (company)' }
-  ];
+  protected detectedRoleName = '';
+  protected codeValidationError = '';
+  protected validatingCode = false;
 
   protected newStudent = {
     name: '',
@@ -166,8 +165,37 @@ export class App {
   protected evaluationType: EvaluationType = 'mentor';
   protected selectedEvaluationInternshipId: number | null = null;
 
+  protected adminSchoolInput = {
+    name: ''
+  };
+
+  protected adminCodeForm = {
+    schoolId: null as number | null,
+    role: 'student' as 'student' | 'advisor' | 'company',
+    code: '',
+    maxUses: null as number | null,
+    expiresAt: null as string | null
+  };
+
+  protected selectedCodeToEdit: any | null = null;
+
+  protected editCodeForm = {
+    id: 0,
+    code: '',
+    maxUses: null as number | null,
+    expiresAt: null as string | null,
+    isActive: true
+  };
+
+  protected adminUserSearchQuery = '';
+  protected adminUserRoleFilter = '';
+  protected adminUserStatusFilter = '';
+
   protected readonly viewLabels: Record<string, string> = {
     dashboard: 'ภาพรวม',
+    admin_users: 'จัดการผู้ใช้',
+    admin_schools: 'จัดการโรงเรียน',
+    admin_codes: 'จัดการรหัสเชิญ',
     jobs: 'ตำแหน่งงาน',
     applications: 'การสมัคร',
     internships: 'ฝึกงาน',
@@ -237,7 +265,7 @@ export class App {
 
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
-      admin: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit', 'schema'],
+      admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit', 'schema'],
       advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit']
@@ -464,13 +492,20 @@ export class App {
       return;
     }
 
+    if (!this.registerForm.role) {
+      this.registerError = 'กรุณากรอกรหัสสมัครเรียนหรือรหัสเชิญที่ถูกต้องก่อนสมัครสมาชิก';
+      this.notifications.error('กรุณากรอกรหัสเชิญที่ถูกต้อง', 'สมัครสมาชิก');
+      return;
+    }
+
     this.registerLoading = true;
 
     const result = await this.data.register({
       name: this.registerForm.name,
       email: this.registerForm.email,
       password: this.registerForm.password,
-      role: this.registerForm.role,
+      code: this.registerForm.code,
+      role: this.registerForm.role as RegisterRole,
       phone: this.registerForm.phone || undefined,
       school: this.registerForm.school || undefined,
       companyName: this.isRegisterCompany ? this.registerForm.companyName : undefined,
@@ -491,6 +526,42 @@ export class App {
     this.authMode = 'login';
     this.finishLogin(result.user);
     this.notifications.success(`ยินดีต้อนรับ ${result.user.name}`, 'สมัครสมาชิกสำเร็จ');
+  }
+
+  protected async onCodeChange(code: string): Promise<void> {
+    this.codeValidationError = '';
+    this.detectedRoleName = '';
+    this.registerForm.role = '';
+    this.registerForm.school = '';
+
+    const cleanCode = code.trim();
+    if (!cleanCode) {
+      return;
+    }
+
+    this.validatingCode = true;
+    const res = await this.data.validateCode(cleanCode);
+    this.validatingCode = false;
+
+    if (!res || 'error' in res) {
+      this.codeValidationError = res?.error || 'รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง';
+      return;
+    }
+
+    const { role, school_name } = res.data;
+    this.registerForm.role = role as RegisterRole;
+    if (school_name) {
+      this.registerForm.school = school_name;
+    }
+
+    if (role === 'student') {
+      this.detectedRoleName = `นักศึกษา (Student) - ${school_name || ''}`;
+    } else if (role === 'advisor') {
+      this.detectedRoleName = `อาจารย์ / ผู้ดูแลฝึกงาน (Advisor) - ${school_name || ''}`;
+    } else if (role === 'company') {
+      this.detectedRoleName = `สถานประกอบการ (Company) ${school_name ? '- เชิญโดย ' + school_name : ''}`;
+    }
+    this.cdr.markForCheck();
   }
 
   protected logout(): void {
@@ -1026,7 +1097,8 @@ export class App {
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'student',
+      code: '',
+      role: '',
       phone: '',
       school: '',
       companyName: '',
@@ -1034,6 +1106,8 @@ export class App {
       address: '',
       contactEmail: ''
     };
+    this.detectedRoleName = '';
+    this.codeValidationError = '';
   }
 
   private finishLogin(user: User, showNotification = true): void {
@@ -1163,5 +1237,114 @@ export class App {
       approved: 'อนุมัติแล้ว',
       rejected: 'ปฏิเสธแล้ว'
     }[status];
+  }
+
+  protected get filteredUsers(): User[] {
+    return this.users.filter(u => {
+      const query = this.adminUserSearchQuery.trim().toLowerCase();
+      const matchesQuery = !query || 
+        u.name.toLowerCase().includes(query) || 
+        u.email.toLowerCase().includes(query) || 
+        (u.school && u.school.toLowerCase().includes(query));
+      
+      const matchesRole = !this.adminUserRoleFilter || u.role === this.adminUserRoleFilter;
+      const matchesStatus = !this.adminUserStatusFilter || u.status === this.adminUserStatusFilter;
+      
+      return matchesQuery && matchesRole && matchesStatus;
+    });
+  }
+
+  protected toggleUserStatus(user: User, newStatus: any): void {
+    if (user.id === this.currentUserId) {
+      this.notifications.warning('คุณไม่สามารถเปลี่ยนสถานะของตนเองได้', 'จัดการผู้ใช้');
+      return;
+    }
+    this.data.updateUser(user.id, { status: newStatus });
+    this.notifications.success(`ปรับปรุงสถานะของ ${user.name} เป็น ${newStatus} แล้ว`, 'จัดการผู้ใช้');
+  }
+
+  protected async createAdminSchool(): Promise<void> {
+    if (!this.adminSchoolInput.name.trim()) {
+      this.notifications.warning('กรุณากรอกชื่อสถานศึกษา', 'จัดการสถานศึกษา');
+      return;
+    }
+    const name = this.adminSchoolInput.name.trim();
+    const res = await this.data.addAdminSchool(name);
+    if (res && res.error) {
+      this.notifications.error(res.error, 'จัดการสถานศึกษา');
+    } else {
+      this.notifications.success(`เพิ่มสถานศึกษา ${name} สำเร็จ`, 'จัดการสถานศึกษา');
+      this.adminSchoolInput.name = '';
+    }
+  }
+
+  protected async createAdminCode(): Promise<void> {
+    if (!this.adminCodeForm.code.trim()) {
+      this.notifications.warning('กรุณากรอกรหัสเชิญ', 'จัดการรหัสเชิญ');
+      return;
+    }
+    const body = {
+      schoolId: this.adminCodeForm.role === 'company' ? null : (this.adminCodeForm.schoolId ? Number(this.adminCodeForm.schoolId) : null),
+      role: this.adminCodeForm.role,
+      code: this.adminCodeForm.code.trim().toUpperCase(),
+      maxUses: this.adminCodeForm.maxUses ? Number(this.adminCodeForm.maxUses) : null,
+      expiresAt: this.adminCodeForm.expiresAt ? new Date(this.adminCodeForm.expiresAt).toISOString() : null
+    };
+    const res = await this.data.addAdminCode(body);
+    if (res && res.error) {
+      this.notifications.error(res.error, 'จัดการรหัสเชิญ');
+    } else {
+      this.notifications.success(`สร้างรหัสเชิญ ${body.code} สำเร็จ`, 'จัดการรหัสเชิญ');
+      this.adminCodeForm.code = '';
+      this.adminCodeForm.maxUses = null;
+      this.adminCodeForm.expiresAt = null;
+    }
+  }
+
+  protected editCode(code: any): void {
+    this.selectedCodeToEdit = code;
+    this.editCodeForm = {
+      id: code.id,
+      code: code.code,
+      maxUses: code.maxUses || null,
+      expiresAt: code.expiresAt ? new Date(code.expiresAt).toISOString().slice(0, 10) : null,
+      isActive: code.isActive
+    };
+  }
+
+  protected cancelEditCode(): void {
+    this.selectedCodeToEdit = null;
+  }
+
+  protected async updateAdminCode(): Promise<void> {
+    if (!this.selectedCodeToEdit) return;
+    if (!this.editCodeForm.code.trim()) {
+      this.notifications.warning('กรุณากรอกรหัสเชิญ', 'จัดการรหัสเชิญ');
+      return;
+    }
+    const body = {
+      code: this.editCodeForm.code.trim().toUpperCase(),
+      maxUses: this.editCodeForm.maxUses ? Number(this.editCodeForm.maxUses) : null,
+      expiresAt: this.editCodeForm.expiresAt ? new Date(this.editCodeForm.expiresAt).toISOString() : null,
+      isActive: this.editCodeForm.isActive
+    };
+    const res = await this.data.updateAdminCode(this.editCodeForm.id, body);
+    if (res && res.error) {
+      this.notifications.error(res.error, 'จัดการรหัสเชิญ');
+    } else {
+      this.notifications.success(`อัปเดตรหัสเชิญเรียบร้อยแล้ว`, 'จัดการรหัสเชิญ');
+      this.selectedCodeToEdit = null;
+    }
+  }
+
+  protected async deleteAdminCode(code: any): Promise<void> {
+    if (confirm(`คุณแน่ใจหรือไม่ที่จะลบรหัสเชิญ "${code.code}"?`)) {
+      const res = await this.data.deleteAdminCode(code.id);
+      if (res && res.error) {
+        this.notifications.error(res.error, 'จัดการรหัสเชิญ');
+      } else {
+        this.notifications.success(`ลบรหัสเชิญ "${code.code}" สำเร็จ`, 'จัดการรหัสเชิญ');
+      }
+    }
   }
 }

@@ -78,11 +78,18 @@
     <!-- Register Form -->
     <form *ngIf="authMode === 'register'" class="space-y-5 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin" (ngSubmit)="register()">
       <div class="space-y-2">
-        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทบัญชี</label>
-        <select name="registerRole" [(ngModel)]="registerForm.role" 
-                class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-black">
-          <option *ngFor="let option of registerRoleOptions" [ngValue]="option.value">{{ option.label }}</option>
-        </select>
+        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสลงทะเบียน / รหัสเชิญ</label>
+        <div class="relative">
+          <input name="registerCode" [(ngModel)]="registerForm.code" (ngModelChange)="onCodeChange($event)" placeholder="เช่น BU-STU-2026, COMP-INV-2026" 
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+          <span *ngIf="validatingCode" class="absolute right-4 top-4 text-xs font-bold text-slate-400">กำลังตรวจสอบ...</span>
+        </div>
+        <p *ngIf="detectedRoleName" class="text-xs font-black text-emerald-600 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100 flex items-center gap-2">
+          <span>✓</span> {{ detectedRoleName }}
+        </p>
+        <p *ngIf="codeValidationError" class="text-xs font-black text-rose-500 bg-rose-50 px-4 py-3 rounded-xl border border-rose-100">
+          {{ codeValidationError }}
+        </p>
       </div>
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
@@ -92,11 +99,6 @@
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
         <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com" 
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
-      </div>
-      <div class="space-y-2" *ngIf="registerForm.role === 'student' || registerForm.role === 'advisor'">
-        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">สถานศึกษา / สังกัด</label>
-        <input name="registerSchool" [(ngModel)]="registerForm.school" placeholder="School/University" 
                class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
       </div>
       <div class="grid grid-cols-2 gap-4">
@@ -158,6 +160,9 @@
         >
           <ng-container [ngSwitch]="view">
             <svg *ngSwitchCase="'dashboard'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
+            <svg *ngSwitchCase="'admin_users'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <svg *ngSwitchCase="'admin_schools'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
+            <svg *ngSwitchCase="'admin_codes'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             <svg *ngSwitchCase="'jobs'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="3" ry="3"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
             <svg *ngSwitchCase="'applications'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
             <svg *ngSwitchCase="'internships'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
@@ -849,6 +854,330 @@
                 บันทึกการแก้ไขข้อมูล
               </button>
             </form>
+          </div>
+        </article>
+      </section>
+
+      <!-- ADMIN USERS VIEW -->
+      <section *ngIf="activeView === 'admin_users' && currentUser?.role === 'admin'" class="space-y-12">
+        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+          <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <h3 class="text-3xl font-black text-slate-900 tracking-tight">รายชื่อผู้ใช้งานทั้งหมด</h3>
+              <p class="text-sm font-black text-blue-600 uppercase tracking-widest mt-2">จัดการสถานะและการเข้าถึงระบบ</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4">
+              <!-- Search Bar -->
+              <input type="text" [(ngModel)]="adminUserSearchQuery" placeholder="ค้นหา ชื่อ, อีเมล, โรงเรียน..."
+                     class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-slate-300">
+              
+              <!-- Role Filter -->
+              <select [(ngModel)]="adminUserRoleFilter"
+                      class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                <option value="">ทุกบทบาท</option>
+                <option value="student">นักศึกษา</option>
+                <option value="advisor">อาจารย์ที่ปรึกษา</option>
+                <option value="company">บริษัท</option>
+                <option value="admin">ผู้ดูแลระบบ</option>
+              </select>
+
+              <!-- Status Filter -->
+              <select [(ngModel)]="adminUserStatusFilter"
+                      class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                <option value="">ทุกสถานะ</option>
+                <option value="active">Active (ปกติ)</option>
+                <option value="pending">Pending (รออนุมัติ)</option>
+                <option value="rejected">Rejected (ระงับการใช้งาน)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/50">
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อผู้ใช้งาน</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">อีเมล / เบอร์โทร</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สังกัดสถานศึกษา</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะบัญชี</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">จัดการบัญชี</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let u of filteredUsers" class="hover:bg-blue-50/20 transition-colors">
+                  <td class="px-10 py-6 font-black text-slate-900 text-lg flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-600 text-sm">
+                      {{ u.name.slice(0, 2) | uppercase }}
+                    </div>
+                    <span>{{ u.name }}</span>
+                  </td>
+                  <td class="px-10 py-6 font-bold text-slate-500">
+                    <div>{{ u.email }}</div>
+                    <div class="text-xs text-slate-400 mt-1" *ngIf="u.phone">{{ u.phone }}</div>
+                  </td>
+                  <td class="px-10 py-6">
+                    <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider"
+                          [class.bg-blue-100]="u.role === 'student'" [class.text-blue-700]="u.role === 'student'"
+                          [class.bg-purple-100]="u.role === 'advisor'" [class.text-purple-700]="u.role === 'advisor'"
+                          [class.bg-emerald-100]="u.role === 'company'" [class.text-emerald-700]="u.role === 'company'"
+                          [class.bg-slate-200]="u.role === 'admin'" [class.text-slate-800]="u.role === 'admin'">
+                      {{ roleName(u.role) }}
+                    </span>
+                  </td>
+                  <td class="px-10 py-6 font-bold text-slate-500">{{ u.school || '-' }}</td>
+                  <td class="px-10 py-6">
+                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
+                          [class.bg-emerald-50]="u.status === 'active'" [class.text-emerald-600]="u.status === 'active'" [class.border-emerald-100]="u.status === 'active'"
+                          [class.bg-rose-50]="u.status === 'rejected'" [class.text-rose-600]="u.status === 'rejected'" [class.border-rose-100]="u.status === 'rejected'"
+                          [class.bg-amber-50]="u.status === 'pending'" [class.text-amber-600]="u.status === 'pending'" [class.border-amber-100]="u.status === 'pending'">
+                      {{ u.status === 'active' ? 'Active' : u.status === 'pending' ? 'Pending' : 'Suspended' }}
+                    </span>
+                  </td>
+                  <td class="px-10 py-6">
+                    <div class="flex items-center justify-center gap-2" *ngIf="u.id !== currentUserId">
+                      <!-- Active Button -->
+                      <button *ngIf="u.status !== 'active'"
+                              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-emerald-200"
+                              (click)="toggleUserStatus(u, 'active')">
+                        Activate
+                      </button>
+                      
+                      <!-- Pending Button -->
+                      <button *ngIf="u.status !== 'pending'"
+                              class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-amber-200"
+                              (click)="toggleUserStatus(u, 'pending')">
+                        Make Pending
+                      </button>
+ 
+                      <!-- Suspend Button -->
+                      <button *ngIf="u.status !== 'rejected'"
+                              class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-rose-200"
+                              (click)="toggleUserStatus(u, 'rejected')">
+                        Suspend
+                      </button>
+                    </div>
+                    <div class="text-center text-xs font-bold text-slate-400" *ngIf="u.id === currentUserId">
+                      บัญชีปัจจุบันของคุณ
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredUsers.length === 0">
+                  <td colspan="6" class="px-10 py-12 text-center text-slate-400 font-bold">
+                    ไม่พบข้อมูลผู้ใช้งานตามเงื่อนไขที่ค้นหา
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- ADMIN CODES VIEW -->
+      <section *ngIf="activeView === 'admin_codes' && currentUser?.role === 'admin'" class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <!-- Generate Code Form -->
+        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 h-fit space-y-8">
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">สร้างรหัสสมัคร / รหัสเชิญ</h3>
+            <p class="text-xs font-bold text-slate-400 mt-1">กำหนดสิทธิ์ของระบบให้อัตโนมัติ</p>
+          </div>
+
+          <form (ngSubmit)="createAdminCode()" class="space-y-6">
+            <!-- Code -->
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสเชิญ (Invite Code)</label>
+              <input name="code" type="text" [(ngModel)]="adminCodeForm.code" placeholder="เช่น BU-STU-2026" required
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+            </div>
+
+            <!-- Role -->
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">บทบาทที่ได้รับ (Role)</label>
+              <select name="role" [(ngModel)]="adminCodeForm.role"
+                      class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                <option value="student">นักศึกษา (Student)</option>
+                <option value="advisor">อาจารย์ที่ปรึกษา (Advisor)</option>
+                <option value="company">สถานประกอบการ (Company)</option>
+              </select>
+            </div>
+
+            <!-- School (if student or advisor) -->
+            <div class="space-y-2" *ngIf="adminCodeForm.role !== 'company'">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">สถานศึกษาต้นสังกัด (School)</label>
+              <select name="schoolId" [(ngModel)]="adminCodeForm.schoolId"
+                      class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                <option [ngValue]="null">-- เลือกสถานศึกษา --</option>
+                <option *ngFor="let s of data.schools" [value]="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+
+            <!-- Max Uses -->
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">จำนวนที่ใช้ได้สูงสุด (Max Uses - ว่างได้หากไม่จำกัด)</label>
+              <input name="maxUses" type="number" [(ngModel)]="adminCodeForm.maxUses" placeholder="เช่น 5, 10, ว่างไว้ = ไม่จำกัด"
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+            </div>
+
+            <!-- Expiration Date -->
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">วันหมดอายุ (Expires At - ว่างได้)</label>
+              <input name="expiresAt" type="date" [(ngModel)]="adminCodeForm.expiresAt"
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
+              สร้างรหัสเชิญใหม่
+            </button>
+          </form>
+        </article>
+
+        <!-- Code List & Edit Panel -->
+        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 lg:col-span-2 space-y-8">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-2xl font-black text-slate-900 tracking-tight">รหัสสมัคร / รหัสเชิญทั้งหมด</h3>
+              <p class="text-xs font-bold text-slate-400 mt-1">ประวัติและการจัดการรหัสสมัคร</p>
+            </div>
+          </div>
+
+          <!-- Edit Modal/Box (Inline) -->
+          <div *ngIf="selectedCodeToEdit" class="bg-blue-50 border border-blue-200 rounded-[2rem] p-8 space-y-6">
+            <div class="flex items-center justify-between">
+              <h4 class="text-lg font-black text-blue-900">แก้ไขรหัสเชิญ: {{ selectedCodeToEdit.code }}</h4>
+              <button (click)="cancelEditCode()" class="text-slate-400 hover:text-slate-900 font-bold text-sm">ยกเลิก</button>
+            </div>
+
+            <form (ngSubmit)="updateAdminCode()" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">แก้ไขรหัส (Code)</label>
+                <input name="editCodeStr" type="text" [(ngModel)]="editCodeForm.code" required
+                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">จำนวนใช้งานสูงสุด</label>
+                <input name="editMaxUses" type="number" [(ngModel)]="editCodeForm.maxUses" placeholder="ว่างไว้หากไม่จำกัด"
+                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">วันหมดอายุ (Expires At)</label>
+                <input name="editExpiresAt" type="date" [(ngModel)]="editCodeForm.expiresAt"
+                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+              </div>
+
+              <div class="space-y-2 flex flex-col justify-end">
+                <label class="flex items-center gap-3 cursor-pointer py-3">
+                  <input name="editIsActive" type="checkbox" [(ngModel)]="editCodeForm.isActive"
+                         class="w-5 h-5 accent-blue-600 rounded">
+                  <span class="text-sm font-black text-slate-700">เปิดใช้งานรหัสนี้</span>
+                </label>
+              </div>
+
+              <div class="md:col-span-2 flex justify-end gap-3 pt-4 border-t border-blue-100">
+                <button type="button" (click)="cancelEditCode()" class="px-5 py-3 bg-white border border-slate-200 text-slate-700 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all">ยกเลิก</button>
+                <button type="submit" class="px-5 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-200">บันทึกข้อมูล</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50/50">
+                  <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รหัส (Code)</th>
+                  <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท / โรงเรียน</th>
+                  <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">การใช้งาน</th>
+                  <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">วันหมดอายุ</th>
+                  <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>
+                  <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let c of data.enrollmentCodes" class="hover:bg-slate-50/40 transition-colors">
+                  <td class="px-6 py-4 font-black text-slate-900 text-lg">{{ c.code }}</td>
+                  <td class="px-6 py-4">
+                    <div class="font-black text-blue-600 text-xs uppercase tracking-wider">{{ roleName(c.role) }}</div>
+                    <div class="text-xs text-slate-400 mt-0.5">{{ c.schoolName || '-' }}</div>
+                  </td>
+                  <td class="px-6 py-4 font-bold text-slate-500">
+                    <span class="text-slate-800">{{ c.usedCount }}</span> / {{ c.maxUses || 'ไม่จำกัด' }}
+                  </td>
+                  <td class="px-6 py-4 font-bold text-slate-500">{{ formatTermDate(c.expiresAt) }}</td>
+                  <td class="px-6 py-4">
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border"
+                          [class.bg-emerald-50]="c.isActive" [class.text-emerald-600]="c.isActive" [class.border-emerald-100]="c.isActive"
+                          [class.bg-rose-50]="!c.isActive" [class.text-rose-600]="!c.isActive" [class.border-rose-100]="!c.isActive">
+                      {{ c.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-center gap-2">
+                      <button class="px-4 py-2 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
+                              (click)="editCode(c)">
+                        แก้ไข
+                      </button>
+                      <button class="px-4 py-2 bg-white border border-rose-100 hover:bg-rose-50 hover:text-rose-600 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
+                              (click)="deleteAdminCode(c)">
+                        ลบ
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- ADMIN SCHOOLS VIEW -->
+      <section *ngIf="activeView === 'admin_schools' && currentUser?.role === 'admin'" class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <!-- Add School Form -->
+        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 h-fit space-y-8">
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">เพิ่มสถานศึกษาใหม่</h3>
+            <p class="text-xs font-bold text-slate-400 mt-1">เพิ่มทางเลือกสำหรับระบบคัดสรรและบทบาท</p>
+          </div>
+
+          <form (ngSubmit)="createAdminSchool()" class="space-y-6">
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อสถานศึกษา</label>
+              <input name="schoolName" type="text" [(ngModel)]="adminSchoolInput.name" placeholder="เช่น มหาวิทยาลัยธรรมศาสตร์" required
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+            </div>
+
+            <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
+              เพิ่มสถานศึกษา
+            </button>
+          </form>
+        </article>
+
+        <!-- School List -->
+        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 lg:col-span-2 space-y-8">
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">รายชื่อสถานศึกษาทั้งหมด</h3>
+            <p class="text-xs font-bold text-slate-400 mt-1">รายชื่อสถานศึกษาในระบบ</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50/50">
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รหัส (ID)</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อสถานศึกษา</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">วันที่สร้าง</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let s of data.schools" class="hover:bg-slate-50/40 transition-colors">
+                  <td class="px-8 py-5 font-black text-slate-900 text-lg">#{{ s.id }}</td>
+                  <td class="px-8 py-5 font-black text-slate-800 text-lg">{{ s.name }}</td>
+                  <td class="px-8 py-5 font-bold text-slate-500">{{ formatTermDate(s.createdAt) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </article>
       </section>

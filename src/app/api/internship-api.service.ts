@@ -35,7 +35,9 @@ import {
   JobPosting,
   Logbook,
   User,
-  LeaveRequest
+  LeaveRequest,
+  School,
+  EnrollmentCode
 } from '../internship.models';
 
 export type InternshipDbSnapshot = {
@@ -119,7 +121,8 @@ export class InternshipApiService {
     name: string;
     email: string;
     password: string;
-    role: 'student' | 'company' | 'advisor';
+    code: string;
+    role?: 'student' | 'company' | 'advisor';
     phone?: string;
     school?: string;
     company_name?: string;
@@ -139,7 +142,8 @@ export class InternshipApiService {
     name: string;
     email: string;
     password: string;
-    role: 'student' | 'company' | 'advisor';
+    code: string;
+    role?: 'student' | 'company' | 'advisor';
     phone?: string;
     school?: string;
     company_name?: string;
@@ -156,6 +160,15 @@ export class InternshipApiService {
         return of(null);
       })
     );
+  }
+
+  validateCode(code: string): Observable<any> {
+    if (!this.apiEnabled()) {
+      return of(null);
+    }
+    return this.http.get<any>(`${this.base}/auth/validate-code`, {
+      params: { code }
+    });
   }
 
   updateUser(id: number, body: Partial<User>): Observable<User | null> {
@@ -340,5 +353,62 @@ export class InternshipApiService {
         'Authorization': `Bearer ${token}`
       })
     };
+  }
+
+  getAdminSchools(): Observable<School[]> {
+    return this.http.get<any>(`${this.base}/admin/schools`, this.authOptions()).pipe(
+      map((res) => res?.data || []),
+      catchError(() => of([]))
+    );
+  }
+
+  createAdminSchool(name: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/admin/schools`, { name }, this.authOptions()).pipe(
+      catchError((err) => {
+        throw err;
+      })
+    );
+  }
+
+  getAdminCodes(): Observable<EnrollmentCode[]> {
+    return this.http.get<any>(`${this.base}/admin/codes`, this.authOptions()).pipe(
+      map((res) => res?.data || []),
+      catchError(() => of([]))
+    );
+  }
+
+  createAdminCode(body: {
+    school_id?: number | null;
+    role: 'student' | 'advisor' | 'company';
+    code: string;
+    max_uses?: number | null;
+    expires_at?: string | null;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.base}/admin/codes`, body, this.authOptions()).pipe(
+      catchError((err) => {
+        throw err;
+      })
+    );
+  }
+
+  updateAdminCode(id: number, body: {
+    code: string;
+    max_uses?: number | null;
+    expires_at?: string | null;
+    is_active?: boolean;
+  }): Observable<any> {
+    return this.http.put<any>(`${this.base}/admin/codes/${id}`, body, this.authOptions()).pipe(
+      catchError((err) => {
+        throw err;
+      })
+    );
+  }
+
+  deleteAdminCode(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.base}/admin/codes/${id}`, this.authOptions()).pipe(
+      catchError((err) => {
+        throw err;
+      })
+    );
   }
 }

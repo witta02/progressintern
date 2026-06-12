@@ -9,7 +9,8 @@ export interface RegisterInput {
   name: string;
   email: string;
   password: string;
-  role: RegisterRole;
+  code: string;
+  role?: RegisterRole;
   phone?: string;
   school?: string;
   companyName?: string;
@@ -163,3 +164,22 @@ export const DB_SCHEMA_TABLES: { name: string; columns: string }[] = [
   { name: 'evaluations', columns: 'id, internship_id, evaluator_id, score, feedback, evaluation_type, created_at, updated_at' },
   { name: 'leave_requests', columns: 'id, internship_id, student_id, leave_type, start_date, end_date, reason, status, mentor_id, comment, created_at, approved_at' }
 ];
+
+export interface School {
+  id: number;
+  name: string;
+  createdAt?: string;
+}
+
+export interface EnrollmentCode {
+  id: number;
+  schoolId?: number;
+  schoolName?: string;
+  role: 'student' | 'advisor' | 'company';
+  code: string;
+  maxUses?: number;
+  usedCount: number;
+  expiresAt?: string;
+  isActive: boolean;
+  createdAt?: string;
+}

@@ -1154,6 +1154,33 @@ export class App {
     }
   }
 
+  protected showMap(lat: number | undefined | null, lon: number | undefined | null, typeLabel: string): void {
+    if (!lat || !lon) return;
+    if (this.currentUser?.role === 'student') return;
+
+    const mapUrl = `https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`;
+    const externalUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+
+    Swal.fire({
+      title: `<span class="text-slate-800 font-black text-2xl tracking-tight">${typeLabel}</span>`,
+      html: `
+        <div class="rounded-[2rem] overflow-hidden border border-slate-200/80 shadow-inner my-4">
+          <iframe width="100%" height="350" frameborder="0" style="border:0; display: block;" src="${mapUrl}"></iframe>
+        </div>
+        <p class="text-xs text-slate-500 font-extrabold mb-4">พิกัด GPS: ${lat}, ${lon}</p>
+        <a href="${externalUrl}" target="_blank" class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase tracking-widest bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-xl border border-blue-100 shadow-sm transition-all hover:scale-105">
+          📍 เปิดใน Google Maps ↗
+        </a>
+      `,
+      showConfirmButton: true,
+      confirmButtonText: 'ปิดหน้าต่าง',
+      confirmButtonColor: '#3b82f6',
+      customClass: {
+        popup: 'rounded-[2.5rem] p-8 border border-slate-100 shadow-2xl'
+      }
+    });
+  }
+
   protected addLogbook(): void {
     if (!this.activeInternship) {
       this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'บันทึก');

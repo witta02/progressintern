@@ -629,18 +629,32 @@
                   <td class="px-10 py-8">
                     <div class="flex flex-col gap-2">
                       <span *ngIf="att.latitude && att.longitude">
-                        <a [href]="'https://www.google.com/maps?q=' + att.latitude + ',' + att.longitude" 
-                           target="_blank" 
-                           class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm transition-all hover:scale-105 w-fit">
-                          📍 In Map
-                        </a>
+                        <ng-container *ngIf="currentUser?.role !== 'student'">
+                          <button type="button" 
+                                  (click)="showMap(att.latitude, att.longitude, 'พิกัดเข้างาน (Check-In)')" 
+                                  class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm transition-all hover:scale-105 w-fit cursor-pointer">
+                            📍 In Map
+                          </button>
+                        </ng-container>
+                        <ng-container *ngIf="currentUser?.role === 'student'">
+                          <span class="inline-flex items-center gap-1.5 text-blue-450 font-black text-[10px] uppercase tracking-widest bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100/50 w-fit cursor-default select-none opacity-85">
+                            📍 In Map
+                          </span>
+                        </ng-container>
                       </span>
                       <span *ngIf="att.checkoutLatitude && att.checkoutLongitude">
-                        <a [href]="'https://www.google.com/maps?q=' + att.checkoutLatitude + ',' + att.checkoutLongitude" 
-                           target="_blank" 
-                           class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-800 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm transition-all hover:scale-105 w-fit">
-                          📍 Out Map
-                        </a>
+                        <ng-container *ngIf="currentUser?.role !== 'student'">
+                          <button type="button" 
+                                  (click)="showMap(att.checkoutLatitude, att.checkoutLongitude, 'พิกัดออกงาน (Check-Out)')" 
+                                  class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-800 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm transition-all hover:scale-105 w-fit cursor-pointer">
+                            📍 Out Map
+                          </button>
+                        </ng-container>
+                        <ng-container *ngIf="currentUser?.role === 'student'">
+                          <span class="inline-flex items-center gap-1.5 text-emerald-450 font-black text-[10px] uppercase tracking-widest bg-emerald-50/50 px-3 py-1.5 rounded-xl border border-emerald-100/50 w-fit cursor-default select-none opacity-85">
+                            📍 Out Map
+                          </span>
+                        </ng-container>
                       </span>
                       <span *ngIf="!att.latitude && !att.longitude && !att.checkoutLatitude && !att.checkoutLongitude" class="text-slate-300 font-bold">—</span>
                     </div>

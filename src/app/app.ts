@@ -613,6 +613,10 @@ export class App {
     this.notificationPanelOpen = false;
     this.selectedEvaluationInternshipId = null;
     this.notifications.info('คุณออกจากระบบแล้ว', 'ออกจากระบบ');
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }
 
   protected toggleNotificationPanel(): void {
@@ -1401,6 +1405,14 @@ export class App {
       field: user.field ?? ''
     };
     this.evaluationType = user.role === 'advisor' ? 'advisor' : 'mentor';
+
+    this.cdr.detectChanges();
+
+    if (showNotification) {
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
   }
 
   private today(): string {

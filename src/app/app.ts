@@ -98,6 +98,7 @@ export class App {
   protected activeView = 'dashboard';
   protected authMode: 'login' | 'register' = 'login';
   protected loginError = '';
+  protected loginLoading = false;
   protected registerError = '';
   protected registerLoading = false;
   protected notificationPanelOpen = false;
@@ -505,6 +506,8 @@ export class App {
 
   protected async login(): Promise<void> {
     this.loginError = '';
+    this.loginLoading = true;
+    this.cdr.detectChanges();
     const email = this.loginForm.email.trim().toLowerCase();
     const result = await this.data.login(email, this.loginForm.password);
 
@@ -512,10 +515,13 @@ export class App {
       const msg = (result && 'error' in result) ? result.error : 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
       this.loginError = msg;
       this.notifications.error(msg, 'เข้าสู่ระบบไม่สำเร็จ');
+      this.loginLoading = false;
+      this.cdr.detectChanges();
       return;
     }
 
-    this.finishLogin(result);
+    await this.finishLogin(result);
+    this.loginLoading = false;
   }
 
   protected async register(): Promise<void> {
@@ -559,9 +565,8 @@ export class App {
 
     this.resetRegisterForm();
     this.authMode = 'login';
-    this.finishLogin(result.user);
+    await this.finishLogin(result.user);
     this.notifications.success(`ยินดีต้อนรับ ${result.user.name}`, 'สมัครสมาชิกสำเร็จ');
-    window.location.reload();
   }
 
   protected onCodeChange(code: string): void {
@@ -1379,20 +1384,23 @@ export class App {
     this.codeValidationError = '';
   }
 
-  private finishLogin(user: User, showNotification = true): void {
+  private async finishLogin(user: User, showNotification = true): Promise<void> {
     this.currentUserId = user.id;
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(this.sessionKey, user.id.toString());
     }
     this.loginError = '';
-    
+
+    // Await a fresh full data snapshot so all views are populated instantly
+    await this.data.refreshFromApi();
+
     if (showNotification) {
       this.notifications.success(
         `เข้าสู่ระบบเป็น ${this.roleName(user.role)}`,
         `ยินดีต้อนรับ ${user.name}`
       );
     }
-    
+
     let targetView = 'dashboard';
     if (typeof localStorage !== 'undefined') {
       const savedView = localStorage.getItem('intern-manager-active-view-v1');
@@ -1414,12 +1422,6 @@ export class App {
     this.evaluationType = user.role === 'advisor' ? 'advisor' : 'mentor';
 
     this.cdr.detectChanges();
-
-    if (showNotification) {
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    }
   }
 
   protected today(): string {

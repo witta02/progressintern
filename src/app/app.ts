@@ -465,18 +465,6 @@ export class App {
     return !!this.todayAttendance?.checkOutTime;
   }
 
-  protected get otherStudents(): User[] {
-    const user = this.currentUser;
-    if (user?.role !== 'advisor') return [];
-    
-    const query = this.studentSearchQuery.trim().toLowerCase();
-    
-    return this.users.filter(u => 
-      u.role === 'student' && 
-      u.school !== user.school &&
-      (u.school?.toLowerCase().includes(query) || u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query))
-    );
-  }
 
   protected get visibleJobs(): JobPosting[] {
     const list = this.jobPostings.filter((job) => !job.isDeleted);

@@ -227,6 +227,8 @@ export class App {
   protected internshipTableStatusFilter = '';
   protected advisorStudentFilter: 'my' | 'school_all' | 'school_unassigned' | 'other_schools' = 'my';
   protected showAddStudentModal = false;
+  protected addStudentModalTab: 'pick' | 'create' = 'pick';
+  protected pickStudentSearchQuery = '';
 
 
   protected readonly viewLabels: Record<string, string> = {
@@ -394,6 +396,19 @@ export class App {
   
   protected get advisorStudents(): User[] {
     return this.users.filter(u => u.role === 'student' && u.advisorId === this.currentUser?.id);
+  }
+  
+  protected get pickableStudents(): User[] {
+    const user = this.currentUser;
+    if (user?.role !== 'advisor') return [];
+    const query = this.pickStudentSearchQuery.trim().toLowerCase();
+    return this.users.filter(u => 
+      u.role === 'student' && 
+      u.advisorId !== user.id &&
+      (u.name.toLowerCase().includes(query) || 
+       u.email.toLowerCase().includes(query) || 
+       (u.school && u.school.toLowerCase().includes(query)))
+    );
   }
 
   protected get otherStudents(): User[] {
@@ -1902,6 +1917,7 @@ export class App {
           next: () => {
             this.notifications.success(`รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว`, "สำเร็จ");
             this.data.refreshFromApi();
+            this.showAddStudentModal = false;
           },
           error: (err) => {
             this.notifications.error(`เกิดข้อผิดพลาด: ${err.message}`, "ล้มเหลว");
@@ -1911,6 +1927,7 @@ export class App {
         student.advisorId = advisorId;
         this.data.persist();
         this.notifications.success(`รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว (Mock)`, "สำเร็จ");
+        this.showAddStudentModal = false;
       }
     }
   }

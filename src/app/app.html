@@ -1480,9 +1480,9 @@
             <h3 class="text-4xl font-black mb-2 tracking-tight text-slate-900">จัดการนักศึกษา</h3>
             <p class="text-slate-500 font-medium text-lg leading-relaxed">เพิ่มและบริหารจัดการรายชื่อนักศึกษาที่อยู่ในความดูแลของคุณ</p>
           </div>
-          <button type="button" (click)="showAddStudentModal = true" class="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-2">
+          <button type="button" (click)="showAddStudentModal = true; addStudentModalTab = 'pick'; pickStudentSearchQuery = ''" class="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
-            เพิ่มนักศึกษาใหม่
+            เพิ่ม / เลือกนักศึกษา
           </button>
         </div>
 
@@ -1548,11 +1548,72 @@
         <!-- Add Student Modal Dialog overlay -->
         <div *ngIf="showAddStudentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
-            <div class="p-8 border-b border-slate-100 bg-slate-50">
-              <h3 class="text-2xl font-black text-slate-900 tracking-tight">เพิ่มนักศึกษาใหม่</h3>
-              <p class="text-sm text-slate-500 font-medium mt-1">สร้างบัญชีนักศึกษาใหม่เพื่อเข้าร่วมกลุ่มความดูแลของคุณ</p>
+            <!-- Modal Header -->
+            <div class="p-8 pb-4 border-b border-slate-100 bg-slate-50/50">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-black text-slate-900 tracking-tight">เพิ่ม / เลือกนักศึกษา</h3>
+                <button type="button" (click)="showAddStudentModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <!-- Tab Bar -->
+              <div class="flex bg-slate-100 p-1.5 rounded-2xl">
+                <button type="button" (click)="addStudentModalTab = 'pick'" 
+                        [class.bg-white]="addStudentModalTab === 'pick'" [class.shadow-md]="addStudentModalTab === 'pick'" [class.text-blue-600]="addStudentModalTab === 'pick'"
+                        class="flex-1 py-2.5 text-xs font-black rounded-xl text-center transition-all cursor-pointer text-slate-500 hover:text-slate-900">
+                  เลือกจากระบบ
+                </button>
+                <button type="button" (click)="addStudentModalTab = 'create'" 
+                        [class.bg-white]="addStudentModalTab === 'create'" [class.shadow-md]="addStudentModalTab === 'create'" [class.text-blue-600]="addStudentModalTab === 'create'"
+                        class="flex-1 py-2.5 text-xs font-black rounded-xl text-center transition-all cursor-pointer text-slate-500 hover:text-slate-900">
+                  สร้างบัญชีใหม่
+                </button>
+              </div>
             </div>
-            <form (ngSubmit)="addStudent()" class="p-8 space-y-6">
+
+            <!-- Tab Content: Pick Student -->
+            <div *ngIf="addStudentModalTab === 'pick'" class="p-8 space-y-6">
+              <div class="space-y-4">
+                <div class="relative">
+                  <input name="pickSearch" type="text" [(ngModel)]="pickStudentSearchQuery" placeholder="ค้นหาชื่อ, อีเมล หรือสถาบัน..."
+                         class="w-full pl-11 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder-slate-400">
+                  <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <div class="max-h-64 overflow-y-auto divide-y divide-slate-100 border border-slate-200/60 rounded-2xl bg-white shadow-inner">
+                  <div *ngFor="let s of pickableStudents" class="p-4 hover:bg-slate-50 flex justify-between items-center transition-colors">
+                    <div class="min-w-0 pr-3">
+                      <div class="font-black text-slate-900 text-sm truncate">{{ s.name }}</div>
+                      <div class="text-xs text-slate-500 truncate">{{ s.email }}</div>
+                      <div class="text-[10px] text-slate-400 font-medium truncate mt-0.5" *ngIf="s.school">{{ s.school }}</div>
+                      <div class="text-[9px] mt-1 font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full inline-block" *ngIf="s.advisorId">
+                        ผู้ดูแล: {{ studentAdvisorName(s.id) }}
+                      </div>
+                      <div class="text-[9px] mt-1 font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block" *ngIf="!s.advisorId">
+                        ยังไม่มีผู้ดูแล
+                      </div>
+                    </div>
+                    <button type="button" (click)="assignStudentToAdvisor(s.id)" 
+                            class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm hover:scale-[1.02] shrink-0">
+                      เลือก
+                    </button>
+                  </div>
+                  <div *ngIf="pickableStudents.length === 0" class="p-8 text-center text-slate-400 font-bold text-sm">
+                    ไม่พบนักศึกษาอื่นในระบบ
+                  </div>
+                </div>
+              </div>
+              <div class="pt-2">
+                <button type="button" (click)="showAddStudentModal = false" 
+                        class="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm transition-all cursor-pointer">
+                  ปิดหน้าต่าง
+                </button>
+              </div>
+            </div>
+
+            <!-- Tab Content: Create Student -->
+            <form *ngIf="addStudentModalTab === 'create'" (ngSubmit)="addStudent()" class="p-8 space-y-6">
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
                 <input name="newName" type="text" [(ngModel)]="newStudent.name" required placeholder="ชื่อจริง นามสกุล" 

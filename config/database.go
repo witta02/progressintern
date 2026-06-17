@@ -55,48 +55,12 @@ func InitDatabase() error {
 	return nil
 }
 
-// migrateDatabase ทำการเพิ่มฟิลด์ที่จำเป็นในฐานข้อมูล (ถ้ายังไม่มี) และลบตารางที่เลิกใช้งาน
+// migrateDatabase ทำการลบตารางที่เลิกใช้งานและเพิ่มฟิลด์ที่จำเป็น (ถ้ายังไม่มี)
 func migrateDatabase(db *sql.DB) {
-	// ลบตาราง audit_logs ที่ไม่ใช้งานแล้ว
-	if _, err := db.Exec("DROP TABLE IF EXISTS audit_logs"); err != nil {
-		log.Printf("⚠️ ลบตาราง audit_logs ล้มเหลว: %v\n", err)
-	} else {
-		log.Println("✅ ลบตาราง audit_logs เรียบร้อยแล้ว (ถ้ามี)")
-	}
-
-	var count int
-	err := db.QueryRow(`
-		SELECT COUNT(*) 
-		FROM information_schema.COLUMNS 
-		WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'advisor_id'
-	`).Scan(&count)
-	if err != nil {
-		log.Printf("⚠️ ไม่สามารถตรวจสอบคอลัมน์ advisor_id ได้: %v\n", err)
-		return
-	}
-
-	if count == 0 {
-		log.Println("🛠️ กำลังเพิ่มคอลัมน์ advisor_id ในตาราง users...")
-		_, err = db.Exec(`
-			ALTER TABLE users ADD COLUMN advisor_id INT NULL;
-		`)
-		if err != nil {
-			log.Printf("❌ เพิ่มคอลัมน์ advisor_id ล้มเหลว: %v\n", err)
-		} else {
-			log.Println("✅ เพิ่มคอลัมน์ advisor_id สำเร็จ!")
-			log.Println("🛠️ กำลังเพิ่ม foreign key fk_users_advisor_id ในตาราง users...")
-			_, err = db.Exec(`
-				ALTER TABLE users ADD CONSTRAINT fk_users_advisor_id FOREIGN KEY (advisor_id) REFERENCES users(id) ON DELETE SET NULL;
-			`)
-			if err != nil {
-				log.Printf("❌ เพิ่ม foreign key fk_users_advisor_id ล้มเหลว: %v\n", err)
-			} else {
-				log.Println("✅ เพิ่ม foreign key fk_users_advisor_id สำเร็จ!")
-			}
-		}
-	} else {
-		log.Println("ℹ️ คอลัมน์ advisor_id มีอยู่แล้วในตาราง users")
-	}
+	// ponytail: run drop/alter commands directly, ignoring duplicate errors
+	_, _ = db.Exec("DROP TABLE IF EXISTS audit_logs")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN advisor_id INT NULL")
+	_, _ = db.Exec("ALTER TABLE users ADD CONSTRAINT fk_users_advisor_id FOREIGN KEY (advisor_id) REFERENCES users(id) ON DELETE SET NULL")
 }
 
 

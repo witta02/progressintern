@@ -149,8 +149,15 @@ func UpdateAppStatusHandler(c *gin.Context) {
 
 	// ถ้าอนุมัติ ให้ตรวจสอบว่านักศึกษามีที่ฝึกงานอยู่แล้วหรือไม่
 	if input.Status == "approved" {
+		tx, err := config.DB.Begin()
+		if err != nil {
+			c.JSON(500, gin.H{"status": 500, "error": "ไม่สามารถทำรายการได้: " + err.Error()})
+			return
+		}
+		defer tx.Rollback()
+
 		var sID, jpID, cID int
-		err := config.DB.QueryRow("SELECT student_id, job_posting_id FROM applications WHERE id = ?", appID).Scan(&sID, &jpID)
+		err = tx.QueryRow("SELECT student_id, job_posting_id FROM applications WHERE id = ?", appID).Scan(&sID, &jpID)
 		if err != nil {
 			c.JSON(404, gin.H{"status": 404, "error": "ไม่พบข้อมูลใบสมัคร"})
 			return
@@ -158,30 +165,41 @@ func UpdateAppStatusHandler(c *gin.Context) {
 
 		// ตรวจสอบว่ามีประวัติฝึกงานที่กำลังดำเนินอยู่ (active) หรือไม่
 		var existingInternshipID int
-		err = config.DB.QueryRow("SELECT id FROM internships WHERE student_id = ? AND status = 'active'", sID).Scan(&existingInternshipID)
+		err = tx.QueryRow("SELECT id FROM internships WHERE student_id = ? AND status = 'active'", sID).Scan(&existingInternshipID)
 		if err == nil {
 			// นักศึกษามีที่ฝึกงานแล้ว -> ทำการปฏิเสธใบสมัครนี้โดยอัตโนมัติ (auto reject)
-			config.DB.Exec("UPDATE applications SET status = 'rejected' WHERE id = ?", appID)
+			tx.Exec("UPDATE applications SET status = 'rejected' WHERE id = ?", appID)
+			tx.Commit()
 			c.JSON(400, gin.H{"status": 400, "error": "นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว"})
 			return
 		}
 
 		// อัปเดตสถานะใบสมัครเป็น approved
-		_, err = config.DB.Exec("UPDATE applications SET status = 'approved' WHERE id = ?", appID)
+		_, err = tx.Exec("UPDATE applications SET status = 'approved' WHERE id = ?", appID)
 		if err != nil {
 			c.JSON(500, gin.H{"status": 500, "error": "อนุมัติใบสมัครไม่สำเร็จ"})
 			return
 		}
 
 		// สร้างข้อมูลฝึกงานใหม่
-		config.DB.QueryRow("SELECT company_id FROM job_postings WHERE id = ?", jpID).Scan(&cID)
-		_, err = config.DB.Exec(
+		err = tx.QueryRow("SELECT company_id FROM job_postings WHERE id = ?", jpID).Scan(&cID)
+		if err != nil {
+			c.JSON(500, gin.H{"status": 500, "error": "ไม่พบข้อมูลงาน"})
+			return
+		}
+
+		_, err = tx.Exec(
 			"INSERT INTO internships (student_id, company_id, job_posting_id, start_date, end_date) "+
 				"VALUES (?, ?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 4 MONTH))",
 			sID, cID, jpID,
 		)
 		if err != nil {
 			c.JSON(500, gin.H{"status": 500, "error": "สร้างประวัติการฝึกงานไม่สำเร็จ: " + err.Error()})
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			c.JSON(500, gin.H{"status": 500, "error": "บันทึกรายการไม่สำเร็จ: " + err.Error()})
 			return
 		}
 	} else {

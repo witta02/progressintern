@@ -182,9 +182,9 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	result, err := tx.Exec(`
-		INSERT INTO users (name, email, password, role, phone, school, school_id, status) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		input.Name, input.Email, string(hashed), resolvedRole, input.Phone, resolvedSchoolName, resolvedSchoolID, status,
+		INSERT INTO users (name, email, password, role, phone, intro, field, school, school_id, status) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		input.Name, input.Email, string(hashed), resolvedRole, input.Phone, input.Intro, input.Field, resolvedSchoolName, resolvedSchoolID, status,
 	)
 	if err != nil {
 		fmt.Printf("❌ Register DB error: %v\n", err)

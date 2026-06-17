@@ -17,8 +17,12 @@ type User struct {
 	Password     string    `json:"-" db:"password"` // ซ่อนรหัสผ่านจาก JSON response
 	Role         string    `json:"role" db:"role"`  // student, company, advisor, admin
 	PhoneNumber  string    `json:"phone" db:"phone"`
+	Intro        string    `json:"intro" db:"intro"`
+	Field        string    `json:"field" db:"field"`
+	School       string    `json:"school" db:"school"`
+	Status       string    `json:"status" db:"status"` // active, pending, suspended
+	ResumeURL    string    `json:"resume_url" db:"resume_url"`
 	ProfileImage string    `json:"profile_image" db:"profile_image"`
-	IsActive     bool      `json:"is_active" db:"is_active"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -35,6 +39,8 @@ type RegisterInput struct {
 	Code         string `json:"code" binding:"required"` // รหัสลงทะเบียน / รหัสเชิญ
 	Role         string `json:"role" binding:"omitempty,oneof=student company advisor admin"`
 	Phone        string `json:"phone" binding:"omitempty"`
+	Intro        string `json:"intro"`
+	Field        string `json:"field"`
 	School       string `json:"school"`
 	CompanyName  string `json:"company_name"`
 	Description  string `json:"description"`

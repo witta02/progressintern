@@ -259,7 +259,7 @@ export class App {
 
     if (this.currentUser?.role === 'advisor') {
       return [
-        { label: 'นักศึกษาในสังกัด', value: this.managedStudents.length, helper: 'นักศึกษาที่โรงเรียนเดียวกัน' },
+        { label: 'นักศึกษาในสังกัด', value: this.managedStudents.length, helper: 'นักศึกษาที่สถานศึกษาเดียวกัน' },
         { label: 'ใบสมัครของนักศึกษา', value: this.visibleApplications.length, helper: 'ติดตามผลสมัครงาน' },
         { label: 'กำลังฝึกงาน', value: this.visibleInternships.length, helper: 'internship ของนักศึกษาในความดูแล' },
         { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'ติดตามการลงเวลา' }
@@ -760,7 +760,7 @@ export class App {
     const user = this.currentUser;
     if (!user) return;
     this.data.updateUser(student.id, { school: user.school, status: 'active' });
-    this.notifications.success(`แก้ไขโรงเรียนและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
+    this.notifications.success(`แก้ไขสถานศึกษาและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
   }
 
   protected saveProfile(): void {

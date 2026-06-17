@@ -2,6 +2,27 @@
 -- 📋 INTERNSHIP MANAGEMENT SYSTEM - DATABASE SCHEMA
 -- ========================================================
 
+-- 0️⃣ SCHOOLS TABLE (ข้อมูลสถาบันการศึกษา)
+CREATE TABLE IF NOT EXISTS schools (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 0️⃣.1️⃣ ENROLLMENT_CODES TABLE (รหัสสมัครเข้าใช้งาน)
+CREATE TABLE IF NOT EXISTS enrollment_codes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    school_id INT NULL,
+    role ENUM('student', 'advisor', 'company') NOT NULL,
+    code VARCHAR(100) UNIQUE NOT NULL,
+    max_uses INT NULL,
+    used_count INT DEFAULT 0,
+    expires_at TIMESTAMP NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- 1️⃣ USERS TABLE (ข้อมูลผู้ใช้ - นักศึกษา, บริษัท, อาจารย์)
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -10,12 +31,18 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     role ENUM('student', 'company', 'advisor', 'admin') NOT NULL DEFAULT 'student',
     phone VARCHAR(20),
+    school VARCHAR(255),
+    school_id INT NULL,
+    intro TEXT,
+    field VARCHAR(255),
     profile_image VARCHAR(500),
-    is_active BOOLEAN DEFAULT TRUE,
+    status ENUM('active', 'pending', 'suspended') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE SET NULL,
     INDEX idx_email (email),
-    INDEX idx_role (role)
+    INDEX idx_role (role),
+    INDEX idx_school_id (school_id)
 );
 
 -- 2️⃣ COMPANIES TABLE (ข้อมูลสถานประกอบการ)
@@ -112,6 +139,8 @@ CREATE TABLE IF NOT EXISTS attendances (
     check_out_time DATETIME,
     latitude DECIMAL(10, 8),
     longitude DECIMAL(11, 8),
+    checkout_latitude DOUBLE NULL,
+    checkout_longitude DOUBLE NULL,
     status ENUM('present', 'absent', 'late', 'early_leave') DEFAULT 'present',
     verification_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     notes TEXT,

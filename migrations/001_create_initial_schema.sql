@@ -251,22 +251,6 @@ CREATE TABLE IF NOT EXISTS file_uploads (
     INDEX idx_upload_type (upload_type)
 );
 
--- 1️⃣1️⃣ AUDIT_LOGS TABLE (บันทึกการเปลี่ยนแปลง)
-CREATE TABLE IF NOT EXISTS audit_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    action VARCHAR(100) NOT NULL,
-    entity_type VARCHAR(50),
-    entity_id INT,
-    old_value JSON,
-    new_value JSON,
-    ip_address VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_user_id (user_id),
-    INDEX idx_created_at (created_at),
-    INDEX idx_entity (entity_type, entity_id)
-);
 
 -- ========================================================
 -- 📌 CREATE INDEXES FOR PERFORMANCE
@@ -292,4 +276,4 @@ CREATE TABLE IF NOT EXISTS schema_versions (
 );
 
 INSERT INTO schema_versions (version, description) VALUES 
-('1.0.0', 'Initial schema creation - core tables (users, companies, jobs, applications, internships, attendances, logbooks, evaluations, notifications, files, audit_logs)');
+('1.0.0', 'Initial schema creation - core tables (users, companies, jobs, applications, internships, attendances, logbooks, evaluations, notifications, files)');

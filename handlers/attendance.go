@@ -133,13 +133,6 @@ func CheckOutHandler(c *gin.Context) {
 			if err == nil && dbUserID == userIDInt {
 				isAuthorized = true
 			}
-		} else if roleStr == "advisor" {
-			var advisorSchool, studentSchool string
-			config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&advisorSchool)
-			config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", input.StudentID).Scan(&studentSchool)
-			if advisorSchool != "" && advisorSchool == studentSchool {
-				isAuthorized = true
-			}
 		}
 
 		if !isAuthorized {

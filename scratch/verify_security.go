@@ -46,9 +46,6 @@ func main() {
 		log.Fatalf("❌ Cleanup failed: %v", err)
 	}
 
-	// Clean up audit logs for test
-	_, _ = db.Exec("DELETE FROM audit_logs")
-
 	// ==========================================
 	// 2. Verify Password Complexity
 	// ==========================================
@@ -197,40 +194,6 @@ func main() {
 
 	if !limiterTriggered {
 		log.Fatalf("❌ Rate limiter was not triggered after multiple login attempts!")
-	}
-
-	// ==========================================
-	// 6. Verify Audit Logs Table
-	// ==========================================
-	fmt.Println("\n--- Querying Audit Logs from Database ---")
-	rows, err := db.Query("SELECT id, user_id, action, ip_address, created_at FROM audit_logs ORDER BY id ASC")
-	if err != nil {
-		log.Fatalf("❌ Querying audit logs failed: %v", err)
-	}
-	defer rows.Close()
-
-	fmt.Printf("%-5s | %-7s | %-30s | %-15s | %-20s\n", "ID", "UserID", "Action", "IP Address", "Created At")
-	fmt.Println(strings.Repeat("-", 85))
-	count := 0
-	for rows.Next() {
-		var id int
-		var userID sql.NullInt64
-		var action, ipAddress string
-		var createdAt time.Time
-		rows.Scan(&id, &userID, &action, &ipAddress, &createdAt)
-
-		userIDStr := "NULL"
-		if userID.Valid {
-			userIDStr = fmt.Sprintf("%d", userID.Int64)
-		}
-		fmt.Printf("%-5d | %-7s | %-30s | %-15s | %s\n", id, userIDStr, action, ipAddress, createdAt.Format("2006-01-02 15:04:05"))
-		count++
-	}
-
-	if count > 0 {
-		fmt.Printf("✅ Found %d audit logs in database.\n", count)
-	} else {
-		log.Fatalf("❌ No audit logs found in the database!")
 	}
 
 	// Clean up

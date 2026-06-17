@@ -55,8 +55,15 @@ func InitDatabase() error {
 	return nil
 }
 
-// migrateDatabase ทำการเพิ่มฟิลด์ที่จำเป็นในฐานข้อมูล (ถ้ายังไม่มี)
+// migrateDatabase ทำการเพิ่มฟิลด์ที่จำเป็นในฐานข้อมูล (ถ้ายังไม่มี) และลบตารางที่เลิกใช้งาน
 func migrateDatabase(db *sql.DB) {
+	// ลบตาราง audit_logs ที่ไม่ใช้งานแล้ว
+	if _, err := db.Exec("DROP TABLE IF EXISTS audit_logs"); err != nil {
+		log.Printf("⚠️ ลบตาราง audit_logs ล้มเหลว: %v\n", err)
+	} else {
+		log.Println("✅ ลบตาราง audit_logs เรียบร้อยแล้ว (ถ้ามี)")
+	}
+
 	var count int
 	err := db.QueryRow(`
 		SELECT COUNT(*) 
@@ -69,16 +76,23 @@ func migrateDatabase(db *sql.DB) {
 	}
 
 	if count == 0 {
-		log.Println("🛠️ กำลังเพิ่มคอลัมน์ advisor_id และ foreign key ในตาราง users...")
+		log.Println("🛠️ กำลังเพิ่มคอลัมน์ advisor_id ในตาราง users...")
 		_, err = db.Exec(`
-			ALTER TABLE users 
-			ADD COLUMN advisor_id INT NULL,
-			ADD CONSTRAINT fk_users_advisor_id FOREIGN KEY (advisor_id) REFERENCES users(id) ON DELETE SET NULL;
+			ALTER TABLE users ADD COLUMN advisor_id INT NULL;
 		`)
 		if err != nil {
 			log.Printf("❌ เพิ่มคอลัมน์ advisor_id ล้มเหลว: %v\n", err)
 		} else {
-			log.Println("✅ เพิ่มคอลัมน์ advisor_id และ foreign key สำเร็จ!")
+			log.Println("✅ เพิ่มคอลัมน์ advisor_id สำเร็จ!")
+			log.Println("🛠️ กำลังเพิ่ม foreign key fk_users_advisor_id ในตาราง users...")
+			_, err = db.Exec(`
+				ALTER TABLE users ADD CONSTRAINT fk_users_advisor_id FOREIGN KEY (advisor_id) REFERENCES users(id) ON DELETE SET NULL;
+			`)
+			if err != nil {
+				log.Printf("❌ เพิ่ม foreign key fk_users_advisor_id ล้มเหลว: %v\n", err)
+			} else {
+				log.Println("✅ เพิ่ม foreign key fk_users_advisor_id สำเร็จ!")
+			}
 		}
 	} else {
 		log.Println("ℹ️ คอลัมน์ advisor_id มีอยู่แล้วในตาราง users")

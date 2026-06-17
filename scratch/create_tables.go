@@ -33,31 +33,6 @@ func main() {
 		log.Fatalf("Ping failed: %v", err)
 	}
 
-	// 1. Create audit_logs table (with user_id NULLable)
-	auditLogsSQL := `
-	CREATE TABLE IF NOT EXISTS audit_logs (
-		id INT AUTO_INCREMENT PRIMARY KEY,
-		user_id INT NULL,
-		action VARCHAR(100) NOT NULL,
-		entity_type VARCHAR(50),
-		entity_id INT,
-		old_value JSON,
-		new_value JSON,
-		ip_address VARCHAR(50),
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-		INDEX idx_user_id (user_id),
-		INDEX idx_created_at (created_at),
-		INDEX idx_entity (entity_type, entity_id)
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
-
-	fmt.Println("Creating audit_logs table...")
-	_, err = db.Exec(auditLogsSQL)
-	if err != nil {
-		log.Fatalf("Failed to create audit_logs: %v", err)
-	}
-	fmt.Println("✅ audit_logs table created successfully!")
-
 	// 2. Create notifications table
 	notificationsSQL := `
 	CREATE TABLE IF NOT EXISTS notifications (

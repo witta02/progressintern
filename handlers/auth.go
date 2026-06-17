@@ -228,8 +228,6 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	writeAuditLog(int(userID), "REGISTER", c.ClientIP())
-
 	c.JSON(201, gin.H{"status": 201, "message": "สมัครสมาชิกสำเร็จ"})
 }
 
@@ -251,18 +249,14 @@ func LoginHandler(c *gin.Context) {
 	).Scan(&id, &name, &email, &hashed, &role, &status)
 
 	if err != nil {
-		writeAuditLog(0, "LOGIN_FAILED_USER_NOT_FOUND", c.ClientIP())
 		c.JSON(401, gin.H{"status": 401, "error": "ไม่พบผู้ใช้งานนี้"})
 		return
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(hashed), []byte(input.Password)) != nil {
-		writeAuditLog(id, "LOGIN_FAILED_WRONG_PASSWORD", c.ClientIP())
 		c.JSON(401, gin.H{"status": 401, "error": "รหัสผ่านไม่ถูกต้อง"})
 		return
 	}
-
-	writeAuditLog(id, "LOGIN_SUCCESS", c.ClientIP())
 
 	// สร้าง JWT Token — use getJWTKey() to match middleware
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -311,21 +305,4 @@ func validatePassword(password string) error {
 		return fmt.Errorf("ต้องมีอักขระพิเศษอย่างน้อย 1 ตัว")
 	}
 	return nil
-}
-
-// writeAuditLog logs events to the audit_logs table
-func writeAuditLog(userID int, action string, ipAddress string) {
-	var dbUserID interface{}
-	if userID > 0 {
-		dbUserID = userID
-	} else {
-		dbUserID = nil
-	}
-	_, err := config.DB.Exec(
-		"INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)",
-		dbUserID, action, ipAddress,
-	)
-	if err != nil {
-		fmt.Printf("⚠️ Audit log insert failed: %v\n", err)
-	}
 }

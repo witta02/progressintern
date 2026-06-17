@@ -139,7 +139,9 @@ export class App {
     email: '',
     phone: '',
     school: '',
-    resumeUrl: ''
+    resumeUrl: '',
+    intro: '',
+    field: ''
   };
 
   protected leaveForm = {
@@ -656,7 +658,9 @@ export class App {
         email: user.email,
         phone: user.phone ?? '',
         school: user.school ?? '',
-        resumeUrl: user.resumeUrl ?? ''
+        resumeUrl: user.resumeUrl ?? '',
+        intro: user.intro ?? '',
+        field: user.field ?? ''
       };
     }
 
@@ -690,6 +694,18 @@ export class App {
 
   protected userName(userId: number): string {
     return this.users.find((user) => user.id === userId)?.name ?? '-';
+  }
+
+  protected studentField(userId: number): string {
+    return this.users.find((user) => user.id === userId)?.field ?? '-';
+  }
+
+  protected studentIntro(userId: number): string {
+    return this.users.find((user) => user.id === userId)?.intro ?? '';
+  }
+
+  protected studentResume(userId: number): string {
+    return this.users.find((user) => user.id === userId)?.resumeUrl ?? '';
   }
 
   protected jobName(jobPostingId: number): string {
@@ -1380,7 +1396,9 @@ export class App {
       email: user.email,
       phone: user.phone ?? '',
       school: user.school ?? '',
-      resumeUrl: user.resumeUrl ?? ''
+      resumeUrl: user.resumeUrl ?? '',
+      intro: user.intro ?? '',
+      field: user.field ?? ''
     };
     this.evaluationType = user.role === 'advisor' ? 'advisor' : 'mentor';
   }

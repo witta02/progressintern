@@ -277,6 +277,7 @@
               <thead>
                 <tr class="bg-slate-50/50">
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Name</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Field of Study</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Email</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Role</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Affiliation</th>
@@ -287,6 +288,7 @@
               <tbody class="divide-y divide-slate-100">
                 <tr *ngFor="let student of managedStudents" class="hover:bg-blue-50/20 transition-colors">
                   <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ student.name }}</td>
+                  <td class="px-10 py-6 font-bold text-blue-600 text-sm">{{ student.field || '-' }}</td>
                   <td class="px-10 py-6 font-bold text-slate-500">{{ student.email }}</td>
                   <td class="px-10 py-6 font-black text-blue-600 text-xs uppercase tracking-wider">{{ student.role }}</td>
                   <td class="px-10 py-6 font-bold text-slate-500">{{ student.school || '-' }}</td>
@@ -492,8 +494,21 @@
               </thead>
               <tbody class="divide-y divide-slate-100">
                 <tr *ngFor="let app of visibleApplications" class="hover:bg-blue-50/20 transition-colors">
-                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(app.studentId) }}</td>
-                  <td class="px-10 py-6 font-black text-blue-600 text-lg">{{ jobName(app.jobPostingId) }}</td>
+                  <td class="px-10 py-6">
+                    <div class="font-black text-slate-900 text-lg leading-tight">{{ userName(app.studentId) }}</div>
+                    <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">{{ studentField(app.studentId) }}</div>
+                    <div *ngIf="studentIntro(app.studentId)" class="text-xs text-slate-400 font-medium mt-2 max-w-xs italic line-clamp-2" [title]="studentIntro(app.studentId)">
+                      "{{ studentIntro(app.studentId) }}"
+                    </div>
+                  </td>
+                  <td class="px-10 py-6 font-black text-blue-600 text-lg">
+                    {{ jobName(app.jobPostingId) }}
+                    <div *ngIf="studentResume(app.studentId)" class="mt-2">
+                      <a [href]="studentResume(app.studentId)" target="_blank" class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm transition-all hover:scale-105">
+                        📄 View Resume
+                      </a>
+                    </div>
+                  </td>
                   <td class="px-10 py-6 font-bold text-slate-500">{{ formatDateTime(app.appliedAt) }}</td>
                   <td class="px-10 py-6">
                     <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
@@ -948,15 +963,27 @@
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="space-y-2" *ngIf="currentUser?.role === 'student' || currentUser?.role === 'advisor'">
-                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">โรงเรียน / สถานศึกษา</label>
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">สถานศึกษา</label>
                   <input name="profileSchool" [(ngModel)]="profileDraft.school" placeholder="School/University Name" 
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
                 </div>
               </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="currentUser?.role === 'student'">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">สาขาวิชา / คณะ</label>
+                  <input name="profileField" [(ngModel)]="profileDraft.field" placeholder="Field of Study (e.g. Computer Science)" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Resume / Portfolio URL</label>
+                  <input name="profileResume" [(ngModel)]="profileDraft.resumeUrl" placeholder="https://drive.google.com/..." 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                </div>
+              </div>
               <div class="space-y-2" *ngIf="currentUser?.role === 'student'">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Resume / Portfolio URL</label>
-                <input name="profileResume" [(ngModel)]="profileDraft.resumeUrl" placeholder="https://drive.google.com/..." 
-                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">แนะนำตัวเอง (Introduction)</label>
+                <textarea name="profileIntro" [(ngModel)]="profileDraft.intro" placeholder="Introduce yourself to companies..." rows="4"
+                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold resize-none"></textarea>
               </div>
               <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
                 บันทึกการแก้ไขข้อมูล
@@ -977,7 +1004,7 @@
             
             <div class="flex flex-wrap items-center gap-4">
               <!-- Search Bar -->
-              <input type="text" [(ngModel)]="adminUserSearchQuery" placeholder="ค้นหา ชื่อ, อีเมล, โรงเรียน..."
+              <input type="text" [(ngModel)]="adminUserSearchQuery" placeholder="ค้นหา ชื่อ, อีเมล, สถานศึกษา..."
                      class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-slate-300">
               
               <!-- Role Filter -->
@@ -1196,7 +1223,7 @@
               <thead>
                 <tr class="bg-slate-50/50">
                   <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รหัส (Code)</th>
-                  <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท / โรงเรียน</th>
+                  <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท / สถานศึกษา</th>
                   <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">การใช้งาน</th>
                   <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">วันหมดอายุ</th>
                   <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>

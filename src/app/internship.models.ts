@@ -12,6 +12,8 @@ export interface RegisterInput {
   code: string;
   role?: RegisterRole;
   phone?: string;
+  intro?: string;
+  field?: string;
   school?: string;
   companyName?: string;
   description?: string;
@@ -39,6 +41,8 @@ export interface User {
   role: Role;
   status?: UserStatus;
   phone?: string;
+  intro?: string;
+  field?: string;
   school?: string;
   profileImage?: string;
   resumeUrl?: string;

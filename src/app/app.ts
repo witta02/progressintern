@@ -226,6 +226,7 @@ export class App {
   protected internshipTableSearch = '';
   protected internshipTableStatusFilter = '';
   protected advisorStudentFilter: 'my' | 'school_all' | 'school_unassigned' | 'other_schools' = 'my';
+  protected showAddStudentModal = false;
 
 
   protected readonly viewLabels: Record<string, string> = {
@@ -233,6 +234,7 @@ export class App {
     admin_users: 'จัดการผู้ใช้',
     admin_schools: 'จัดการโรงเรียน',
     admin_codes: 'จัดการรหัสเชิญ',
+    students: 'จัดการนักศึกษา',
     jobs: 'ตำแหน่งงาน',
     applications: 'การสมัคร',
     internships: 'ฝึกงาน',
@@ -303,7 +305,7 @@ export class App {
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
       admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
-      advisor: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
+      advisor: ['dashboard', 'students', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
       company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit']
     };
@@ -390,6 +392,10 @@ export class App {
     );
   }
   
+  protected get advisorStudents(): User[] {
+    return this.users.filter(u => u.role === 'student' && u.advisorId === this.currentUser?.id);
+  }
+
   protected get otherStudents(): User[] {
     const user = this.currentUser;
     if (user?.role !== 'advisor') return [];
@@ -901,7 +907,7 @@ export class App {
     });
     this.notifications.success(`สร้างบัญชีนักศึกษา ${name} แล้ว`, 'เพิ่มนักศึกษา');
     this.newStudent = { name: '', email: '', password: 'student123' };
-    window.location.reload();
+    this.showAddStudentModal = false;
   }
   
   protected approveStudent(student: User): void {

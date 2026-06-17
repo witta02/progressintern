@@ -1212,7 +1212,7 @@
                     </span>
                   </td>
                   <td class="px-10 py-8">
-                    <div *ngIf="att.verificationStatus === 'pending' && (currentUser?.role === 'company' || currentUser?.role === 'advisor')" 
+                    <div *ngIf="att.verificationStatus === 'pending' && currentUser?.role === 'company'" 
                          class="flex gap-2">
                       <button title="Approve" 
                               class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest shadow-sm" 
@@ -1221,7 +1221,7 @@
                               class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest shadow-sm" 
                               (click)="setAttendanceVerification(att, 'rejected')">Reject</button>
                     </div>
-                    <span *ngIf="att.verificationStatus !== 'pending' || (currentUser?.role !== 'company' && currentUser?.role !== 'advisor')"
+                    <span *ngIf="att.verificationStatus !== 'pending' || currentUser?.role !== 'company'"
                           class="text-xs font-black uppercase tracking-widest"
                           [class.text-emerald-600]="att.verificationStatus === 'approved'"
                           [class.text-rose-600]="att.verificationStatus === 'rejected'"
@@ -1469,6 +1469,116 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MANAGE STUDENTS -->
+      <section *ngIf="activeView === 'students'" class="space-y-8 animate-in fade-in duration-200">
+        <div class="flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <h3 class="text-4xl font-black mb-2 tracking-tight text-slate-900">จัดการนักศึกษา</h3>
+            <p class="text-slate-500 font-medium text-lg leading-relaxed">เพิ่มและบริหารจัดการรายชื่อนักศึกษาที่อยู่ในความดูแลของคุณ</p>
+          </div>
+          <button type="button" (click)="showAddStudentModal = true" class="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+            เพิ่มนักศึกษาใหม่
+          </button>
+        </div>
+
+        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/20 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-gradient-to-r from-slate-50 to-blue-50/30">
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">#</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">นักศึกษา</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">เบอร์โทร / อีเมล</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สาขาวิชา / สถาบัน</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะบัญชี</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let s of advisorStudents; let idx = index" class="hover:bg-blue-50/10 transition-colors">
+                  <td class="px-8 py-5 text-sm font-black text-slate-400">{{ idx + 1 }}</td>
+                  <td class="px-8 py-5">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-md shadow-blue-200">
+                        {{ s.name.charAt(0) }}
+                      </div>
+                      <div>
+                        <div class="font-black text-slate-900 text-sm leading-tight">{{ s.name }}</div>
+                        <div *ngIf="s.intro" class="text-xs text-slate-400 italic mt-1 max-w-xs truncate" [title]="s.intro">"{{ s.intro }}"</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-8 py-5">
+                    <div class="text-sm font-bold text-slate-700">{{ s.email }}</div>
+                    <div class="text-xs text-slate-400 mt-0.5">{{ s.phone || '—' }}</div>
+                  </td>
+                  <td class="px-8 py-5">
+                    <div class="text-sm font-bold text-slate-700">{{ s.field || '—' }}</div>
+                    <div class="text-xs text-slate-400 mt-0.5">{{ s.school || '—' }}</div>
+                  </td>
+                  <td class="px-8 py-5">
+                    <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
+                          [class.bg-emerald-50]="s.status === 'active'" [class.text-emerald-600]="s.status === 'active'" [class.border-emerald-100]="s.status === 'active'"
+                          [class.bg-amber-50]="s.status === 'pending'" [class.text-amber-600]="s.status === 'pending'" [class.border-amber-100]="s.status === 'pending'"
+                          [class.bg-rose-50]="s.status === 'rejected'" [class.text-rose-600]="s.status === 'rejected'" [class.border-rose-100]="s.status === 'rejected'">
+                      {{ s.status }}
+                    </span>
+                  </td>
+                  <td class="px-8 py-5">
+                    <button type="button" (click)="removeStudentFromAdvisor(s.id)" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-800 text-[10px] font-black uppercase tracking-widest rounded-xl border border-rose-100 transition-all cursor-pointer">
+                      นำออก
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="advisorStudents.length === 0">
+                  <td colspan="6" class="px-8 py-16 text-center text-slate-400 font-bold">
+                    คุณยังไม่มีนักศึกษาในความดูแลของตนเอง
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <!-- Add Student Modal Dialog overlay -->
+        <div *ngIf="showAddStudentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
+            <div class="p-8 border-b border-slate-100 bg-slate-50">
+              <h3 class="text-2xl font-black text-slate-900 tracking-tight">เพิ่มนักศึกษาใหม่</h3>
+              <p class="text-sm text-slate-500 font-medium mt-1">สร้างบัญชีนักศึกษาใหม่เพื่อเข้าร่วมกลุ่มความดูแลของคุณ</p>
+            </div>
+            <form (ngSubmit)="addStudent()" class="p-8 space-y-6">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
+                <input name="newName" type="text" [(ngModel)]="newStudent.name" required placeholder="ชื่อจริง นามสกุล" 
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">อีเมลแอดเดรส</label>
+                <input name="newEmail" type="email" [(ngModel)]="newStudent.email" required placeholder="student@school.ac.th" 
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสผ่าน (เริ่มต้น)</label>
+                <input name="newPassword" type="password" [(ngModel)]="newStudent.password" required placeholder="อย่างน้อย 6 ตัวอักษร" 
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+              </div>
+              <div class="flex gap-4 pt-2">
+                <button type="button" (click)="showAddStudentModal = false" 
+                        class="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm transition-all cursor-pointer">
+                  ยกเลิก
+                </button>
+                <button type="submit" 
+                        class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-200 cursor-pointer">
+                  สร้างบัญชีนักศึกษา
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </section>

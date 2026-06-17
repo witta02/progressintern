@@ -245,7 +245,9 @@
     <div class="animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       <!-- DASHBOARD -->
-      <section *ngIf="activeView === 'dashboard'" class="space-y-12">
+      <section *ngIf="activeView === 'dashboard'" class="space-y-12 animate-in fade-in duration-200">
+        
+        <!-- PENDING BANNER FOR STUDENT -->
         <div *ngIf="currentUser?.role === 'student' && currentUser?.status === 'pending'" class="bg-amber-50 border border-amber-200 rounded-[2rem] p-10 flex items-start gap-8 shadow-lg shadow-amber-500/5">
           <div class="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-amber-500 shrink-0 shadow-xl shadow-amber-200 border border-amber-100">
             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -260,64 +262,412 @@
           </div>
         </div>
 
+        <!-- METRIC CARDS GRID -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          <article class="bg-white p-10 rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 relative overflow-hidden group hover:scale-[1.03] transition-all duration-500" *ngFor="let metric of dashboardMetrics; let i = index">
+          <article (click)="setActiveView(metric.view)" 
+                   class="bg-white p-10 rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 relative overflow-hidden group hover:scale-[1.03] transition-all duration-500 cursor-pointer animate-in fade-in" 
+                   *ngFor="let metric of dashboardMetrics; let i = index">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r" [ngClass]="['from-blue-500 to-blue-600', 'from-purple-500 to-purple-600', 'from-emerald-500 to-emerald-600', 'from-amber-500 to-amber-600'][i % 4]"></div>
             <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{{ metric.label }}</span>
             <div class="flex items-baseline gap-2 mt-4 mb-2">
               <strong class="text-6xl font-black text-slate-900 leading-none tracking-tighter group-hover:text-blue-600 transition-colors">{{ metric.value }}</strong>
             </div>
             <small class="text-xs font-black text-slate-500 uppercase tracking-widest">{{ metric.helper }}</small>
+            <div class="mt-4 flex items-center gap-1 text-[10px] font-black text-blue-600 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              <span>ไปที่หน้าต่างนี้</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+            </div>
           </article>
         </div>
 
-        <!-- Advisor & Admin Management -->
-        <article *ngIf="currentUser?.role === 'advisor' || currentUser?.role === 'admin'" class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
-          <div class="p-10 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <div>
-              <h3 class="text-3xl font-black text-slate-900 tracking-tight">{{ currentUser?.role === 'admin' ? 'User Roster' : 'Student Roster' }}</h3>
-              <p class="text-sm font-black text-blue-600 uppercase tracking-widest mt-2">{{ currentUser?.role === 'admin' ? 'System Users' : currentUser?.school }}</p>
+        <!-- ROLE-SPECIFIC FUNCTIONAL DASHBOARD SECTIONS -->
+        
+        <!-- 1. STUDENT DASHBOARD -->
+        <div *ngIf="currentUser?.role === 'student' && currentUser?.status === 'active'" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Attendance Quick Portal -->
+          <div class="lg:col-span-6 space-y-6">
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden h-full flex flex-col justify-between min-h-[350px]">
+              <div class="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+              <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"></div>
+              
+              <div class="relative z-10">
+                <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 text-blue-200 border border-white/10 shadow-sm mb-6">
+                  ลงเวลาทำงานวันนี้
+                </span>
+                <div *ngIf="activeInternship">
+                  <h4 class="text-3xl font-black mb-2 tracking-tight">{{ internshipJobTitle(activeInternship) }}</h4>
+                  <p class="text-blue-100/70 font-medium text-sm">เข้า/ออกงานเพื่อสะสมชั่วโมงฝึกงานของคุณ</p>
+                </div>
+                <div *ngIf="!activeInternship">
+                  <h4 class="text-3xl font-black mb-2 tracking-tight">ไม่มีกิจกรรมฝึกงาน</h4>
+                  <p class="text-blue-100/70 font-medium text-sm">คุณยังไม่มีกิจกรรมฝึกงานที่อยู่ระหว่างดำเนินการ</p>
+                </div>
+              </div>
+
+              <div class="relative z-10 mt-8">
+                <!-- If not checked in today -->
+                <div *ngIf="activeInternship && !isTodayCheckedIn" class="flex flex-col gap-4">
+                  <button type="button" (click)="checkIn()" class="w-full py-5 bg-white text-blue-600 hover:bg-slate-50 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                    ลงเวลาเข้างาน (Check In)
+                  </button>
+                  <p class="text-center text-[10px] text-blue-200/60 font-bold uppercase tracking-widest">พิกัด GPS จะถูกตรวจสอบโดยผู้ควบคุมงาน</p>
+                </div>
+
+                <!-- If checked in but not checked out today -->
+                <div *ngIf="activeInternship && isTodayCheckedIn && !isTodayCheckedOut" class="flex flex-col gap-4">
+                  <div class="bg-white/10 border border-white/10 rounded-2xl p-5 mb-2 flex justify-between items-center">
+                    <div>
+                      <span class="text-[9px] text-blue-200 uppercase tracking-widest block mb-0.5">เวลาเข้างานของคุณ</span>
+                      <strong class="text-2xl font-black text-white">{{ todayAttendance?.checkInTime | date:'HH:mm:ss' }} น.</strong>
+                    </div>
+                    <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-500/20">
+                      กำลังปฏิบัติงาน
+                    </span>
+                  </div>
+                  <button type="button" (click)="checkOut()" class="w-full py-5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                    ลงเวลาออกงาน (Check Out)
+                  </button>
+                </div>
+
+                <!-- If completed today -->
+                <div *ngIf="activeInternship && isTodayCheckedIn && isTodayCheckedOut" class="bg-emerald-500/20 border border-emerald-500/20 rounded-2xl p-6 flex items-center gap-4 text-emerald-200">
+                  <div class="w-12 h-12 rounded-xl bg-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div>
+                    <strong class="text-lg font-black block">ลงเวลาเรียบร้อยแล้ว</strong>
+                    <span class="text-xs font-medium text-emerald-300/80">คุณได้บันทึกเวลาปฏิบัติงานของวันนี้ครบถ้วนแล้ว</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left">
-              <thead>
-                <tr class="bg-slate-50/50">
-                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Name</th>
-                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Field of Study</th>
-                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Email</th>
-                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Role</th>
-                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Affiliation</th>
-                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Action</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr *ngFor="let student of managedStudents" class="hover:bg-blue-50/20 transition-colors">
-                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ student.name }}</td>
-                  <td class="px-10 py-6 font-bold text-blue-600 text-sm">{{ student.field || '-' }}</td>
-                  <td class="px-10 py-6 font-bold text-slate-500">{{ student.email }}</td>
-                  <td class="px-10 py-6 font-black text-blue-600 text-xs uppercase tracking-wider">{{ student.role }}</td>
-                  <td class="px-10 py-6 font-bold text-slate-500">{{ student.school || '-' }}</td>
-                  <td class="px-10 py-6">
-                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
-                          [class.bg-emerald-50]="student.status === 'active'" [class.text-emerald-600]="student.status === 'active'" [class.border-emerald-100]="student.status === 'active'"
-                          [class.bg-rose-50]="student.status === 'rejected'" [class.text-rose-600]="student.status === 'rejected'" [class.border-rose-100]="student.status === 'rejected'"
-                          [class.bg-amber-50]="student.status === 'pending'" [class.text-amber-600]="student.status === 'pending'" [class.border-amber-100]="student.status === 'pending'">
-                      {{ student.status }}
-                    </span>
-                  </td>
-                  <td class="px-10 py-6 text-right">
-                    <div class="flex gap-2" *ngIf="student.status === 'pending'">
-                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="approveStudent(student)">Approve</button>
-                      <button class="px-5 py-2.5 bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="rejectStudent(student)">Reject</button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+
+          <!-- Logbook Quick Entry -->
+          <div class="lg:col-span-6 space-y-6">
+            <div class="bg-white rounded-[2.5rem] p-10 border border-slate-200/60 shadow-2xl shadow-slate-200/20 h-full flex flex-col justify-between">
+              <div>
+                <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 shadow-sm mb-6">
+                  บันทึกความคืบหน้าของวันนี้
+                </span>
+                <h4 class="text-3xl font-black text-slate-900 mb-2 tracking-tight">ส่งรายงานประจำวัน</h4>
+                <p class="text-slate-500 font-medium text-sm mb-6 leading-relaxed">เขียนสรุปผลและส่งรายงานความคืบหน้าให้ผู้ประเมินของคุณ</p>
+
+                <div *ngIf="!activeInternship" class="p-8 text-center text-slate-400 font-bold text-sm bg-slate-50 rounded-2xl border border-dashed">
+                  ไม่พบการฝึกงานที่พร้อมส่งบันทึก
+                </div>
+
+                <form *ngIf="activeInternship" (ngSubmit)="addLogbook()" class="space-y-4">
+                  <div class="space-y-1">
+                    <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อรายงาน</label>
+                    <input name="logTitle" type="text" [(ngModel)]="logbookTitle" placeholder="เช่น บันทึกการทำงานวันที่..." required
+                           class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-900 placeholder:text-slate-400 transition-all">
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดงานที่ทำ</label>
+                    <textarea name="logText" [(ngModel)]="logbookText" placeholder="เขียนรายละเอียดงานที่ทำวันนี้..." required rows="4"
+                              class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-900 placeholder:text-slate-400 transition-all resize-none"></textarea>
+                  </div>
+                  <button type="submit" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-200 cursor-pointer hover:scale-[1.01]">
+                    บันทึกและส่งรายงาน
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
-        </article>
+        </div>
+
+        <!-- 2. ADVISOR DASHBOARD -->
+        <div *ngIf="currentUser?.role === 'advisor'" class="space-y-8">
+          
+          <!-- Actions Needed: Student & Logbook approvals -->
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-8" *ngIf="pendingStudents.length > 0 || pendingLogbooks.length > 0">
+            
+            <!-- Pending Students -->
+            <div class="xl:col-span-5 space-y-4" *ngIf="pendingStudents.length > 0">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                <h4 class="text-lg font-black text-slate-900">นักศึกษาที่รออนุมัติบัญชี ({{ pendingStudents.length }})</h4>
+              </div>
+              <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden">
+                <div *ngFor="let s of pendingStudents" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
+                  <div class="min-w-0 pr-3">
+                    <div class="font-black text-slate-900 text-sm truncate">{{ s.name }}</div>
+                    <div class="text-xs text-slate-500 truncate">{{ s.email }}</div>
+                  </div>
+                  <div class="flex gap-2 shrink-0">
+                    <button type="button" (click)="approveStudent(s)" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm">
+                      อนุมัติ
+                    </button>
+                    <button type="button" (click)="rejectStudent(s)" class="px-3.5 py-2 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                      ปฏิเสธ
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Logbooks -->
+            <div class="space-y-4" [ngClass]="pendingStudents.length > 0 ? 'xl:col-span-7' : 'xl:col-span-12'" *ngIf="pendingLogbooks.length > 0">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                <h4 class="text-lg font-black text-slate-900">บันทึกประจำวันของนักศึกษาที่รอตรวจ ({{ pendingLogbooks.length }})</h4>
+              </div>
+              <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden">
+                <div *ngFor="let l of pendingLogbooks" class="p-6 hover:bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-black text-slate-900">{{ userName(internshipFor(l.internshipId)?.studentId || 0) }}</span>
+                      <span class="text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        {{ internshipJobTitle(internshipFor(l.internshipId)!) }}
+                      </span>
+                    </div>
+                    <div class="font-bold text-slate-800 text-sm mb-0.5">{{ l.title }}</div>
+                    <p class="text-xs text-slate-500 italic max-w-lg truncate" [title]="l.content">"{{ l.content }}"</p>
+                  </div>
+                  <div class="flex gap-2 shrink-0 self-end md:self-center">
+                    <button type="button" (click)="reviewLogbook(l, 'approved')" class="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm">
+                      อนุมัติ
+                    </button>
+                    <button type="button" (click)="reviewLogbook(l, 'rejected')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                      ปฏิเสธ
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Roster Quick View -->
+          <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/20 overflow-hidden animate-in fade-in">
+            <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <h3 class="text-3xl font-black text-slate-900 tracking-tight">รายชื่อนักศึกษาในสังกัด</h3>
+                <p class="text-xs font-black text-blue-600 uppercase tracking-widest mt-2">{{ currentUser?.school }}</p>
+              </div>
+              <button type="button" (click)="setActiveView('students')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                จัดการนักศึกษา
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="bg-slate-50/20">
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อ-นามสกุล</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สาขาวิชา</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">อีเมล</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">เบอร์โทรศัพท์</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะบัญชี</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr *ngFor="let student of advisorStudents" class="hover:bg-blue-50/10 transition-colors">
+                    <td class="px-10 py-6 font-black text-slate-900 text-base">{{ student.name }}</td>
+                    <td class="px-10 py-6 font-bold text-blue-600 text-sm">{{ student.field || '—' }}</td>
+                    <td class="px-10 py-6 font-bold text-slate-500">{{ student.email }}</td>
+                    <td class="px-10 py-6 font-bold text-slate-500">{{ student.phone || '—' }}</td>
+                    <td class="px-10 py-6 font-black text-slate-400 text-xs uppercase tracking-wider">{{ student.role }}</td>
+                    <td class="px-10 py-6">
+                      <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-600 border-emerald-100">
+                        {{ student.status }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="advisorStudents.length === 0">
+                    <td colspan="6" class="px-10 py-12 text-center text-slate-400 font-bold">
+                      ยังไม่มีนักศึกษาในความดูแลของตนเอง
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
+        <!-- 3. COMPANY DASHBOARD -->
+        <div *ngIf="currentUser?.role === 'company'" class="space-y-8">
+          
+          <!-- Pending Applications & Attendances -->
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-8" *ngIf="pendingApplications.length > 0 || pendingAttendances.length > 0">
+            
+            <!-- Pending Applications -->
+            <div class="xl:col-span-6 space-y-4" *ngIf="pendingApplications.length > 0">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                <h4 class="text-lg font-black text-slate-900">ใบสมัครเข้าฝึกงานที่รอดำเนินการ ({{ pendingApplications.length }})</h4>
+              </div>
+              <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden">
+                <div *ngFor="let app of pendingApplications" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
+                  <div class="min-w-0 pr-3">
+                    <div class="font-black text-slate-900 text-sm truncate">{{ userName(app.studentId) }}</div>
+                    <div class="text-xs text-blue-600 font-bold uppercase tracking-wider truncate mt-0.5">{{ jobName(app.jobPostingId) }}</div>
+                  </div>
+                  <div class="flex gap-2 shrink-0">
+                    <button type="button" (click)="updateApplication(app, 'approved')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm">
+                      รับเข้าฝึกงาน
+                    </button>
+                    <button type="button" (click)="updateApplication(app, 'rejected')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                      ปฏิเสธ
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Attendances -->
+            <div class="space-y-4" [ngClass]="pendingApplications.length > 0 ? 'xl:col-span-6' : 'xl:col-span-12'" *ngIf="pendingAttendances.length > 0">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                <h4 class="text-lg font-black text-slate-900">บันทึกเวลาที่รอการอนุมัติ ({{ pendingAttendances.length }})</h4>
+              </div>
+              <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden">
+                <div *ngFor="let att of pendingAttendances" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
+                  <div class="min-w-0 pr-3">
+                    <div class="font-black text-slate-900 text-sm truncate">{{ userName(att.studentId) }}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">
+                      <span>เข้า: {{ att.checkInTime | date:'HH:mm' }} น.</span>
+                      <span *ngIf="att.checkOutTime"> | ออก: {{ att.checkOutTime | date:'HH:mm' }} น.</span>
+                    </div>
+                  </div>
+                  <div class="flex gap-2 shrink-0">
+                    <button type="button" (click)="setAttendanceVerification(att, 'approved')" class="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm">
+                      Approve
+                    </button>
+                    <button type="button" (click)="setAttendanceVerification(att, 'rejected')" class="px-3.5 py-2 bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Active Interns list -->
+          <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/20 overflow-hidden">
+            <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <h3 class="text-3xl font-black text-slate-900 tracking-tight">นักศึกษาฝึกงานปัจจุบัน</h3>
+                <p class="text-xs font-black text-blue-600 uppercase tracking-widest mt-2">กำลังฝึกอบรมกับทางบริษัท</p>
+              </div>
+              <button type="button" (click)="setActiveView('internships')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                ดูทั้งหมด
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="bg-slate-50/20">
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อ-นามสกุล</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ตำแหน่งงาน</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">วันที่เริ่ม - สิ้นสุด</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ความคืบหน้า</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr *ngFor="let intern of visibleInternships" class="hover:bg-blue-50/10 transition-colors">
+                    <td class="px-10 py-6 font-black text-slate-900 text-base">{{ userName(intern.studentId) }}</td>
+                    <td class="px-10 py-6 font-bold text-blue-600 text-sm">{{ internshipJobTitle(intern) }}</td>
+                    <td class="px-10 py-6 font-bold text-slate-500">{{ intern.startDate | date:'dd MMM yyyy' }} - {{ intern.endDate | date:'dd MMM yyyy' }}</td>
+                    <td class="px-10 py-6">
+                      <div class="w-32 flex items-center gap-3">
+                        <div class="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <div class="bg-blue-600 h-full rounded-full" [style.width.%]="getInternshipProgress(intern).percent"></div>
+                        </div>
+                        <span class="text-xs font-black text-slate-700">{{ getInternshipProgress(intern).percent }}%</span>
+                      </div>
+                    </td>
+                    <td class="px-10 py-6">
+                      <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-600 border-emerald-100">
+                        {{ intern.status }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="visibleInternships.length === 0">
+                    <td colspan="5" class="px-10 py-12 text-center text-slate-400 font-bold">
+                      ยังไม่มีนักศึกษาที่ได้รับการอนุมัติฝึกงาน
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
+        <!-- 4. ADMIN DASHBOARD -->
+        <div *ngIf="currentUser?.role === 'admin'" class="space-y-8">
+          
+          <!-- Pending users system-wide -->
+          <div class="space-y-4" *ngIf="pendingUsers.length > 0">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+              <h4 class="text-lg font-black text-slate-900">ผู้สมัครลงทะเบียนที่รอการเปิดใช้งานบัญชี ({{ pendingUsers.length }})</h4>
+            </div>
+            <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden max-h-96 overflow-y-auto">
+              <div *ngFor="let u of pendingUsers" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
+                <div class="min-w-0 pr-3">
+                  <div class="font-black text-slate-900 text-sm truncate">{{ u.name }}</div>
+                  <div class="text-xs text-slate-400 font-medium tracking-wide uppercase mt-0.5">{{ u.role }} | {{ u.school || u.email }}</div>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                  <button type="button" (click)="approveStudent(u)" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm">
+                    Approve
+                  </button>
+                  <button type="button" (click)="rejectStudent(u)" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                    Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Roster System-wide -->
+          <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+            <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <h3 class="text-3xl font-black text-slate-900 tracking-tight">รายชื่อผู้ใช้งานระบบทั้งหมด</h3>
+                <p class="text-xs font-black text-blue-600 uppercase tracking-widest mt-2">ดูแลและปรับแต่งบัญชีในเซิร์ฟเวอร์</p>
+              </div>
+              <button type="button" (click)="setActiveView('admin_users')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                จัดการผู้ใช้ทั้งหมด
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="bg-slate-50/20">
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อ-นามสกุล</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">อีเมล</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สังกัด</th>
+                    <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr *ngFor="let u of managedStudents" class="hover:bg-blue-50/10 transition-colors">
+                    <td class="px-10 py-6 font-black text-slate-900 text-base">{{ u.name }}</td>
+                    <td class="px-10 py-6 font-bold text-slate-500 text-sm">{{ u.email }}</td>
+                    <td class="px-10 py-6 font-black text-blue-600 text-xs uppercase tracking-wider">{{ u.role }}</td>
+                    <td class="px-10 py-6 font-bold text-slate-500 text-sm">{{ u.school || '—' }}</td>
+                    <td class="px-10 py-6">
+                      <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
+                            [class.bg-emerald-50]="u.status === 'active'" [class.text-emerald-600]="u.status === 'active'" [class.border-emerald-100]="u.status === 'active'"
+                            [class.bg-rose-50]="u.status === 'rejected'" [class.text-rose-600]="u.status === 'rejected'" [class.border-rose-100]="u.status === 'rejected'"
+                            [class.bg-amber-50]="u.status === 'pending'" [class.text-amber-600]="u.status === 'pending'" [class.border-amber-100]="u.status === 'pending'">
+                        {{ u.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
       </section>
 
       <!-- JOBS -->

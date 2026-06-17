@@ -319,36 +319,36 @@ export class App {
   protected get dashboardMetrics() {
     if (this.currentUser?.role === 'admin') {
       return [
-        { label: 'ผู้ใช้ทั้งหมด', value: this.users.length, helper: 'ทุก role ในระบบ' },
-        { label: 'บริษัททั้งหมด', value: this.companies.length, helper: 'สถานประกอบการที่ลงทะเบียน' },
-        { label: 'ฝึกงานทั้งหมด', value: this.internships.length, helper: 'internship ทุกสถานะ' },
-        { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'รายการลงเวลาที่ยังไม่จบ' }
+        { label: 'ผู้ใช้ทั้งหมด', value: this.users.length, helper: 'ทุก role ในระบบ', view: 'admin_users' },
+        { label: 'บริษัททั้งหมด', value: this.companies.length, helper: 'สถานประกอบการที่ลงทะเบียน', view: 'jobs' },
+        { label: 'ฝึกงานทั้งหมด', value: this.internships.length, helper: 'internship ทุกสถานะ', view: 'internships' },
+        { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'รายการลงเวลาที่ยังไม่จบ', view: 'attendance' }
       ];
     }
 
     if (this.currentUser?.role === 'advisor') {
       return [
-        { label: 'นักศึกษาในสังกัด', value: this.managedStudents.length, helper: 'นักศึกษาที่โรงเรียนเดียวกัน' },
-        { label: 'ใบสมัครของนักศึกษา', value: this.visibleApplications.length, helper: 'ติดตามผลสมัครงาน' },
-        { label: 'กำลังฝึกงาน', value: this.visibleInternships.length, helper: 'internship ของนักศึกษาในความดูแล' },
-        { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'ติดตามการลงเวลา' }
+        { label: 'นักศึกษาในสังกัด', value: this.managedStudents.length, helper: 'นักศึกษาที่โรงเรียนเดียวกัน', view: 'students' },
+        { label: 'ใบสมัครของนักศึกษา', value: this.visibleApplications.length, helper: 'ติดตามผลสมัครงาน', view: 'applications' },
+        { label: 'กำลังฝึกงาน', value: this.visibleInternships.length, helper: 'internship ของนักศึกษาในความดูแล', view: 'internships' },
+        { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'ติดตามการลงเวลา', view: 'attendance' }
       ];
     }
 
     if (this.currentUser?.role === 'company') {
       return [
-        { label: 'งานที่บริษัทโพสต์', value: this.visibleJobs.length, helper: 'ตำแหน่งของบริษัทนี้' },
-        { label: 'ใบสมัครที่ได้รับ', value: this.visibleApplications.length, helper: 'pending / interview / approved' },
-        { label: 'นักศึกษาฝึกงาน', value: this.visibleInternships.length, helper: 'นักศึกษาที่ฝึกงานกับบริษัทนี้' },
-        { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'ตรวจสอบการลงเวลา' }
+        { label: 'งานที่บริษัทโพสต์', value: this.visibleJobs.length, helper: 'ตำแหน่งของบริษัทนี้', view: 'jobs' },
+        { label: 'ใบสมัครที่ได้รับ', value: this.visibleApplications.length, helper: 'pending / interview / approved', view: 'applications' },
+        { label: 'นักศึกษาฝึกงาน', value: this.visibleInternships.length, helper: 'นักศึกษาที่ฝึกงานกับบริษัทนี้', view: 'internships' },
+        { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'ตรวจสอบการลงเวลา', view: 'attendance' }
       ];
     }
 
     return [
-      { label: 'งานที่เปิดรับ', value: this.visibleJobs.length, helper: 'ตำแหน่งที่สามารถสมัครได้' },
-      { label: 'ใบสมัครของฉัน', value: this.visibleApplications.length, helper: 'ประวัติสมัครงาน' },
-      { label: 'สถานะฝึกงานของฉัน', value: this.visibleInternships.length, helper: 'internship ที่ active' },
-      { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'รายการลงเวลาของตัวเอง' }
+      { label: 'งานที่เปิดรับ', value: this.visibleJobs.length, helper: 'ตำแหน่งที่สามารถสมัครได้', view: 'jobs' },
+      { label: 'ใบสมัครของฉัน', value: this.visibleApplications.length, helper: 'ประวัติสมัครงาน', view: 'applications' },
+      { label: 'สถานะฝึกงานของฉัน', value: this.visibleInternships.length, helper: 'internship ที่ active', view: 'internships' },
+      { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'รายการลงเวลาของตัวเอง', view: 'attendance' }
     ];
   }
 
@@ -409,6 +409,60 @@ export class App {
        u.email.toLowerCase().includes(query) || 
        (u.school && u.school.toLowerCase().includes(query)))
     );
+  }
+
+  protected get pendingStudents(): User[] {
+    const user = this.currentUser;
+    if (!user || user.role !== 'advisor') return [];
+    return this.users.filter(u => u.role === 'student' && u.school === user.school && u.status === 'pending');
+  }
+
+  protected get pendingLogbooks(): Logbook[] {
+    return this.visibleLogbooks.filter(l => l.status === 'pending');
+  }
+
+  protected get pendingApplications(): Application[] {
+    const companyId = this.currentCompanyId;
+    if (!companyId) return [];
+    const jobIds = this.jobPostings
+      .filter((j) => j.companyId === companyId && !j.isDeleted)
+      .map((j) => j.id);
+    return this.data.applications.filter(
+      (a) => jobIds.includes(a.jobPostingId) && a.status === 'pending'
+    );
+  }
+
+  protected get pendingAttendances(): Attendance[] {
+    const companyId = this.currentCompanyId;
+    if (!companyId) return [];
+    const internshipIds = this.internships
+      .filter((i) => i.companyId === companyId && i.status === 'active')
+      .map((i) => i.id);
+    return this.attendances.filter(
+      (a) => internshipIds.includes(a.internshipId) && a.verificationStatus === 'pending'
+    );
+  }
+
+  protected get pendingUsers(): User[] {
+    if (this.currentUser?.role !== 'admin') return [];
+    return this.users.filter(u => u.status === 'pending');
+  }
+
+  protected get todayAttendance() {
+    const user = this.currentUser;
+    if (!user || user.role !== 'student') return undefined;
+    const todayStr = new Date().toDateString();
+    return this.attendances.find(
+      (a) => a.studentId === user.id && new Date(a.checkInTime).toDateString() === todayStr
+    );
+  }
+
+  protected get isTodayCheckedIn(): boolean {
+    return !!this.todayAttendance;
+  }
+
+  protected get isTodayCheckedOut(): boolean {
+    return !!this.todayAttendance?.checkOutTime;
   }
 
   protected get otherStudents(): User[] {

@@ -1,1 +1,65 @@
-/* Tailwind utilities will handle most of the styling */
+/* ============================================================
+   InternManager – Global CSS
+   ============================================================ */
+
+/* --- Slide-over panel animation ----------------------------- */
+.panel-slide-enter {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.panel-slide-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.25s ease;
+}
+.panel-overlay-enter  { opacity: 0; }
+.panel-overlay-active { opacity: 1; transition: opacity 0.25s ease; }
+
+/* --- Utility classes ---------------------------------------- */
+.no-print   { /* visible on screen */ }
+.print-only { display: none !important; }
+
+/* --- Print Styles ------------------------------------------- */
+@media print {
+
+  /* Hide everything that shouldn't be on paper */
+  nav,
+  .no-print,
+  aside,
+  app-notification-host,
+  .fixed.bottom-4          /* debug bar */
+  { display: none !important; }
+
+  /* Show print-only header */
+  .print-only { display: block !important; }
+
+  /* Make the detail panel full-width and static */
+  .student-detail-panel {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+
+  /* Hide the overlay backdrop */
+  .panel-backdrop { display: none !important; }
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 18mm 15mm;
+  }
+
+  body { background: white !important; font-size: 11pt; }
+
+  /* Avoid breaking sections across pages */
+  .print-section { page-break-inside: avoid; break-inside: avoid; }
+
+  /* Force colour for status badges */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

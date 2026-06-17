@@ -219,6 +219,13 @@ export class App {
   protected tableSchemaInfo: any = null;
   protected queryDuration = 0;
 
+  // ----------- Student Detail Panel -----------
+  protected selectedInternshipId: number | null = null;
+  protected internshipDetailOpen = false;
+  protected internshipTableSearch = '';
+  protected internshipTableStatusFilter = '';
+
+
   protected readonly viewLabels: Record<string, string> = {
     dashboard: 'ภาพรวม',
     admin_users: 'จัดการผู้ใช้',
@@ -1415,7 +1422,7 @@ export class App {
     }
   }
 
-  private today(): string {
+  protected today(): string {
     return new Date().toISOString().slice(0, 10);
   }
 
@@ -1709,5 +1716,139 @@ export class App {
 
   protected getQueryResultRows(results: any): any[] {
     return results?.data || [];
+  }
+
+  // ============================================================
+  //  Internship Detail Panel
+  // ============================================================
+
+  protected get selectedInternshipDetail(): Internship | undefined {
+    return this.internships.find(i => i.id === this.selectedInternshipId);
+  }
+
+  protected get filteredVisibleInternships(): Internship[] {
+    let list = this.visibleInternships;
+    const q = this.internshipTableSearch.toLowerCase().trim();
+    if (q) {
+      list = list.filter(i => {
+        const name = this.userName(i.studentId).toLowerCase();
+        const job  = this.internshipJobTitle(i).toLowerCase();
+        const co   = this.companyName(i.companyId).toLowerCase();
+        return name.includes(q) || job.includes(q) || co.includes(q);
+      });
+    }
+    if (this.internshipTableStatusFilter) {
+      list = list.filter(i => i.status === this.internshipTableStatusFilter);
+    }
+    return list;
+  }
+
+  protected openInternshipDetail(internship: Internship): void {
+    this.selectedInternshipId = internship.id;
+    this.internshipDetailOpen = true;
+  }
+
+  protected closeInternshipDetail(): void {
+    this.internshipDetailOpen = false;
+    setTimeout(() => { this.selectedInternshipId = null; }, 350);
+  }
+
+  protected printStudentReport(): void {
+    window.print();
+  }
+
+  protected getStudentAttendanceSummary(studentId: number, internshipId: number): {
+    total: number; late: number; absent: number; earlyLeave: number;
+    pendingVerify: number; approved: number; open: number;
+    recent: Attendance[];
+  } {
+    const list = this.attendances.filter(
+      a => a.internshipId === internshipId && a.studentId === studentId
+    );
+    return {
+      total:        list.length,
+      late:         list.filter(a => a.status === 'late').length,
+      absent:       list.filter(a => a.status === 'absent').length,
+      earlyLeave:   list.filter(a => a.status === 'early_leave').length,
+      pendingVerify:list.filter(a => a.verificationStatus === 'pending').length,
+      approved:     list.filter(a => a.verificationStatus === 'approved').length,
+      open:         list.filter(a => !a.checkOutTime).length,
+      recent:       [...list].sort((a, b) =>
+        new Date(b.checkInTime).getTime() - new Date(a.checkInTime).getTime()
+      ).slice(0, 10)
+    };
+  }
+
+  protected getStudentLogbookSummary(internshipId: number): {
+    total: number; approved: number; pending: number; rejected: number; recent: Logbook[];
+  } {
+    const list = this.data.logbooks.filter(l => l.internshipId === internshipId);
+    return {
+      total:    list.length,
+      approved: list.filter(l => l.status === 'approved').length,
+      pending:  list.filter(l => l.status === 'pending').length,
+      rejected: list.filter(l => l.status === 'rejected').length,
+      recent:   [...list].sort((a, b) =>
+        new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+      ).slice(0, 5)
+    };
+  }
+
+  protected getStudentLeaveSummary(internshipId: number): {
+    total: number; sick: number; personal: number; approved: number; leaves: LeaveRequest[];
+  } {
+    const list = this.data.leaves.filter(l => l.internshipId === internshipId);
+    return {
+      total:    list.length,
+      sick:     list.filter(l => l.leaveType === 'sick').length,
+      personal: list.filter(l => l.leaveType === 'personal').length,
+      approved: list.filter(l => l.status === 'approved').length,
+      leaves:   list
+    };
+  }
+
+  protected getStudentEvaluation(internshipId: number): {
+    mentorScore: number | null; advisorScore: number | null; average: number | null;
+  } {
+    const evals = this.data.evaluations.filter(e => e.internshipId === internshipId);
+    const mentor  = evals.find(e => e.evaluationType === 'mentor');
+    const advisor = evals.find(e => e.evaluationType === 'advisor');
+    const scores  = [mentor?.score, advisor?.score].filter((s): s is number => s != null);
+    return {
+      mentorScore:  mentor?.score  ?? null,
+      advisorScore: advisor?.score ?? null,
+      average: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null
+    };
+  }
+
+  protected get detailStudent(): User | undefined {
+    return this.selectedInternshipDetail
+      ? this.users.find(u => u.id === this.selectedInternshipDetail!.studentId)
+      : undefined;
+  }
+
+  protected get detailJob(): JobPosting | undefined {
+    return this.selectedInternshipDetail
+      ? this.jobPostings.find(j => j.id === this.selectedInternshipDetail!.jobPostingId)
+      : undefined;
+  }
+
+  protected get detailCompany(): import('./internship.models').Company | undefined {
+    return this.selectedInternshipDetail
+      ? this.companies.find(c => c.id === this.selectedInternshipDetail!.companyId)
+      : undefined;
+  }
+
+  /** Opens the detail panel for the most-recent internship of a student.
+   *  Used by the Applications table's "View" button. */
+  protected openInternshipDetailByStudentId(studentId: number): void {
+    const internship = [...this.internships]
+      .filter(i => i.studentId === studentId)
+      .sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())[0];
+    if (internship) {
+      this.openInternshipDetail(internship);
+    } else {
+      this.notifications.info('ยังไม่มีข้อมูลการฝึกงานของนักศึกษาคนนี้', 'ข้อมูลนักศึกษา');
+    }
   }
 }

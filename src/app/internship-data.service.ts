@@ -26,7 +26,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class InternshipDataService {
-  private readonly api = inject(InternshipApiService);
+  readonly api = inject(InternshipApiService);
   private readonly storageKey = 'intern-manager-state-v2';
 
   users: User[] = [];
@@ -705,7 +705,7 @@ export class InternshipDataService {
     return Math.max(0, ...items.map((item) => item.id)) + 1;
   }
 
-  private persist(): void {
+  persist(): void {
     if (!environment.useMockData || !this.hasLocalStorage()) {
       return;
     }

@@ -568,6 +568,18 @@
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </select>
+          
+          <!-- Advisor Student Scope Filter -->
+          <select *ngIf="currentUser?.role === 'advisor'"
+                  id="advisor-student-filter"
+                  [(ngModel)]="advisorStudentFilter"
+                  class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+            <option value="my">👥 นักศึกษาในความดูแลของฉัน (My Group)</option>
+            <option value="school_all">🏫 นักศึกษาทั้งหมดในสถาบัน (Same School)</option>
+            <option value="school_unassigned">❓ ยังไม่มีอาจารย์ที่ปรึกษา (Unassigned)</option>
+            <option value="other_schools">🌐 นักศึกษาต่างสถาบัน (Other Schools)</option>
+          </select>
+
           <!-- Count badge -->
           <span class="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-black uppercase tracking-widest border border-blue-100">
             {{ filteredVisibleInternships.length }} รายการ
@@ -602,13 +614,55 @@
                   <td class="px-8 py-5 text-sm font-black text-slate-400">{{ idx + 1 }}</td>
                   <!-- Student -->
                   <td *ngIf="currentUser?.role !== 'student'" class="px-8 py-5">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-md shadow-blue-200">
-                        {{ userName(internship.studentId).charAt(0) }}
+                    <div class="flex items-center justify-between gap-4">
+                      <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-md shadow-blue-200">
+                          {{ userName(internship.studentId).charAt(0) }}
+                        </div>
+                        <div>
+                          <div class="font-black text-slate-900 text-sm leading-tight">{{ userName(internship.studentId) }}</div>
+                          <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-0.5 mb-1">{{ studentField(internship.studentId) }}</div>
+                          
+                          <!-- Advisor tag & actions -->
+                          <div *ngIf="currentUser?.role === 'advisor'" class="flex flex-wrap items-center gap-2 mt-1">
+                            <!-- Has Advisor -->
+                            <ng-container *ngIf="studentAdvisorName(internship.studentId) as advName; else noAdv">
+                              <span class="inline-flex px-2 py-0.5 rounded bg-slate-100 text-[10px] text-slate-600 font-bold border border-slate-200">
+                                🎓 ที่ปรึกษา: {{ advName }}
+                              </span>
+                              <!-- Remove if it's me -->
+                              <button *ngIf="isMyStudent(internship.studentId)" 
+                                      type="button"
+                                      (click)="$event.stopPropagation(); removeStudentFromAdvisor(internship.studentId)"
+                                      class="text-rose-600 hover:text-rose-800 text-[10px] font-black uppercase tracking-widest hover:underline cursor-pointer">
+                                [ นำออก ]
+                              </button>
+                            </ng-container>
+                            <!-- No Advisor -->
+                            <ng-template #noAdv>
+                              <span class="inline-flex px-2 py-0.5 rounded bg-amber-50 text-[10px] text-amber-600 font-bold border border-amber-200/60">
+                                ⚠️ ยังไม่มีอาจารย์ที่ปรึกษา
+                              </span>
+                            </ng-template>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div class="font-black text-slate-900 text-sm leading-tight">{{ userName(internship.studentId) }}</div>
-                        <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-0.5">{{ studentField(internship.studentId) }}</div>
+                      
+                      <!-- Advisor Action Buttons (Plus / Transfer) -->
+                      <div *ngIf="currentUser?.role === 'advisor'" class="shrink-0 flex items-center gap-1.5">
+                        <!-- Add/transfer to my care -->
+                        <button *ngIf="!isMyStudent(internship.studentId)"
+                                type="button"
+                                (click)="$event.stopPropagation(); assignStudentToAdvisor(internship.studentId)"
+                                [class.bg-emerald-50]="!studentAdvisorName(internship.studentId)"
+                                [class.text-emerald-700]="!studentAdvisorName(internship.studentId)"
+                                [class.border-emerald-200]="!studentAdvisorName(internship.studentId)"
+                                [class.bg-blue-50]="studentAdvisorName(internship.studentId)"
+                                [class.text-blue-700]="studentAdvisorName(internship.studentId)"
+                                [class.border-blue-200]="studentAdvisorName(internship.studentId)"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 border text-xs font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-sm cursor-pointer">
+                          {{ studentAdvisorName(internship.studentId) ? 'ย้ายมาดูแล' : '+ รับดูแล' }}
+                        </button>
                       </div>
                     </div>
                   </td>
@@ -749,6 +803,14 @@
                       <div *ngIf="detailStudent?.status">
                         <div class="text-blue-300 text-[10px] font-black uppercase tracking-widest">สถานะบัญชี</div>
                         <div class="font-bold text-white mt-0.5">{{ detailStudent?.status }}</div>
+                      </div>
+                      
+                      <!-- Advisor details visible to all roles -->
+                      <div class="col-span-2 mt-2" *ngIf="getStudentAdvisor(detailStudent?.advisorId) as adv">
+                        <div class="text-blue-300 text-[10px] font-black uppercase tracking-widest">อาจารย์ที่ปรึกษา (Advisor)</div>
+                        <div class="font-black text-white text-base mt-0.5">
+                          🎓 {{ adv.name }} <span *ngIf="adv.phone" class="text-blue-200 text-xs font-bold ml-1.5">(โทร: {{ adv.phone }})</span>
+                        </div>
                       </div>
                     </div>
                     <div *ngIf="detailStudent?.intro" class="mt-4 pt-4 border-t border-white/20 text-sm text-blue-100 italic leading-relaxed">

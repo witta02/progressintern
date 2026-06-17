@@ -179,7 +179,8 @@ export class InternshipApiService {
       phone: body.phone ?? null,
       school: body.school ?? null,
       status: body.status,
-      resume_url: body.resumeUrl ?? null
+      resume_url: body.resumeUrl ?? null,
+      advisor_id: body.advisorId !== undefined ? body.advisorId : undefined
     } as any, mapUser);
   }
 

@@ -225,6 +225,7 @@ export class App {
   protected internshipDetailOpen = false;
   protected internshipTableSearch = '';
   protected internshipTableStatusFilter = '';
+  protected advisorStudentFilter: 'my' | 'school_all' | 'school_unassigned' | 'other_schools' = 'my';
 
 
   protected readonly viewLabels: Record<string, string> = {
@@ -364,15 +365,28 @@ export class App {
       return [];
     }
 
-    // Advisor can see students with the same school name
-    if (this.currentUser.school) {
+    const user = this.currentUser;
+    const filter = this.advisorStudentFilter;
+
+    if (filter === 'school_all') {
       return this.users.filter(
-        (user) => user.role === 'student' && user.school === this.currentUser?.school
+        (u) => u.role === 'student' && u.school === user.school
+      );
+    }
+    if (filter === 'school_unassigned') {
+      return this.users.filter(
+        (u) => u.role === 'student' && u.school === user.school && !u.advisorId
+      );
+    }
+    if (filter === 'other_schools') {
+      return this.users.filter(
+        (u) => u.role === 'student' && u.school !== user.school
       );
     }
 
+    // Default is 'my' (My Students)
     return this.users.filter(
-      (user) => user.role === 'student' && user.advisorId === this.currentUser?.id
+      (u) => u.role === 'student' && u.advisorId === user.id
     );
   }
   
@@ -1852,5 +1866,74 @@ export class App {
     } else {
       this.notifications.info('ยังไม่มีข้อมูลการฝึกงานของนักศึกษาคนนี้', 'ข้อมูลนักศึกษา');
     }
+  }
+
+  protected studentAdvisorName(studentId: number): string | null {
+    const student = this.users.find(u => u.id === studentId);
+    if (!student || !student.advisorId) return null;
+    const adv = this.users.find(u => u.id === student.advisorId && u.role === 'advisor');
+    return adv ? adv.name : 'มีอาจารย์ดูแลแล้ว';
+  }
+
+  protected isMyStudent(studentId: number): boolean {
+    const student = this.users.find(u => u.id === studentId);
+    return student?.advisorId === this.currentUser?.id;
+  }
+
+  protected assignStudentToAdvisor(studentId: number): void {
+    if (!this.currentUser) return;
+    const advisorId = this.currentUser.id;
+    const student = this.users.find(u => u.id === studentId);
+    if (!student) return;
+    
+    const msg = student.advisorId 
+      ? `คุณแน่ใจหรือไม่ที่จะย้ายนักศึกษา "${student.name}" มาอยู่ในการดูแลของคุณ?`
+      : `คุณต้องการรับนักศึกษา "${student.name}" เข้าอยู่ในการดูแลของคุณหรือไม่?`;
+      
+    if (confirm(msg)) {
+      if (this.data.api.apiEnabled()) {
+        this.data.api.updateUser(studentId, { advisorId } as any).subscribe({
+          next: () => {
+            this.notifications.success(`รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว`, "สำเร็จ");
+            this.data.refreshFromApi();
+          },
+          error: (err) => {
+            this.notifications.error(`เกิดข้อผิดพลาด: ${err.message}`, "ล้มเหลว");
+          }
+        });
+      } else {
+        student.advisorId = advisorId;
+        this.data.persist();
+        this.notifications.success(`รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว (Mock)`, "สำเร็จ");
+      }
+    }
+  }
+
+  protected removeStudentFromAdvisor(studentId: number): void {
+    const student = this.users.find(u => u.id === studentId);
+    if (!student) return;
+    
+    if (confirm(`คุณแน่ใจหรือไม่ที่จะนำนักศึกษา "${student.name}" ออกจากความดูแลของคุณ?`)) {
+      if (this.data.api.apiEnabled()) {
+        this.data.api.updateUser(studentId, { advisorId: 0 } as any).subscribe({
+          next: () => {
+            this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว`, "สำเร็จ");
+            this.data.refreshFromApi();
+          },
+          error: (err) => {
+            this.notifications.error(`เกิดข้อผิดพลาด: ${err.message}`, "ล้มเหลว");
+          }
+        });
+      } else {
+        delete student.advisorId;
+        this.data.persist();
+        this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว (Mock)`, "สำเร็จ");
+      }
+    }
+  }
+
+  protected getStudentAdvisor(advisorId: number | undefined): User | undefined {
+    if (!advisorId) return undefined;
+    return this.users.find(u => u.id === advisorId && u.role === 'advisor');
   }
 }

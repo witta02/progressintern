@@ -24,13 +24,13 @@ func GetAllUsersHandler(c *gin.Context) {
 	userIDInt := reqUserID.(int)
 
 	if roleStr == "admin" {
-		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,'') FROM users")
+		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id FROM users")
 	} else if roleStr == "advisor" {
 		var school string
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,'') 
+			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id 
 			 FROM users 
 			 WHERE id = ? 
 			    OR (school = ? AND school <> '' AND role IN ('student', 'advisor')) 
@@ -40,7 +40,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		)
 	} else if roleStr == "company" {
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,'')
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id
 			 FROM users u
 			 LEFT JOIN companies c ON c.user_id = ?
 			 LEFT JOIN job_postings j ON j.company_id = c.id
@@ -62,7 +62,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,'')
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id
 			 FROM users u
 			 LEFT JOIN companies c ON c.user_id = u.id
 			 LEFT JOIN job_postings j ON j.company_id = c.id
@@ -87,7 +87,14 @@ func GetAllUsersHandler(c *gin.Context) {
 	for rows.Next() {
 		var id int
 		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field string
-		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field)
+		var advisorID sql.NullInt64
+		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID)
+		
+		var advIDVal interface{} = nil
+		if advisorID.Valid {
+			advIDVal = advisorID.Int64
+		}
+
 		list = append(list, gin.H{
 			"id":            id,
 			"name":          name,
@@ -100,6 +107,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			"resume_url":    resumeURL,
 			"intro":         intro,
 			"field":         field,
+			"advisor_id":    advIDVal,
 		})
 	}
 	if list == nil {
@@ -186,20 +194,28 @@ func GetUserByIDHandler(c *gin.Context) {
 
 	var id int
 	var name, email, role, phone, profileImage, school, status, resumeURL, intro, field string
+	var advisorID sql.NullInt64
 	err := config.DB.QueryRow(
-		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,'') FROM users WHERE id = ?",
+		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id FROM users WHERE id = ?",
 		targetUserIDInt,
-	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field)
+	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบผู้ใช้"})
 		return
 	}
+	
+	var advIDVal interface{} = nil
+	if advisorID.Valid {
+		advIDVal = advisorID.Int64
+	}
+
 	c.JSON(200, gin.H{
 		"status": 200,
 		"data": gin.H{
 			"id": id, "name": name, "email": email, "role": role,
 			"phone": phone, "profile_image": profileImage, "school": school,
 			"status": status, "resume_url": resumeURL, "intro": intro, "field": field,
+			"advisor_id": advIDVal,
 		},
 	})
 }
@@ -808,6 +824,7 @@ func UpdateUserHandler(c *gin.Context) {
 		ResumeURL string `json:"resume_url"`
 		Intro     string `json:"intro"`
 		Field     string `json:"field"`
+		AdvisorID *int   `json:"advisor_id"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
@@ -840,14 +857,39 @@ func UpdateUserHandler(c *gin.Context) {
 				return
 			}
 
-			_, err = config.DB.Exec(
-				"UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ? WHERE id = ?",
-				input.Status, advisorSchool, targetUserIDInt,
-			)
+			var query string
+			var args []interface{}
+			if input.AdvisorID != nil {
+				if *input.AdvisorID == 0 {
+					query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = NULL WHERE id = ?"
+					args = []interface{}{input.Status, advisorSchool, targetUserIDInt}
+				} else {
+					query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = ? WHERE id = ?"
+					args = []interface{}{input.Status, advisorSchool, *input.AdvisorID, targetUserIDInt}
+				}
+			} else {
+				query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ? WHERE id = ?"
+				args = []interface{}{input.Status, advisorSchool, targetUserIDInt}
+			}
+
+			_, err = config.DB.Exec(query, args...)
 			if err != nil {
 				c.JSON(500, gin.H{"status": 500, "error": "อัปเดตข้อมูลนักศึกษาไม่สำเร็จ: " + err.Error()})
 				return
 			}
+
+			// Sync supervisor_id in internships table for active internship
+			if input.AdvisorID != nil {
+				var supervisorVal interface{} = *input.AdvisorID
+				if *input.AdvisorID == 0 {
+					supervisorVal = nil
+				}
+				_, _ = config.DB.Exec(
+					"UPDATE internships SET supervisor_id = ? WHERE student_id = ? AND status = 'active'",
+					supervisorVal, targetUserIDInt,
+				)
+			}
+
 			c.JSON(200, gin.H{"status": 200, "message": "อนุมัติ/แก้ไขข้อมูลนักศึกษาสำเร็จ"})
 			return
 		}
@@ -875,8 +917,27 @@ func UpdateUserHandler(c *gin.Context) {
 			input.Name, input.Email, input.Phone, input.School, input.ResumeURL, input.Intro, input.Field, userIDInt,
 		)
 	} else {
-		_, err = config.DB.Exec(
-			`UPDATE users SET 
+		var query string
+		var args []interface{}
+		if input.AdvisorID != nil {
+			var advVal interface{} = *input.AdvisorID
+			if *input.AdvisorID == 0 {
+				advVal = nil
+			}
+			query = `UPDATE users SET 
+				name = COALESCE(NULLIF(?,''), name), 
+				email = COALESCE(NULLIF(?,''), email), 
+				phone = ?, 
+				school = ?, 
+				status = COALESCE(NULLIF(?,''), status), 
+				resume_url = ?,
+				intro = ?,
+				field = ?,
+				advisor_id = ?
+			 WHERE id = ?`
+			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, advVal, targetUserIDInt}
+		} else {
+			query = `UPDATE users SET 
 				name = COALESCE(NULLIF(?,''), name), 
 				email = COALESCE(NULLIF(?,''), email), 
 				phone = ?, 
@@ -885,9 +946,23 @@ func UpdateUserHandler(c *gin.Context) {
 				resume_url = ?,
 				intro = ?,
 				field = ?
-			 WHERE id = ?`,
-			input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, targetUserIDInt,
-		)
+			 WHERE id = ?`
+			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, targetUserIDInt}
+		}
+
+		_, err = config.DB.Exec(query, args...)
+
+		// Sync supervisor_id in internships table for active internship
+		if err == nil && input.AdvisorID != nil && targetRole == "student" {
+			var supervisorVal interface{} = *input.AdvisorID
+			if *input.AdvisorID == 0 {
+				supervisorVal = nil
+			}
+			_, _ = config.DB.Exec(
+				"UPDATE internships SET supervisor_id = ? WHERE student_id = ? AND status = 'active'",
+				supervisorVal, targetUserIDInt,
+			)
+		}
 	}
 
 	if err != nil {

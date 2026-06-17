@@ -23,6 +23,7 @@ type User struct {
 	Status       string    `json:"status" db:"status"` // active, pending, suspended
 	ResumeURL    string    `json:"resume_url" db:"resume_url"`
 	ProfileImage string    `json:"profile_image" db:"profile_image"`
+	AdvisorID    *int      `json:"advisor_id,omitempty" db:"advisor_id"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }

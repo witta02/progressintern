@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"internship-backend/config"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -44,40 +46,53 @@ func CheckInHandler(c *gin.Context) {
 		return
 	}
 
-	// Check if already checked in today
-	var existingID int
+	// Check if already checked in today (in Bangkok timezone)
+	var lastCheckIn time.Time
 	err = config.DB.QueryRow(
-		"SELECT id FROM attendances WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()",
+		"SELECT check_in_time FROM attendances WHERE internship_id = ? AND student_id = ? ORDER BY check_in_time DESC LIMIT 1",
 		input.InternshipID, input.StudentID,
-	).Scan(&existingID)
+	).Scan(&lastCheckIn)
+
+	bangkok := time.FixedZone("Asia/Bangkok", 7*60*60)
+	now := time.Now().In(bangkok)
+
 	if err == nil {
-		c.JSON(409, gin.H{"status": 409, "error": "วันนี้เช็คอินแล้ว"})
-		return
+		lastLocal := lastCheckIn.In(bangkok)
+		if lastLocal.Format("2006-01-02") == now.Format("2006-01-02") {
+			c.JSON(409, gin.H{"status": 409, "error": "วันนี้เช็คอินแล้ว"})
+			return
+		}
 	}
 
 	// Determine status: check against lated_time from job_postings
 	status := "present"
-	var latedTime interface{}
+	var latedTimeStr *string
 	config.DB.QueryRow(
 		`SELECT j.lated_time FROM internships i 
 		 JOIN job_postings j ON i.job_posting_id = j.id 
 		 WHERE i.id = ?`, input.InternshipID,
-	).Scan(&latedTime)
-	// If lated_time is set and current time is past it, mark as late
-	if latedTime != nil {
-		var isLate bool
-		config.DB.QueryRow(
-			"SELECT CURTIME() > ? as is_late", latedTime,
-		).Scan(&isLate)
-		if isLate {
+	).Scan(&latedTimeStr)
+
+	// Fallback to "09:15:00" if lated_time is NULL
+	targetLateTime := "09:15:00"
+	if latedTimeStr != nil {
+		targetLateTime = *latedTimeStr
+	}
+
+	var h, m, s int
+	_, errScan := fmt.Sscanf(targetLateTime, "%d:%d:%d", &h, &m, &s)
+	if errScan == nil {
+		currentSeconds := now.Hour()*3600 + now.Minute()*60 + now.Second()
+		lateSeconds := h*3600 + m*60 + s
+		if currentSeconds > lateSeconds {
 			status = "late"
 		}
 	}
 
 	_, err = config.DB.Exec(
 		"INSERT INTO attendances (internship_id, student_id, check_in_time, latitude, longitude, status) "+
-			"VALUES (?, ?, NOW(), ?, ?, ?)",
-		input.InternshipID, input.StudentID, input.Latitude, input.Longitude, status,
+			"VALUES (?, ?, ?, ?, ?, ?)",
+		input.InternshipID, input.StudentID, now, input.Latitude, input.Longitude, status,
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ลงเวลาเข้างานไม่สำเร็จ: " + err.Error()})
@@ -109,6 +124,9 @@ func CheckOutHandler(c *gin.Context) {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
 		return
 	}
+
+	bangkok := time.FixedZone("Asia/Bangkok", 7*60*60)
+	now := time.Now().In(bangkok)
 
 	reqRole, _ := c.Get("role")
 	reqUserID, _ := c.Get("user_id")
@@ -165,27 +183,50 @@ func CheckOutHandler(c *gin.Context) {
 			args = append(args, input.Status, input.ID)
 		} else {
 			// Student checkout
-			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, NOW()), checkout_latitude = ?, checkout_longitude = ? WHERE id = ?"
-			args = append(args, input.Latitude, input.Longitude, input.ID)
+			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, ?), checkout_latitude = ?, checkout_longitude = ? WHERE id = ?"
+			args = append(args, now, input.Latitude, input.Longitude, input.ID)
 		}
 	} else {
-		if input.VerificationStatus != "" {
-			// Approval/Rejection by company or advisor
-			sql = "UPDATE attendances SET verification_status = ?"
-			args = append(args, input.VerificationStatus)
-			if input.VerificationStatus == "rejected" {
-				sql += ", status = 'absent'"
+		// Find the active check-in ID or fallback to checking the date range in Bangkok timezone
+		var activeID int
+		errFind := config.DB.QueryRow(
+			"SELECT id FROM attendances WHERE internship_id = ? AND student_id = ? ORDER BY check_in_time DESC LIMIT 1",
+			input.InternshipID, input.StudentID,
+		).Scan(&activeID)
+
+		if errFind == nil {
+			if input.VerificationStatus != "" {
+				sql = "UPDATE attendances SET verification_status = ?"
+				args = append(args, input.VerificationStatus)
+				if input.VerificationStatus == "rejected" {
+					sql += ", status = 'absent'"
+				}
+				sql += " WHERE id = ?"
+				args = append(args, activeID)
+			} else if input.Status != "" {
+				sql = "UPDATE attendances SET status = ? WHERE id = ?"
+				args = append(args, input.Status, activeID)
+			} else {
+				sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, ?), checkout_latitude = ?, checkout_longitude = ? WHERE id = ?"
+				args = append(args, now, input.Latitude, input.Longitude, activeID)
 			}
-			sql += " WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()"
-			args = append(args, input.InternshipID, input.StudentID)
-		} else if input.Status != "" {
-			// Manual status update
-			sql = "UPDATE attendances SET status = ? WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()"
-			args = append(args, input.Status, input.InternshipID, input.StudentID)
 		} else {
-			// Student checkout
-			sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, NOW()), checkout_latitude = ?, checkout_longitude = ? WHERE internship_id = ? AND student_id = ? AND DATE(check_in_time) = CURDATE()"
-			args = append(args, input.Latitude, input.Longitude, input.InternshipID, input.StudentID)
+			// Absolute fallback if no rows at all (should not happen)
+			if input.VerificationStatus != "" {
+				sql = "UPDATE attendances SET verification_status = ?"
+				args = append(args, input.VerificationStatus)
+				if input.VerificationStatus == "rejected" {
+					sql += ", status = 'absent'"
+				}
+				sql += " WHERE internship_id = ? AND student_id = ?"
+				args = append(args, input.InternshipID, input.StudentID)
+			} else if input.Status != "" {
+				sql = "UPDATE attendances SET status = ? WHERE internship_id = ? AND student_id = ?"
+				args = append(args, input.Status, input.InternshipID, input.StudentID)
+			} else {
+				sql = "UPDATE attendances SET check_out_time = IFNULL(check_out_time, ?), checkout_latitude = ?, checkout_longitude = ? WHERE internship_id = ? AND student_id = ?"
+				args = append(args, now, input.Latitude, input.Longitude, input.InternshipID, input.StudentID)
+			}
 		}
 	}
 

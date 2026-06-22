@@ -452,6 +452,30 @@ export class InternshipDataService {
     this.persist();
   }
 
+  async updateLogbook(id: number, title: string, content: string): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.updateLogbook(id, { title, content }));
+      await this.refreshFromApi();
+      return;
+    }
+
+    this.logbooks = this.logbooks.map((item) =>
+      item.id === id ? { ...item, title, content } : item
+    );
+    this.persist();
+  }
+
+  async deleteLogbook(id: number): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.deleteLogbook(id));
+      await this.refreshFromApi();
+      return;
+    }
+
+    this.logbooks = this.logbooks.filter((item) => item.id !== id);
+    this.persist();
+  }
+
   async addEvaluation(evaluation: Omit<Evaluation, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.createEvaluation(evaluation));
@@ -482,6 +506,30 @@ export class InternshipDataService {
     }
 
     this.leaves = this.leaves.map((l) => l.id === leaveId ? { ...l, status, comment, approvedAt: status === 'approved' ? new Date().toISOString() : undefined } : l);
+    this.persist();
+  }
+
+  async updateLeave(id: number, leave: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.updateLeave(id, leave));
+      await this.refreshFromApi();
+      return;
+    }
+
+    this.leaves = this.leaves.map((l) =>
+      l.id === id ? { ...l, ...leave } : l
+    );
+    this.persist();
+  }
+
+  async deleteLeave(id: number): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.deleteLeave(id));
+      await this.refreshFromApi();
+      return;
+    }
+
+    this.leaves = this.leaves.filter((l) => l.id !== id);
     this.persist();
   }
 

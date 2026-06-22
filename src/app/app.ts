@@ -189,6 +189,12 @@ export class App {
 
   protected logbookTitle = '';
   protected logbookText = '';
+
+  protected editingLogbook: Logbook | null = null;
+  protected editLogbookForm = { title: '', content: '' };
+
+  protected editingLeave: LeaveRequest | null = null;
+  protected editLeaveForm = { leaveType: 'sick' as 'sick' | 'personal', startDate: '', endDate: '', reason: '' };
   protected evaluationFeedback = '';
   protected evaluationScore = 85;
   protected evaluationType: EvaluationType = 'mentor';
@@ -1427,7 +1433,50 @@ export class App {
       this.notifications.success('ส่งบันทึกแล้ว (รออนุมัติ)', 'บันทึก');
       this.cdr.detectChanges();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'บันทึก');
+      this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'บันทึก');
+    }
+  }
+
+  protected startEditLogbook(log: Logbook): void {
+    this.editingLogbook = log;
+    this.editLogbookForm.title = log.title;
+    this.editLogbookForm.content = log.content;
+  }
+
+  protected cancelEditLogbook(): void {
+    this.editingLogbook = null;
+  }
+
+  protected async submitEditLogbook(): Promise<void> {
+    if (!this.editingLogbook) return;
+    if (!this.editLogbookForm.title.trim() || !this.editLogbookForm.content.trim()) {
+      this.notifications.warning('กรุณากรอกหัวข้อและเนื้อหาบันทึก', 'บันทึก');
+      return;
+    }
+
+    try {
+      await this.data.updateLogbook(
+        this.editingLogbook.id,
+        this.editLogbookForm.title.trim(),
+        this.editLogbookForm.content.trim()
+      );
+      this.editingLogbook = null;
+      this.notifications.success('แก้ไขบันทึกเรียบร้อยแล้ว', 'บันทึก');
+      this.cdr.detectChanges();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'บันทึก');
+    }
+  }
+
+  protected async deleteLogbook(id: number): Promise<void> {
+    if (confirm('คุณแน่ใจหรือไม่ที่จะลบบันทึกรายงานนี้?')) {
+      try {
+        await this.data.deleteLogbook(id);
+        this.notifications.success('ลบบันทึกเรียบร้อยแล้ว', 'บันทึก');
+        this.cdr.detectChanges();
+      } catch (err: any) {
+        this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'บันทึก');
+      }
     }
   }
 
@@ -1477,6 +1526,54 @@ export class App {
       this.cdr.detectChanges();
     } catch (err: any) {
       this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'การลา');
+    }
+  }
+
+  protected startEditLeave(leave: LeaveRequest): void {
+    this.editingLeave = leave;
+    this.editLeaveForm.leaveType = leave.leaveType;
+    this.editLeaveForm.startDate = leave.startDate.slice(0, 10);
+    this.editLeaveForm.endDate = leave.endDate.slice(0, 10);
+    this.editLeaveForm.reason = leave.reason;
+  }
+
+  protected cancelEditLeave(): void {
+    this.editingLeave = null;
+  }
+
+  protected async submitEditLeave(): Promise<void> {
+    if (!this.editingLeave) return;
+    if (!this.editLeaveForm.reason.trim()) {
+      this.notifications.warning('กรุณากรอกเหตุผลการลา', 'การลา');
+      return;
+    }
+
+    try {
+      await this.data.updateLeave(this.editingLeave.id, {
+        internshipId: this.editingLeave.internshipId,
+        studentId: this.editingLeave.studentId,
+        leaveType: this.editLeaveForm.leaveType,
+        startDate: this.editLeaveForm.startDate,
+        endDate: this.editLeaveForm.endDate,
+        reason: this.editLeaveForm.reason.trim()
+      });
+      this.editingLeave = null;
+      this.notifications.success('แก้ไขคำขอลาเรียบร้อยแล้ว', 'การลา');
+      this.cdr.detectChanges();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'การลา');
+    }
+  }
+
+  protected async deleteLeave(id: number): Promise<void> {
+    if (confirm('คุณแน่ใจหรือไม่ที่จะลบคำขอลาบนี้?')) {
+      try {
+        await this.data.deleteLeave(id);
+        this.notifications.success('ลบคำขอลาเรียบร้อยแล้ว', 'การลา');
+        this.cdr.detectChanges();
+      } catch (err: any) {
+        this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'การลา');
+      }
     }
   }
 

@@ -281,6 +281,17 @@ export class InternshipApiService {
     }, mapLogbook);
   }
 
+  updateLogbook(id: number, body: { title: string; content: string }): Observable<Logbook | null> {
+    return this.putOneRequired<ApiLogbook, Logbook>(`logbooks/${id}`, {
+      title: body.title,
+      content: body.content
+    }, mapLogbook);
+  }
+
+  deleteLogbook(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.base}/logbooks/${id}`, this.authOptions());
+  }
+
   createEvaluation(body: Omit<Evaluation, 'id' | 'createdAt' | 'updatedAt'>): Observable<Evaluation | null> {
     return this.postOne<ApiEvaluation, Evaluation>('evaluations', {
       internship_id: body.internshipId,
@@ -307,6 +318,21 @@ export class InternshipApiService {
       status,
       comment: comment ?? null
     }, mapLeaveRequest);
+  }
+
+  updateLeave(id: number, body: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): Observable<LeaveRequest | null> {
+    return this.putOneRequired<ApiLeaveRequest, LeaveRequest>(`leaves/${id}`, {
+      internship_id: (body as any).internshipId,
+      student_id: (body as any).studentId,
+      leave_type: (body as any).leaveType,
+      start_date: (body as any).startDate,
+      end_date: (body as any).endDate,
+      reason: (body as any).reason
+    }, mapLeaveRequest);
+  }
+
+  deleteLeave(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.base}/leaves/${id}`, this.authOptions());
   }
 
   private getList<D, M>(path: string, mapper: (dto: D) => M): Observable<M[]> {

@@ -46,6 +46,7 @@ export class App {
 
   constructor() {
     console.log('App Initialized v2.0 - Leaves & SweetAlert2');
+    this.initTheme();
     this.initSession();
     setTimeout(() => {
       this.notifications.success('ยินดีต้อนรับสู่ระบบจัดการฝึกงาน', 'Welcome');
@@ -95,6 +96,8 @@ export class App {
     this.cdr.markForCheck();
   }
   protected sidebarOpen = false;
+  protected sidebarCollapsed = false;
+  protected theme: 'dark' | 'light' = 'dark';
   protected activeView = 'dashboard';
   protected authMode: 'login' | 'register' = 'login';
   protected loginError = '';
@@ -102,6 +105,48 @@ export class App {
   protected registerError = '';
   protected registerLoading = false;
   protected notificationPanelOpen = false;
+
+  protected initTheme(): void {
+    if (typeof localStorage !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
+      if (savedTheme) {
+        this.theme = savedTheme;
+      } else {
+        this.theme = 'dark';
+      }
+    }
+    this.applyTheme();
+  }
+
+  protected toggleTheme(): void {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('theme', this.theme);
+    }
+    this.applyTheme();
+    this.notifications.success(
+      this.theme === 'dark' ? 'เปลี่ยนเป็นโหมดมืดเรียบร้อย' : 'เปลี่ยนเป็นโหมดสว่างเรียบร้อย',
+      'Theme Updated'
+    );
+  }
+
+  private applyTheme(): void {
+    if (typeof document !== 'undefined') {
+      if (this.theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.body.classList.remove('bg-slate-50', 'text-slate-900');
+        document.body.classList.add('bg-slate-950', 'text-slate-100');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.body.classList.remove('bg-slate-950', 'text-slate-100');
+        document.body.classList.add('bg-slate-50', 'text-slate-900');
+      }
+    }
+  }
+
+  protected toggleSidebarCollapse(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
   
   protected studentSearchQuery = '';
 

@@ -12,17 +12,44 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
             sans: ['Outfit', 'Kanit', 'sans-serif'],
           },
+          colors: {
+            brand: {
+              dark: {
+                DEFAULT: '#0a101f',
+                950: '#030712',
+                900: '#080e1a',
+                800: '#0f172a',
+                700: '#1e293b',
+                card: 'rgba(255, 255, 255, 0.03)',
+                'card-hover': 'rgba(255, 255, 255, 0.06)',
+                input: 'rgba(255, 255, 255, 0.05)',
+                border: 'rgba(255, 255, 255, 0.08)',
+              },
+              accent: {
+                DEFAULT: '#6366f1',
+                teal: '#00d4aa',
+                'teal-dim': 'rgba(0, 212, 170, 0.12)',
+                'indigo-dim': 'rgba(99, 102, 241, 0.12)'
+              }
+            }
+          },
+          boxShadow: {
+            'glow-teal': '0 0 20px rgba(0, 212, 170, 0.25)',
+            'glow-indigo': '0 0 20px rgba(99, 102, 241, 0.25)',
+            glass: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+          }
         }
       }
     }
   </script>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans antialiased">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
   <app-root></app-root>
 </body>
 </html>

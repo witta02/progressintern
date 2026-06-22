@@ -314,7 +314,7 @@ type CreateLeaveInput struct {
 	LeaveType    string `json:"leave_type" binding:"required,oneof=sick personal"`
 	StartDate    string `json:"start_date" binding:"required"` // Expecting YYYY-MM-DD
 	EndDate      string `json:"end_date" binding:"required"`   // Expecting YYYY-MM-DD
-	Reason       string `json:"reason" binding:"required,min=5"`
+	Reason       string `json:"reason" binding:"required"`
 }
 
 type UpdateLeaveStatusInput struct {

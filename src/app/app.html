@@ -1866,7 +1866,7 @@
               <p class="text-slate-500 font-medium text-lg leading-relaxed">ให้คะแนนและข้อเสนอแนะต่อนักศึกษาในความดูแล เพื่อพัฒนาทักษะและติดตามความก้าวหน้า</p>
             </div>
             <form class="lg:col-span-8 space-y-5" (ngSubmit)="addEvaluation()">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div class="grid grid-cols-1 gap-5">
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">นักศึกษาฝึกงาน</label>
                   <select name="evaluationInternship" [(ngModel)]="selectedEvaluationInternshipId" 
@@ -1875,14 +1875,6 @@
                     <option *ngFor="let internship of visibleInternships" [ngValue]="internship.id">
                       {{ userName(internship.studentId) }} - {{ internshipJobTitle(internship) }}
                     </option>
-                  </select>
-                </div>
-                <div class="space-y-2">
-                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทการประเมิน</label>
-                  <select name="evaluationType" [(ngModel)]="evaluationType" 
-                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
-                    <option value="mentor">พี่เลี้ยง (mentor)</option>
-                    <option value="advisor">อาจารย์ที่ปรึกษา (advisor)</option>
                   </select>
                 </div>
               </div>

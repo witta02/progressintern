@@ -849,7 +849,7 @@ export class App {
     );
   }
 
-  protected applyJob(job: JobPosting): void {
+  protected async applyJob(job: JobPosting): Promise<void> {
     const user = this.currentUser;
     if (user?.status !== 'active') {
       this.notifications.warning('บัญชีของคุณยังไม่ได้รับการอนุมัติ', 'สมัครงาน');
@@ -867,21 +867,25 @@ export class App {
       return;
     }
 
-    this.data.addApplication({
-      studentId: user.id,
-      jobPostingId: job.id,
-      status: 'pending',
-      appliedAt: new Date().toISOString()
-    });
-    this.notifications.success(
-      `สมัครตำแหน่ง ${job.title} แล้ว รอการพิจารณาจากบริษัท`,
-      'ส่งใบสมัคร'
-    );
-    this.setActiveView('applications');
-    window.location.reload();
+    try {
+      await this.data.addApplication({
+        studentId: user.id,
+        jobPostingId: job.id,
+        status: 'pending',
+        appliedAt: new Date().toISOString()
+      });
+      this.notifications.success(
+        `สมัครตำแหน่ง ${job.title} แล้ว รอการพิจารณาจากบริษัท`,
+        'ส่งใบสมัคร'
+      );
+      this.setActiveView('applications');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ส่งใบสมัคร');
+    }
   }
 
-  protected updateApplication(application: Application, status: ApplicationStatus): void {
+  protected async updateApplication(application: Application, status: ApplicationStatus): Promise<void> {
     const student = this.userName(application.studentId);
 
     if (status === 'approved') {
@@ -891,49 +895,59 @@ export class App {
       if (hasActiveInternship) {
         alert('นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว');
         this.notifications.error('นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว', 'แจ้งเตือน');
-        this.data.updateApplicationStatus(application, 'rejected');
+        try {
+          await this.data.updateApplicationStatus(application, 'rejected');
+        } catch (e) {
+          console.error(e);
+        }
         return;
       }
     }
 
-    this.data.updateApplicationStatus(application, status);
-    const label = this.applicationStatusLabel(status);
+    try {
+      await this.data.updateApplicationStatus(application, status);
+      const label = this.applicationStatusLabel(status);
 
-    if (status === 'rejected') {
-      this.notifications.warning(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
-    } else if (status === 'approved') {
-      this.notifications.success(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
-    } else {
-      this.notifications.info(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+      if (status === 'rejected') {
+        this.notifications.warning(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+      } else if (status === 'approved') {
+        this.notifications.success(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+      } else {
+        this.notifications.info(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+      }
+
+      if (
+        status !== 'approved' ||
+        !this.useMockData ||
+        this.internships.some((internship) => internship.studentId === application.studentId)
+      ) {
+        window.location.reload();
+        return;
+      }
+
+      const job = this.jobPostings.find((item) => item.id === application.jobPostingId);
+      if (!job) {
+        this.notifications.warning('ไม่พบตำแหน่งงานที่เชื่อมกับใบสมัคร', 'ฝึกงาน');
+        window.location.reload();
+        return;
+      }
+
+      await this.data.addInternship({
+        studentId: application.studentId,
+        companyId: job.companyId,
+        jobPostingId: job.id,
+        startDate: this.today(),
+        endDate: '2026-09-30',
+        status: 'active'
+      });
+      this.notifications.success(
+        `สร้างฝึกงานให้ ${student} ตำแหน่ง ${job.title} แล้ว`,
+        'ฝึกงาน'
+      );
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'การสมัคร');
     }
-
-    if (
-      status !== 'approved' ||
-      !this.useMockData ||
-      this.internships.some((internship) => internship.studentId === application.studentId)
-    ) {
-      return;
-    }
-
-    const job = this.jobPostings.find((item) => item.id === application.jobPostingId);
-    if (!job) {
-      this.notifications.warning('ไม่พบตำแหน่งงานที่เชื่อมกับใบสมัคร', 'ฝึกงาน');
-      return;
-    }
-
-    this.data.addInternship({
-      studentId: application.studentId,
-      companyId: job.companyId,
-      jobPostingId: job.id,
-      startDate: this.today(),
-      endDate: '2026-09-30',
-      status: 'active'
-    });
-    this.notifications.success(
-      `สร้างฝึกงานให้ ${student} ตำแหน่ง ${job.title} แล้ว`,
-      'ฝึกงาน'
-    );
-    window.location.reload();
   }
 
   protected addStudent(): void {
@@ -967,44 +981,60 @@ export class App {
     this.showAddStudentModal = false;
   }
   
-  protected approveStudent(student: User): void {
+  protected async approveStudent(student: User): Promise<void> {
     const user = this.currentUser;
     if (!user) return;
     const updates: Partial<User> = { status: 'active' };
     if (user.role === 'advisor') {
       updates.school = user.school;
     }
-    this.data.updateUser(student.id, updates);
-    this.notifications.success(`อนุมัติผู้ใช้ ${student.name} เรียบร้อยแล้ว`, 'จัดการผู้ใช้');
-    window.location.reload();
+    try {
+      await this.data.updateUser(student.id, updates);
+      this.notifications.success(`อนุมัติผู้ใช้ ${student.name} เรียบร้อยแล้ว`, 'จัดการผู้ใช้');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการผู้ใช้');
+    }
   }
   
-  protected rejectStudent(student: User): void {
-    this.data.updateUser(student.id, { status: 'rejected' });
-    this.notifications.warning(`ปฏิเสธบัญชีของ ${student.name} แล้ว`, 'จัดการผู้ใช้');
-    window.location.reload();
+  protected async rejectStudent(student: User): Promise<void> {
+    try {
+      await this.data.updateUser(student.id, { status: 'rejected' });
+      this.notifications.warning(`ปฏิเสธบัญชีของ ${student.name} แล้ว`, 'จัดการผู้ใช้');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการผู้ใช้');
+    }
   }
   
-  protected claimStudent(student: User): void {
+  protected async claimStudent(student: User): Promise<void> {
     const user = this.currentUser;
     if (!user) return;
-    this.data.updateUser(student.id, { school: user.school, status: 'active' });
-    this.notifications.success(`แก้ไขโรงเรียนและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
-    window.location.reload();
+    try {
+      await this.data.updateUser(student.id, { school: user.school, status: 'active' });
+      this.notifications.success(`แก้ไขโรงเรียนและรับ ${student.name} เข้าสังกัดแล้ว`, 'จัดการนักศึกษา');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการนักศึกษา');
+    }
   }
 
-  protected saveProfile(): void {
+  protected async saveProfile(): Promise<void> {
     const user = this.currentUser;
     if (!user) return;
-    this.data.updateUser(user.id, {
-      name: this.profileDraft.name,
-      email: this.profileDraft.email,
-      phone: this.profileDraft.phone,
-      school: this.profileDraft.school,
-      resumeUrl: this.profileDraft.resumeUrl
-    });
-    this.notifications.success('บันทึกข้อมูลส่วนตัวแล้ว', 'โปรไฟล์');
-    window.location.reload();
+    try {
+      await this.data.updateUser(user.id, {
+        name: this.profileDraft.name,
+        email: this.profileDraft.email,
+        phone: this.profileDraft.phone,
+        school: this.profileDraft.school,
+        resumeUrl: this.profileDraft.resumeUrl
+      });
+      this.notifications.success('บันทึกข้อมูลส่วนตัวแล้ว', 'โปรไฟล์');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'โปรไฟล์');
+    }
   }
 
   protected addJob(): void {
@@ -1057,7 +1087,7 @@ export class App {
     this.selectedJobToEdit = null;
   }
 
-  protected updateJob(): void {
+  protected async updateJob(): Promise<void> {
     if (!this.selectedJobToEdit || !this.editJobForm.title.trim()) {
       this.notifications.warning('กรุณากรอกชื่อตำแหน่งงาน', 'โพสต์งาน');
       return;
@@ -1068,29 +1098,37 @@ export class App {
       return timeStr.length === 5 ? timeStr + ':00' : timeStr;
     };
 
-    this.data.updateJob(this.selectedJobToEdit.id, {
-      companyId: this.selectedJobToEdit.companyId,
-      title,
-      description: this.editJobForm.description.trim() || 'รายละเอียดงานฝึกงาน',
-      requirements: this.editJobForm.requirements.trim() || 'พร้อมเรียนรู้งาน',
-      benefits: this.editJobForm.benefits.trim() || undefined,
-      checkinTime: ensureSeconds(this.editJobForm.checkinTime),
-      checkoutTime: ensureSeconds(this.editJobForm.checkoutTime),
-      latedTime: ensureSeconds(this.editJobForm.latedTime),
-      workDays: this.editJobForm.workDays.trim() || 'Monday - Friday',
-      slots: Number(this.editJobForm.slots) || 1
-    });
+    try {
+      await this.data.updateJob(this.selectedJobToEdit.id, {
+        companyId: this.selectedJobToEdit.companyId,
+        title,
+        description: this.editJobForm.description.trim() || 'รายละเอียดงานฝึกงาน',
+        requirements: this.editJobForm.requirements.trim() || 'พร้อมเรียนรู้งาน',
+        benefits: this.editJobForm.benefits.trim() || undefined,
+        checkinTime: ensureSeconds(this.editJobForm.checkinTime),
+        checkoutTime: ensureSeconds(this.editJobForm.checkoutTime),
+        latedTime: ensureSeconds(this.editJobForm.latedTime),
+        workDays: this.editJobForm.workDays.trim() || 'Monday - Friday',
+        slots: Number(this.editJobForm.slots) || 1
+      });
 
-    this.selectedJobToEdit = null;
-    this.notifications.success(`แก้ไขประกาศตำแหน่ง ${title} แล้ว`, 'ตำแหน่งงาน');
-    window.location.reload();
+      this.selectedJobToEdit = null;
+      this.notifications.success(`แก้ไขประกาศตำแหน่ง ${title} แล้ว`, 'ตำแหน่งงาน');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ตำแหน่งงาน');
+    }
   }
 
-  protected deleteJob(job: JobPosting): void {
+  protected async deleteJob(job: JobPosting): Promise<void> {
     if (confirm(`คุณแน่ใจหรือไม่ที่จะลบประกาศรับสมัครงาน "${job.title}"?`)) {
-      this.data.deleteJob(job.id);
-      this.notifications.warning(`ลบประกาศรับสมัครงาน "${job.title}" แล้ว`, 'ตำแหน่งงาน');
-      window.location.reload();
+      try {
+        await this.data.deleteJob(job.id);
+        this.notifications.warning(`ลบประกาศรับสมัครงาน "${job.title}" แล้ว`, 'ตำแหน่งงาน');
+        window.location.reload();
+      } catch (err: any) {
+        this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ตำแหน่งงาน');
+      }
     }
   }
 
@@ -1325,7 +1363,7 @@ export class App {
     });
   }
 
-  protected addLogbook(): void {
+  protected async addLogbook(): Promise<void> {
     if (!this.activeInternship) {
       this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'บันทึก');
       return;
@@ -1336,34 +1374,42 @@ export class App {
       return;
     }
 
-    this.data.addLogbook({
-      internshipId: this.activeInternship.id,
-      title: this.logbookTitle.trim(),
-      content: this.logbookText.trim()
-    });
-    this.logbookTitle = '';
-    this.logbookText = '';
-    this.notifications.success('ส่งบันทึกแล้ว (รออนุมัติ)', 'บันทึก');
-    window.location.reload();
-  }
-
-  protected reviewLogbook(logbook: Logbook, status: LogbookStatus): void {
-    this.data.updateLogbookStatus(
-      logbook,
-      status,
-      status === 'approved' ? 'รับรองโดย mentor' : 'ต้องแก้ไขและส่งใหม่'
-    );
-    const student = this.userName(this.internshipFor(logbook.internshipId)?.studentId || 0);
-    const label = this.logbookStatusLabel(status);
-
-    if (status === 'approved') {
-      this.notifications.success(`บันทึกของ ${student} → ${label}`, 'บันทึก');
-    } else {
-      this.notifications.warning(`บันทึกของ ${student} → ${label}`, 'บันทึก');
+    try {
+      await this.data.addLogbook({
+        internshipId: this.activeInternship.id,
+        title: this.logbookTitle.trim(),
+        content: this.logbookText.trim()
+      });
+      this.logbookTitle = '';
+      this.logbookText = '';
+      this.notifications.success('ส่งบันทึกแล้ว (รออนุมัติ)', 'บันทึก');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'บันทึก');
     }
   }
 
-  protected addLeave(): void {
+  protected async reviewLogbook(logbook: Logbook, status: LogbookStatus): Promise<void> {
+    try {
+      await this.data.updateLogbookStatus(
+        logbook,
+        status,
+        status === 'approved' ? 'รับรองโดย mentor' : 'ต้องแก้ไขและส่งใหม่'
+      );
+      const student = this.userName(this.internshipFor(logbook.internshipId)?.studentId || 0);
+      const label = this.logbookStatusLabel(status);
+
+      if (status === 'approved') {
+        this.notifications.success(`บันทึกของ ${student} → ${label}`, 'บันทึก');
+      } else {
+        this.notifications.warning(`บันทึกของ ${student} → ${label}`, 'บันทึก');
+      }
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'บันทึก');
+    }
+  }
+
+  protected async addLeave(): Promise<void> {
     if (!this.activeInternship) {
       this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'การลา');
       return;
@@ -1374,33 +1420,41 @@ export class App {
       return;
     }
 
-    this.data.addLeave({
-      internshipId: this.activeInternship.id,
-      studentId: this.currentUser!.id,
-      leaveType: this.leaveForm.leaveType,
-      startDate: this.leaveForm.startDate,
-      endDate: this.leaveForm.endDate,
-      reason: this.leaveForm.reason.trim()
-    });
-    
-    this.leaveForm.reason = '';
-    this.notifications.success('ส่งคำขอลาแล้ว (รออนุมัติ)', 'การลา');
-    window.location.reload();
-  }
-
-  protected setLeaveStatus(leave: LeaveRequest, status: 'approved' | 'rejected'): void {
-    const student = this.userName(leave.studentId);
-    this.data.updateLeaveStatus(leave.id, status);
-    
-    if (status === 'approved') {
-      this.notifications.success(`อนุมัติคำขอลาของ ${student} แล้ว`, 'การลา');
-    } else {
-      this.notifications.warning(`ปฏิเสธคำขอลาของ ${student} แล้ว`, 'การลา');
+    try {
+      await this.data.addLeave({
+        internshipId: this.activeInternship.id,
+        studentId: this.currentUser!.id,
+        leaveType: this.leaveForm.leaveType,
+        startDate: this.leaveForm.startDate,
+        endDate: this.leaveForm.endDate,
+        reason: this.leaveForm.reason.trim()
+      });
+      
+      this.leaveForm.reason = '';
+      this.notifications.success('ส่งคำขอลาแล้ว (รออนุมัติ)', 'การลา');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'การลา');
     }
-    window.location.reload();
   }
 
-  protected addEvaluation(): void {
+  protected async setLeaveStatus(leave: LeaveRequest, status: 'approved' | 'rejected'): Promise<void> {
+    const student = this.userName(leave.studentId);
+    try {
+      await this.data.updateLeaveStatus(leave.id, status);
+      
+      if (status === 'approved') {
+        this.notifications.success(`อนุมัติคำขอลาของ ${student} แล้ว`, 'การลา');
+      } else {
+        this.notifications.warning(`ปฏิเสธคำขอลาของ ${student} แล้ว`, 'การลา');
+      }
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'การลา');
+    }
+  }
+
+  protected async addEvaluation(): Promise<void> {
     const user = this.currentUser;
     if (!user || !this.selectedEvaluationInternship) {
       this.notifications.warning('กรุณาเลือกนักศึกษาที่ต้องการประเมิน', 'ประเมินผล');
@@ -1414,17 +1468,21 @@ export class App {
 
     const student = this.userName(this.selectedEvaluationInternship.studentId);
     const score = Number(this.evaluationScore);
-    this.data.addEvaluation({
-      internshipId: this.selectedEvaluationInternship.id,
-      evaluatorId: user.id,
-      score,
-      feedback: this.evaluationFeedback.trim(),
-      evaluationType: this.evaluationType
-    });
-    this.evaluationFeedback = '';
-    this.evaluationScore = 85;
-    this.notifications.success(`บันทึกการประเมิน ${student} คะแนน ${score}`, 'ประเมินผล');
-    window.location.reload();
+    try {
+      await this.data.addEvaluation({
+        internshipId: this.selectedEvaluationInternship.id,
+        evaluatorId: user.id,
+        score,
+        feedback: this.evaluationFeedback.trim(),
+        evaluationType: this.evaluationType
+      });
+      this.evaluationFeedback = '';
+      this.evaluationScore = 85;
+      this.notifications.success(`บันทึกการประเมิน ${student} คะแนน ${score}`, 'ประเมินผล');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ประเมินผล');
+    }
   }
 
   protected hasOpenAttendance(): boolean {
@@ -1612,14 +1670,18 @@ export class App {
     });
   }
 
-  protected toggleUserStatus(user: User, newStatus: any): void {
+  protected async toggleUserStatus(user: User, newStatus: any): Promise<void> {
     if (user.id === this.currentUserId) {
       this.notifications.warning('คุณไม่สามารถเปลี่ยนสถานะของตนเองได้', 'จัดการผู้ใช้');
       return;
     }
-    this.data.updateUser(user.id, { status: newStatus });
-    this.notifications.success(`ปรับปรุงสถานะของ ${user.name} เป็น ${newStatus} แล้ว`, 'จัดการผู้ใช้');
-    window.location.reload();
+    try {
+      await this.data.updateUser(user.id, { status: newStatus });
+      this.notifications.success(`ปรับปรุงสถานะ of ${user.name} เป็น ${newStatus} แล้ว`, 'จัดการผู้ใช้');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการผู้ใช้');
+    }
   }
 
   protected async createAdminSchool(): Promise<void> {

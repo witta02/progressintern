@@ -275,11 +275,10 @@ export class InternshipDataService {
     return { error: 'รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง' };
   }
 
-  updateUser(userId: number, updates: Partial<User>): void {
+  async updateUser(userId: number, updates: Partial<User>): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.updateUser(userId, updates)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.updateUser(userId, updates));
+      await this.refreshFromApi();
       return;
     }
 
@@ -287,11 +286,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  addJob(job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): void {
+  async addJob(job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createJob(job)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.createJob(job));
+      await this.refreshFromApi();
     } else {
       this.jobPostings = [
         ...this.jobPostings,
@@ -309,11 +307,10 @@ export class InternshipDataService {
     }
   }
 
-  updateJob(id: number, job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): void {
+  async updateJob(id: number, job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.updateJob(id, job)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.updateJob(id, job));
+      await this.refreshFromApi();
     } else {
       this.jobPostings = this.jobPostings.map((item) =>
         item.id === id ? { ...item, ...job } : item
@@ -322,11 +319,10 @@ export class InternshipDataService {
     }
   }
 
-  deleteJob(id: number): void {
+  async deleteJob(id: number): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.deleteJob(id)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.deleteJob(id));
+      await this.refreshFromApi();
       return;
     }
 
@@ -334,13 +330,12 @@ export class InternshipDataService {
     this.persist();
   }
 
-  setAttendanceVerification(attendance: Attendance, verificationStatus: VerificationStatus): void {
+  async setAttendanceVerification(attendance: Attendance, verificationStatus: VerificationStatus): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(
+      await firstValueFrom(
         this.api.patchAttendance(attendance, { verificationStatus })
-      ).then(() => {
-        void this.refreshFromApi();
-      });
+      );
+      await this.refreshFromApi();
       return;
     }
 
@@ -356,11 +351,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  addApplication(application: Omit<Application, 'id' | 'updatedAt'>): void {
+  async addApplication(application: Omit<Application, 'id' | 'updatedAt'>): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createApplication(application)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.createApplication(application));
+      await this.refreshFromApi();
       return;
     }
 
@@ -368,11 +362,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  updateApplicationStatus(application: Application, status: ApplicationStatus): void {
+  async updateApplicationStatus(application: Application, status: ApplicationStatus): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.patchApplication(application.id, status)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.patchApplication(application.id, status));
+      await this.refreshFromApi();
       return;
     }
 
@@ -382,11 +375,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  addInternship(internship: Omit<Internship, 'id' | 'createdAt' | 'updatedAt'>): void {
+  async addInternship(internship: Omit<Internship, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createInternship(internship)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.createInternship(internship));
+      await this.refreshFromApi();
       return;
     }
 
@@ -394,11 +386,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): void {
+  async addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createAttendance(attendance)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.createAttendance(attendance));
+      await this.refreshFromApi();
       return;
     }
 
@@ -406,23 +397,22 @@ export class InternshipDataService {
     this.persist();
   }
 
-  updateAttendance(attendanceId: number, updates: Partial<Attendance>): void {
+  async updateAttendance(attendanceId: number, updates: Partial<Attendance>): Promise<void> {
     if (this.api.apiEnabled()) {
       const attendance = this.attendances.find((item) => item.id === attendanceId);
       if (!attendance) {
         return;
       }
 
-      void firstValueFrom(
+      await firstValueFrom(
         this.api.patchAttendance(attendance, {
           checkOutTime: updates.checkOutTime,
           status: updates.status,
           checkoutLatitude: updates.checkoutLatitude,
           checkoutLongitude: updates.checkoutLongitude
         })
-      ).then(() => {
-        void this.refreshFromApi();
-      });
+      );
+      await this.refreshFromApi();
       return;
     }
 
@@ -430,17 +420,16 @@ export class InternshipDataService {
     this.persist();
   }
 
-  setAttendanceStatus(attendance: Attendance, status: AttendanceStatus): void {
-    this.updateAttendance(attendance.id, { status });
+  async setAttendanceStatus(attendance: Attendance, status: AttendanceStatus): Promise<void> {
+    await this.updateAttendance(attendance.id, { status });
   }
 
-  addLogbook(logbook: Omit<Logbook, 'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'>): void {
+  async addLogbook(logbook: Omit<Logbook, 'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'>): Promise<void> {
     const payload = { ...logbook, status: 'pending' as LogbookStatus };
 
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createLogbook(payload)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.createLogbook(payload));
+      await this.refreshFromApi();
       return;
     }
 
@@ -448,13 +437,12 @@ export class InternshipDataService {
     this.persist();
   }
 
-  updateLogbookStatus(logbook: Logbook, status: LogbookStatus, mentorComment?: string): void {
+  async updateLogbookStatus(logbook: Logbook, status: LogbookStatus, mentorComment?: string): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(
+      await firstValueFrom(
         this.api.patchLogbook(logbook.id, { status, mentorComment })
-      ).then(() => {
-        void this.refreshFromApi();
-      });
+      );
+      await this.refreshFromApi();
       return;
     }
 
@@ -464,11 +452,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  addEvaluation(evaluation: Omit<Evaluation, 'id' | 'createdAt' | 'updatedAt'>): void {
+  async addEvaluation(evaluation: Omit<Evaluation, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createEvaluation(evaluation)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.createEvaluation(evaluation));
+      await this.refreshFromApi();
       return;
     }
 
@@ -476,11 +463,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  addLeave(leave: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): void {
+  async addLeave(leave: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.createLeave(leave)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.createLeave(leave));
+      await this.refreshFromApi();
       return;
     }
 
@@ -488,11 +474,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  updateLeaveStatus(leaveId: number, status: 'approved' | 'rejected', comment?: string): void {
+  async updateLeaveStatus(leaveId: number, status: 'approved' | 'rejected', comment?: string): Promise<void> {
     if (this.api.apiEnabled()) {
-      void firstValueFrom(this.api.patchLeaveStatus(leaveId, status, comment)).then(() => {
-        void this.refreshFromApi();
-      });
+      await firstValueFrom(this.api.patchLeaveStatus(leaveId, status, comment));
+      await this.refreshFromApi();
       return;
     }
 

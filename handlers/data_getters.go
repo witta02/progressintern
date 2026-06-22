@@ -89,7 +89,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field string
 		var advisorID sql.NullInt64
 		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID)
-		
+
 		var advIDVal interface{} = nil
 		if advisorID.Valid {
 			advIDVal = advisorID.Int64
@@ -119,7 +119,7 @@ func GetAllUsersHandler(c *gin.Context) {
 // GetUserByIDHandler fetches a single user with authorization check
 func GetUserByIDHandler(c *gin.Context) {
 	userID := c.Param("id")
-	
+
 	reqRole, _ := c.Get("role")
 	reqUserID, _ := c.Get("user_id")
 
@@ -203,7 +203,7 @@ func GetUserByIDHandler(c *gin.Context) {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบผู้ใช้"})
 		return
 	}
-	
+
 	var advIDVal interface{} = nil
 	if advisorID.Valid {
 		advIDVal = advisorID.Int64
@@ -584,7 +584,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 	if roleStr == "admin" {
 		rows, err = config.DB.Query(
 			`SELECT l.id, l.internship_id, l.title, l.content, 
-			        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
+			        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
 			        l.created_at, l.updated_at
 			 FROM logbooks l
 			 ORDER BY l.created_at DESC`,
@@ -595,7 +595,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 
 		rows, err = config.DB.Query(
 			`SELECT l.id, l.internship_id, l.title, l.content, 
-			        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
+			        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
 			        l.created_at, l.updated_at
 			 FROM logbooks l
 			 LEFT JOIN internships i ON l.internship_id = i.id
@@ -607,7 +607,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 	} else if roleStr == "company" {
 		rows, err = config.DB.Query(
 			`SELECT l.id, l.internship_id, l.title, l.content, 
-			        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
+			        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
 			        l.created_at, l.updated_at
 			 FROM logbooks l
 			 LEFT JOIN internships i ON l.internship_id = i.id
@@ -619,7 +619,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 	} else { // student
 		rows, err = config.DB.Query(
 			`SELECT l.id, l.internship_id, l.title, l.content, 
-			        COALESCE(l.attachment_url, ''), COALESCE(l.mentor_comment, ''), l.status,
+			        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
 			        l.created_at, l.updated_at
 			 FROM logbooks l
 			 LEFT JOIN internships i ON l.internship_id = i.id
@@ -644,6 +644,9 @@ func GetAllLogbooksHandler(c *gin.Context) {
 		if err != nil {
 			fmt.Printf("Scan error: %v\n", err)
 			continue
+		}
+		if status == "draft" || status == "submitted" {
+			status = "pending"
 		}
 
 		var studentName string

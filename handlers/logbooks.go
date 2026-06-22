@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"internship-backend/config"
 
 	"github.com/gin-gonic/gin"
@@ -29,26 +30,47 @@ func CreateLogbookHandler(c *gin.Context) {
 		return
 	}
 
-	var internshipExists int
+	var studentID int
 	err := config.DB.QueryRow(
-		"SELECT COUNT(*) FROM internships WHERE id = ? AND student_id = ? AND status = 'active'",
+		"SELECT student_id FROM internships WHERE id = ? AND student_id = ? AND status = 'active'",
 		input.InternshipID, reqUserID.(int),
-	).Scan(&internshipExists)
-	if err != nil || internshipExists == 0 {
+	).Scan(&studentID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(403, gin.H{"status": 403, "error": "ไม่พบข้อมูลการฝึกงานที่มีสถานะ Active ของคุณ"})
+			return
+		}
+		c.JSON(500, gin.H{"status": 500, "error": "ตรวจสอบข้อมูลฝึกงานไม่สำเร็จ: " + err.Error()})
+		return
+	}
+	if studentID != reqUserID.(int) {
 		c.JSON(403, gin.H{"status": 403, "error": "ไม่พบข้อมูลการฝึกงานที่มีสถานะ Active ของคุณ"})
 		return
 	}
 
-	_, err = config.DB.Exec(
-		"INSERT INTO logbooks (internship_id, title, content, attachment_url) VALUES (?, ?, ?, ?)",
-		input.InternshipID, input.Title, input.Content, input.AttachmentURL,
+	result, err := config.DB.Exec(
+		"INSERT INTO logbooks (internship_id, student_id, title, content, status, submitted_at) VALUES (?, ?, ?, ?, 'submitted', NOW())",
+		input.InternshipID, studentID, input.Title, input.Content,
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ส่งรายงานบันทึกไม่สำเร็จ: " + err.Error()})
 		return
 	}
 
-	c.JSON(201, gin.H{"status": 201, "message": "บันทึกรายงานการฝึกงานส่งเรียบร้อย"})
+	id, _ := result.LastInsertId()
+	c.JSON(201, gin.H{
+		"status":  201,
+		"message": "บันทึกรายงานการฝึกงานส่งเรียบร้อย",
+		"data": gin.H{
+			"id":             id,
+			"internship_id":  input.InternshipID,
+			"title":          input.Title,
+			"content":        input.Content,
+			"attachment_url": input.AttachmentURL,
+			"mentor_comment": "",
+			"status":         "pending",
+		},
+	})
 }
 
 // ========================================================

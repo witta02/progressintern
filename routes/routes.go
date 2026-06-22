@@ -108,6 +108,8 @@ func SetupRoutes(router *gin.Engine) {
 		logbookGroup.POST("", handlers.CreateLogbookHandler)
 		logbookGroup.GET("", handlers.GetAllLogbooksHandler)
 		logbookGroup.PUT("/:id/approve", handlers.ApproveLogbookHandler)
+		logbookGroup.PUT("/:id", handlers.UpdateLogbookHandler)
+		logbookGroup.DELETE("/:id", handlers.DeleteLogbookHandler)
 	}
 
 	// ========================================================
@@ -129,6 +131,8 @@ func SetupRoutes(router *gin.Engine) {
 		leaveGroup.POST("", handlers.CreateLeaveHandler)
 		leaveGroup.GET("", handlers.GetAllLeavesHandler)
 		leaveGroup.PUT("/:id/status", handlers.UpdateLeaveStatusHandler)
+		leaveGroup.PUT("/:id", handlers.UpdateLeaveHandler)
+		leaveGroup.DELETE("/:id", handlers.DeleteLeaveHandler)
 	}
 
 	// ========================================================

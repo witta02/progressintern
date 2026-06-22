@@ -257,3 +257,160 @@ func UpdateLeaveStatusHandler(c *gin.Context) {
 		},
 	})
 }
+
+// ========================================================
+// [PUT] นักศึกษาแก้ไขคำขอลา
+// ========================================================
+func UpdateLeaveHandler(c *gin.Context) {
+	leaveID := c.Param("id")
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	if reqRole.(string) != "student" {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "เฉพาะนักศึกษาเท่านั้นที่สามารถแก้ไขคำขอลาได้",
+		})
+		return
+	}
+
+	var input models.CreateLeaveInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Status:  http.StatusBadRequest,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	if input.StudentID != reqUserID.(int) {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "คุณไม่มีสิทธิ์แก้ไขคำขอลาของผู้อื่น",
+		})
+		return
+	}
+
+	// Verify ownership and that status is not approved
+	var currentStatus string
+	err := config.DB.QueryRow(
+		"SELECT status FROM leave_requests WHERE id = ? AND student_id = ?",
+		leaveID, reqUserID.(int),
+	).Scan(&currentStatus)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, models.APIResponse{
+				Status:  http.StatusNotFound,
+				Message: "ไม่พบคำขอลาที่ระบุหรือคุณไม่มีสิทธิ์แก้ไข",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "ตรวจสอบข้อมูลการลาไม่สำเร็จ",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	if currentStatus == "approved" {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "ไม่สามารถแก้ไขคำขอลาที่ได้รับการอนุมัติแล้วได้",
+		})
+		return
+	}
+
+	// Update leave request
+	_, err = config.DB.Exec(
+		"UPDATE leave_requests SET leave_type = ?, start_date = ?, end_date = ?, reason = ?, updated_at = NOW() WHERE id = ?",
+		input.LeaveType, input.StartDate, input.EndDate, input.Reason, leaveID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "แก้ไขคำขอลาไม่สำเร็จ",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Status:  http.StatusOK,
+		Message: "แก้ไขคำขอลาสำเร็จ",
+		Data: gin.H{
+			"id":            leaveID,
+			"internship_id": input.InternshipID,
+			"student_id":    input.StudentID,
+			"leave_type":    input.LeaveType,
+			"start_date":    input.StartDate,
+			"end_date":      input.EndDate,
+			"reason":        input.Reason,
+			"status":        currentStatus,
+		},
+	})
+}
+
+// ========================================================
+// [DELETE] นักศึกษาลบคำขอลา
+// ========================================================
+func DeleteLeaveHandler(c *gin.Context) {
+	leaveID := c.Param("id")
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	if reqRole.(string) != "student" {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "เฉพาะนักศึกษาเท่านั้นที่สามารถลบคำขอลาได้",
+		})
+		return
+	}
+
+	// Verify ownership and status
+	var currentStatus string
+	err := config.DB.QueryRow(
+		"SELECT status FROM leave_requests WHERE id = ? AND student_id = ?",
+		leaveID, reqUserID.(int),
+	).Scan(&currentStatus)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, models.APIResponse{
+				Status:  http.StatusNotFound,
+				Message: "ไม่พบคำขอลาที่ระบุหรือคุณไม่มีสิทธิ์ลบ",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "ตรวจสอบข้อมูลการลาไม่สำเร็จ",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	if currentStatus == "approved" {
+		c.JSON(http.StatusForbidden, models.APIResponse{
+			Status:  http.StatusForbidden,
+			Message: "ไม่สามารถลบคำขอลาที่ได้รับการอนุมัติแล้วได้",
+		})
+		return
+	}
+
+	// Delete leave request
+	_, err = config.DB.Exec("DELETE FROM leave_requests WHERE id = ?", leaveID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "ลบคำขอลาไม่สำเร็จ",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Status:  http.StatusOK,
+		Message: "ลบคำขอลาสำเร็จ",
+	})
+}

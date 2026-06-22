@@ -159,3 +159,113 @@ func ApproveLogbookHandler(c *gin.Context) {
 		},
 	})
 }
+
+// ========================================================
+// [PUT] นักศึกษาแก้ไขรายงานประจำวัน (Logbook)
+// ========================================================
+func UpdateLogbookHandler(c *gin.Context) {
+	logID := c.Param("id")
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	if reqRole.(string) != "student" {
+		c.JSON(403, gin.H{"status": 403, "error": "เฉพาะนักศึกษาเท่านั้นที่สามารถแก้ไขรายงานบันทึกได้"})
+		return
+	}
+
+	var input struct {
+		Title   string `json:"title" binding:"required"`
+		Content string `json:"content" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "กรอกข้อมูลไม่ครบถ้วน: " + err.Error()})
+		return
+	}
+
+	// Verify ownership and that status is not approved
+	var currentStatus string
+	err := config.DB.QueryRow(
+		"SELECT status FROM logbooks WHERE id = ? AND student_id = ?",
+		logID, reqUserID.(int),
+	).Scan(&currentStatus)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(404, gin.H{"status": 404, "error": "ไม่พบรายงานบันทึกที่ระบุหรือคุณไม่มีสิทธิ์แก้ไข"})
+			return
+		}
+		c.JSON(500, gin.H{"status": 500, "error": "ตรวจสอบข้อมูลบันทึกไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	if currentStatus == "approved" {
+		c.JSON(403, gin.H{"status": 403, "error": "ไม่สามารถแก้ไขรายงานบันทึกที่ได้รับการอนุมัติแล้วได้"})
+		return
+	}
+
+	// Update logbook
+	_, err = config.DB.Exec(
+		"UPDATE logbooks SET title = ?, content = ?, updated_at = NOW() WHERE id = ?",
+		input.Title, input.Content, logID,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "แก้ไขรายงานบันทึกไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"status":  200,
+		"message": "แก้ไขรายงานบันทึกสำเร็จ",
+		"data": gin.H{
+			"id":      logID,
+			"title":   input.Title,
+			"content": input.Content,
+			"status":  currentStatus,
+		},
+	})
+}
+
+// ========================================================
+// [DELETE] นักศึกษาลบรายงานประจำวัน (Logbook)
+// ========================================================
+func DeleteLogbookHandler(c *gin.Context) {
+	logID := c.Param("id")
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	if reqRole.(string) != "student" {
+		c.JSON(403, gin.H{"status": 403, "error": "เฉพาะนักศึกษาเท่านั้นที่สามารถลบรายงานบันทึกได้"})
+		return
+	}
+
+	// Verify ownership and status
+	var currentStatus string
+	err := config.DB.QueryRow(
+		"SELECT status FROM logbooks WHERE id = ? AND student_id = ?",
+		logID, reqUserID.(int),
+	).Scan(&currentStatus)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(404, gin.H{"status": 404, "error": "ไม่พบรายงานบันทึกที่ระบุหรือคุณไม่มีสิทธิ์ลบ"})
+			return
+		}
+		c.JSON(500, gin.H{"status": 500, "error": "ตรวจสอบข้อมูลบันทึกไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	if currentStatus == "approved" {
+		c.JSON(403, gin.H{"status": 403, "error": "ไม่สามารถลบรายงานบันทึกที่ได้รับการอนุมัติแล้วได้"})
+		return
+	}
+
+	// Delete logbook
+	_, err = config.DB.Exec("DELETE FROM logbooks WHERE id = ?", logID)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "ลบรายงานบันทึกไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"status":  200,
+		"message": "ลบรายงานบันทึกสำเร็จ",
+	})
+}

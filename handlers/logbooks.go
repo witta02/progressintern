@@ -86,12 +86,13 @@ func ApproveLogbookHandler(c *gin.Context) {
 	userIDInt := reqUserID.(int)
 
 	var iID, sID int
+	var title, content string
 	err := config.DB.QueryRow(
-		`SELECT l.internship_id, i.student_id FROM logbooks l
+		`SELECT l.internship_id, i.student_id, l.title, l.content FROM logbooks l
 		 JOIN internships i ON l.internship_id = i.id
 		 WHERE l.id = ?`,
 		logID,
-	).Scan(&iID, &sID)
+	).Scan(&iID, &sID, &title, &content)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบรายงานบันทึกที่ระบุ"})
 		return
@@ -144,5 +145,17 @@ func ApproveLogbookHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"status": 200, "message": "ตรวจบันทึกเรียบร้อย"})
+	c.JSON(200, gin.H{
+		"status":  200,
+		"message": "ตรวจบันทึกเรียบร้อย",
+		"data": gin.H{
+			"id":             logID,
+			"internship_id":  iID,
+			"title":          title,
+			"content":        content,
+			"attachment_url": "",
+			"mentor_comment": input.Comment,
+			"status":         input.Status,
+		},
+	})
 }

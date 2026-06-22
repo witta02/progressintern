@@ -54,7 +54,7 @@ func CreateLeaveHandler(c *gin.Context) {
 		return
 	}
 
-	_, err = config.DB.Exec(
+	result, err := config.DB.Exec(
 		"INSERT INTO leave_requests (internship_id, student_id, leave_type, start_date, end_date, reason) VALUES (?, ?, ?, ?, ?, ?)",
 		input.InternshipID, input.StudentID, input.LeaveType, input.StartDate, input.EndDate, input.Reason,
 	)
@@ -67,9 +67,20 @@ func CreateLeaveHandler(c *gin.Context) {
 		return
 	}
 
+	id, _ := result.LastInsertId()
 	c.JSON(http.StatusCreated, models.APIResponse{
 		Status:  http.StatusCreated,
 		Message: "ส่งคำขอลาเรียบร้อยแล้ว",
+		Data: gin.H{
+			"id":            id,
+			"internship_id": input.InternshipID,
+			"student_id":    input.StudentID,
+			"leave_type":    input.LeaveType,
+			"start_date":    input.StartDate,
+			"end_date":      input.EndDate,
+			"reason":        input.Reason,
+			"status":        "pending",
+		},
 	})
 }
 
@@ -164,7 +175,11 @@ func UpdateLeaveStatusHandler(c *gin.Context) {
 	userIDInt := reqUserID.(int)
 
 	var sID, iID int
-	err := config.DB.QueryRow("SELECT student_id, internship_id FROM leave_requests WHERE id = ?", id).Scan(&sID, &iID)
+	var leaveType, startDate, endDate, reason string
+	err := config.DB.QueryRow(
+		"SELECT student_id, internship_id, leave_type, start_date, end_date, reason FROM leave_requests WHERE id = ?",
+		id,
+	).Scan(&sID, &iID, &leaveType, &startDate, &endDate, &reason)
 	if err != nil {
 		c.JSON(http.StatusNotFound, models.APIResponse{
 			Status:  http.StatusNotFound,
@@ -227,5 +242,18 @@ func UpdateLeaveStatusHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, models.APIResponse{
 		Status:  http.StatusOK,
 		Message: "อัปเดตสถานะการลาเรียบร้อยแล้ว",
+		Data: gin.H{
+			"id":            id,
+			"internship_id": iID,
+			"student_id":    sID,
+			"leave_type":    leaveType,
+			"start_date":    startDate,
+			"end_date":      endDate,
+			"reason":        reason,
+			"status":        input.Status,
+			"mentor_id":     mentorID,
+			"comment":       input.Comment,
+			"approved_at":   approvedAt,
+		},
 	})
 }

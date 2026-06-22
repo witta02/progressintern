@@ -1,3 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Color Palette (Light Operations Mode) */
+  --color-primary: #0F172A;
+  --color-on-primary: #FFFFFF;
+  --color-secondary: #64748B;
+  --color-accent: var(--color-brand-accent, #6366f1);
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
+  --color-muted: #F1F5F9;
+  --color-border: #E2E8F0;
+  --color-destructive: #EF4444;
+  --color-ring: var(--color-brand-accent, #6366f1);
+
+  /* Spacing Scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Shadow Depths */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.02);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.01);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.02);
+}
+
 /* ============================================================
    InternManager – Global CSS
    ============================================================ */
@@ -5,25 +36,25 @@
 
 /* --- Glassmorphism helpers (Light Mode) --------------------- */
 .glass-card {
-  background: rgba(255, 255, 255, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.85) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
-  box-shadow: 0 10px 40px 0 rgba(31, 38, 135, 0.08) !important;
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-1px);
 }
 .glass-navbar {
   background: rgba(255, 255, 255, 0.8) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.01) !important;
 }
 
 /* --- Custom Scrollbar --------------------------------------- */
@@ -108,7 +139,7 @@
 
 /* --- Focus Outline Accessibility ---------------------------- */
 *:focus-visible {
-  outline: 2px solid #6366f1 !important;
+  outline: 2px solid var(--color-accent) !important;
   outline-offset: 2px;
 }
 

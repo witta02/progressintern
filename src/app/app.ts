@@ -47,6 +47,7 @@ export class App {
 
   constructor() {
     console.log('App Initialized v2.0 - Leaves & SweetAlert2');
+    this.applyRoleTheme(undefined);
     this.initSession();
     setTimeout(() => {
       this.notifications.success('ยินดีต้อนรับสู่ระบบจัดการฝึกงาน', 'Welcome');
@@ -720,6 +721,7 @@ export class App {
 
   protected logout(): void {
     this.currentUserId = null;
+    this.applyRoleTheme(undefined);
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(this.sessionKey);
       localStorage.removeItem('intern-manager-api-token-v1');
@@ -732,6 +734,77 @@ export class App {
     this.selectedEvaluationInternshipId = null;
     this.notifications.info('คุณออกจากระบบแล้ว', 'ออกจากระบบ');
     this.cdr.detectChanges();
+  }
+
+  private applyRoleTheme(role: string | undefined): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const root = document.documentElement;
+    if (!role) {
+      // Default fallback (Indigo theme)
+      root.style.setProperty('--color-brand-accent', '#6366f1');
+      root.style.setProperty('--color-brand-accent-teal', '#0ea5e9');
+      root.style.setProperty('--color-brand-accent-teal-dim', 'rgba(14, 165, 233, 0.1)');
+      root.style.setProperty('--color-brand-accent-indigo-dim', 'rgba(99, 102, 241, 0.1)');
+      root.style.setProperty('--shadow-glow-teal', '0 0 20px rgba(14, 165, 233, 0.15)');
+      root.style.setProperty('--shadow-glow-indigo', '0 0 20px rgba(99, 102, 241, 0.15)');
+      return;
+    }
+
+    interface ThemeColors {
+      accent: string;
+      accentTeal: string;
+      tealDim: string;
+      indigoDim: string;
+      glowTeal: string;
+      glowIndigo: string;
+    }
+
+    const themes: Record<string, ThemeColors> = {
+      admin: {
+        accent: '#EF4444', // Red
+        accentTeal: '#DC2626',
+        tealDim: 'rgba(220, 38, 38, 0.1)',
+        indigoDim: 'rgba(239, 68, 68, 0.1)',
+        glowTeal: '0 0 20px rgba(220, 38, 38, 0.15)',
+        glowIndigo: '0 0 20px rgba(239, 68, 68, 0.15)'
+      },
+      company: {
+        accent: '#F59E0B', // Amber/Yellow
+        accentTeal: '#D97706',
+        tealDim: 'rgba(217, 119, 6, 0.1)',
+        indigoDim: 'rgba(245, 158, 11, 0.1)',
+        glowTeal: '0 0 20px rgba(217, 119, 6, 0.15)',
+        glowIndigo: '0 0 20px rgba(245, 158, 11, 0.15)'
+      },
+      advisor: {
+        accent: '#22C55E', // Green
+        accentTeal: '#10B981',
+        tealDim: 'rgba(16, 185, 129, 0.1)',
+        indigoDim: 'rgba(34, 197, 94, 0.1)',
+        glowTeal: '0 0 20px rgba(16, 185, 129, 0.15)',
+        glowIndigo: '0 0 20px rgba(34, 197, 94, 0.15)'
+      },
+      student: {
+        accent: '#3B82F6', // Blue
+        accentTeal: '#2563EB',
+        tealDim: 'rgba(37, 99, 235, 0.1)',
+        indigoDim: 'rgba(59, 130, 246, 0.1)',
+        glowTeal: '0 0 20px rgba(37, 99, 235, 0.15)',
+        glowIndigo: '0 0 20px rgba(59, 130, 246, 0.15)'
+      }
+    };
+
+    const theme = themes[role];
+    if (theme) {
+      root.style.setProperty('--color-brand-accent', theme.accent);
+      root.style.setProperty('--color-brand-accent-teal', theme.accentTeal);
+      root.style.setProperty('--color-brand-accent-teal-dim', theme.tealDim);
+      root.style.setProperty('--color-brand-accent-indigo-dim', theme.indigoDim);
+      root.style.setProperty('--shadow-glow-teal', theme.glowTeal);
+      root.style.setProperty('--shadow-glow-indigo', theme.glowIndigo);
+    }
   }
 
   protected async retryApiConnect(): Promise<void> {
@@ -1660,6 +1733,7 @@ export class App {
 
   private async finishLogin(user: User, showNotification = true): Promise<void> {
     this.currentUserId = user.id;
+    this.applyRoleTheme(user.role);
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(this.sessionKey, user.id.toString());
     }

@@ -8,28 +8,29 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Outfit', 'Kanit', 'sans-serif'],
+            sans: ['Fira Sans', 'Outfit', 'Kanit', 'sans-serif'],
+            mono: ['Fira Code', 'monospace']
           },
           colors: {
             brand: {
               accent: {
-                DEFAULT: '#6366f1',
-                teal: '#0ea5e9',
-                'teal-dim': 'rgba(14, 165, 233, 0.1)',
-                'indigo-dim': 'rgba(99, 102, 241, 0.1)'
+                DEFAULT: 'var(--color-brand-accent, #6366f1)',
+                teal: 'var(--color-brand-accent-teal, #0ea5e9)',
+                'teal-dim': 'var(--color-brand-accent-teal-dim, rgba(14, 165, 233, 0.1))',
+                'indigo-dim': 'var(--color-brand-accent-indigo-dim, rgba(99, 102, 241, 0.1))'
               }
             }
           },
           boxShadow: {
-            'glow-teal': '0 0 20px rgba(14, 165, 233, 0.15)',
-            'glow-indigo': '0 0 20px rgba(99, 102, 241, 0.15)',
+            'glow-teal': 'var(--shadow-glow-teal, 0 0 20px rgba(14, 165, 233, 0.15))',
+            'glow-indigo': 'var(--shadow-glow-indigo, 0 0 20px rgba(99, 102, 241, 0.15))',
             glass: '0 8px 32px 0 rgba(31, 38, 135, 0.05)',
           }
         }

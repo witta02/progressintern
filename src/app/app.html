@@ -17,22 +17,22 @@
   <div class="absolute top-0 -right-4 w-96 h-96 bg-emerald-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse delay-700"></div>
   <div class="absolute -bottom-8 left-20 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse delay-1000"></div>
 
-  <section class="w-full max-w-md bg-white rounded-[2rem] shadow-2xl shadow-blue-500/10 border border-slate-200 p-10 z-10">
+  <section class="w-full max-w-md glass-card rounded-[2.5rem] p-10 z-10 relative overflow-hidden animate-slide-up"><div class="absolute -top-40 -left-40 w-80 h-80 bg-brand-accent/5 rounded-full blur-3xl"></div>
     <div class="flex items-center gap-5 mb-10">
-      <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-200 rotate-3">IM</div>
+      <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-teal-400 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-glow-indigo rotate-3">IM</div>
       <div>
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight leading-none">Intern Manager</h1>
+        <h1 class="text-3xl font-black text-slate-800 tracking-tight leading-none">Intern Manager</h1>
         <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">{{ useMockData ? 'Mock data mode' : 'Live Production' }}</p>
       </div>
     </div>
 
-    <div class="flex p-1.5 bg-slate-100 rounded-2xl mb-10" role="tablist">
+    <div class="flex p-1.5 bg-slate-100/60 border border-slate-200/40 rounded-2xl mb-10" role="tablist">
       <button
         type="button"
         role="tab"
         class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
         [class.bg-white]="authMode === 'login'"
-        [class.text-blue-600]="authMode === 'login'"
+        [class.text-brand-accent]="authMode === 'login'"
         [class.shadow-md]="authMode === 'login'"
         [class.text-slate-500]="authMode !== 'login'"
         (click)="setAuthMode('login')"
@@ -44,7 +44,7 @@
         role="tab"
         class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
         [class.bg-white]="authMode === 'register'"
-        [class.text-blue-600]="authMode === 'register'"
+        [class.text-brand-accent]="authMode === 'register'"
         [class.shadow-md]="authMode === 'register'"
         [class.text-slate-500]="authMode !== 'register'"
         (click)="setAuthMode('register')"
@@ -59,17 +59,17 @@
         <label class="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
         <input name="loginEmail" type="email" [(ngModel)]="loginForm.email" placeholder="email@example.com" 
                [disabled]="loginLoading"
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed">
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed">
       </div>
       <div class="space-y-2">
         <label class="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
         <input name="loginPassword" type="password" [(ngModel)]="loginForm.password" placeholder="••••••••" 
                [disabled]="loginLoading"
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed">
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed">
       </div>
       <p *ngIf="loginError" class="text-xs font-black text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">{{ loginError }}</p>
       <button type="submit" [disabled]="loginLoading"
-              class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-1 active:translate-y-0 active:scale-95 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none">
+              class="w-full py-5 bg-brand-accent hover:bg-brand-accent/90 text-white rounded-2xl font-black text-lg shadow-glow-indigo transition-all transform hover:-translate-y-0.5 active:translate-y-0 active:scale-95 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none">
         <svg *ngIf="loginLoading" class="animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -78,7 +78,7 @@
       </button>
       <p class="text-center text-xs font-bold text-slate-400 pt-4 uppercase tracking-widest">
         ยังไม่มีบัญชี?
-        <button type="button" class="text-blue-600 hover:underline ml-1" (click)="setAuthMode('register')">สมัครสมาชิกใหม่</button>
+        <button type="button" class="text-brand-accent font-black hover:underline ml-1" (click)="setAuthMode('register')">สมัครสมาชิกใหม่</button>
       </p>
     </form>
 
@@ -88,7 +88,7 @@
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสลงทะเบียน / รหัสเชิญ</label>
         <div class="relative">
           <input name="registerCode" [(ngModel)]="registerForm.code" (ngModelChange)="onCodeChange($event)" placeholder="เช่น BU-STU-2026, COMP-INV-2026" 
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
           <span *ngIf="validatingCode" class="absolute right-4 top-4 text-xs font-bold text-slate-400">กำลังตรวจสอบ...</span>
         </div>
         <p *ngIf="detectedRoleName" class="text-xs font-black text-emerald-600 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100 flex items-center gap-2">
@@ -101,28 +101,28 @@
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
         <input name="registerName" [(ngModel)]="registerForm.name" placeholder="Full Name" 
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
       </div>
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
         <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com" 
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
       </div>
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เบอร์โทรศัพท์</label>
         <input name="registerPhone" type="text" [(ngModel)]="registerForm.phone" placeholder="เช่น 0812345678" 
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสผ่าน</label>
           <input name="registerPassword" type="password" [(ngModel)]="registerForm.password" placeholder="••••••" 
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
         </div>
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ยืนยันรหัสผ่าน</label>
           <input name="registerConfirm" type="password" [(ngModel)]="registerForm.confirmPassword" placeholder="••••••" 
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
         </div>
       </div>
 
@@ -130,22 +130,22 @@
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อบริษัท</label>
           <input name="companyName" [(ngModel)]="registerForm.companyName" placeholder="Company Name" 
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
         </div>
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">อีเมลติดต่อ (HR)</label>
           <input name="contactEmail" type="email" [(ngModel)]="registerForm.contactEmail" placeholder="hr@company.com" 
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
         </div>
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คำอธิบายบริษัท</label>
           <textarea name="companyDescription" [(ngModel)]="registerForm.description" placeholder="รายละเอียดของบริษัทและธุรกิจ..." rows="3"
-                    class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+                    class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
         </div>
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ที่อยู่บริษัท</label>
           <textarea name="companyAddress" [(ngModel)]="registerForm.address" placeholder="ที่ตั้งของสำนักงาน..." rows="2"
-                    class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+                    class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
         </div>
       </div>
 
@@ -156,7 +156,7 @@
       </button>
       <p class="text-center text-xs font-bold text-slate-400 pt-4 pb-6 uppercase tracking-widest">
         มีบัญชีอยู่แล้ว?
-        <button type="button" class="text-blue-600 hover:underline ml-1" (click)="setAuthMode('login')">เข้าสู่ระบบ</button>
+        <button type="button" class="text-brand-accent font-black hover:underline ml-1" (click)="setAuthMode('login')">เข้าสู่ระบบ</button>
       </p>
     </form>
   </section>
@@ -164,10 +164,10 @@
 
 <main *ngIf="initialized && isAuthenticated" class="min-h-screen bg-slate-50 flex flex-col font-sans">
   <!-- Top Global Navbar -->
-  <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/60 px-4 sm:px-8 h-16 sm:h-20 flex items-center justify-between shadow-sm">
+  <nav class="sticky top-0 z-40 glass-navbar px-4 sm:px-8 h-16 sm:h-20 flex items-center justify-between">
     <div class="flex items-center gap-4 sm:gap-12 h-full">
       <button type="button" class="flex items-center gap-3 sm:gap-4 group" (click)="setActiveView('dashboard')">
-        <div class="w-9 h-9 sm:w-11 sm:h-11 bg-slate-900 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-base sm:text-lg transition-all group-hover:bg-blue-600 group-hover:rotate-3 shadow-lg shadow-slate-200">IM</div>
+        <div class="w-9 h-9 sm:w-11 sm:h-11 bg-brand-accent rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-base sm:text-lg transition-all group-hover:bg-brand-accent-teal group-hover:rotate-3 shadow-glow-indigo">IM</div>
         <span class="text-base sm:text-xl font-black text-slate-900 tracking-tighter hidden sm:block">InternManager</span>
       </button>
 
@@ -176,7 +176,7 @@
           type="button"
           *ngFor="let view of availableViews"
           class="px-5 flex flex-col items-center justify-center gap-1.5 h-full transition-all relative group"
-          [class.text-blue-600]="activeView === view"
+          [class.text-brand-accent]="activeView === view"
           [class.text-slate-400]="activeView !== view"
           (click)="setActiveView(view)"
         >
@@ -196,15 +196,15 @@
             <svg *ngSwitchCase="'edit'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <svg *ngSwitchCase="'schema'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
           </ng-container>
-          <span class="text-[10px] font-black uppercase tracking-[0.1em] group-hover:text-blue-600">{{ viewLabels[view] }}</span>
-          <div class="absolute bottom-0 left-4 right-4 h-1 bg-blue-600 rounded-t-full transition-all" [class.opacity-100]="activeView === view" [class.opacity-0]="activeView !== view"></div>
+          <span class="text-[10px] font-black uppercase tracking-[0.1em] group-hover:text-brand-accent">{{ viewLabels[view] }}</span>
+          <div class="absolute bottom-0 left-4 right-4 h-1 bg-brand-accent shadow-glow-indigo rounded-t-full transition-all" [class.opacity-100]="activeView === view" [class.opacity-0]="activeView !== view"></div>
         </button>
       </div>
     </div>
 
       <div class="flex items-center gap-3 sm:gap-6">
         <div class="hidden sm:flex flex-col items-end">
-          <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-0.5">{{ roleLabel }}</span>
+          <span class="text-[10px] font-black text-brand-accent uppercase tracking-widest mb-0.5">{{ roleLabel }}</span>
           <span class="text-sm font-black text-slate-900">{{ currentUser?.name }}</span>
         </div>
         
@@ -212,7 +212,7 @@
 
         <button
           type="button"
-          class="relative w-10 h-10 sm:w-12 sm:h-11 flex items-center justify-center bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-xl sm:rounded-2xl text-slate-500 transition-all border border-transparent hover:border-blue-100"
+          class="relative w-10 h-10 sm:w-12 sm:h-11 flex items-center justify-center bg-slate-100/60 hover:bg-brand-accent/10 hover:text-brand-accent rounded-xl sm:rounded-2xl text-slate-500 transition-all border border-transparent hover:border-brand-accent/20"
           (click)="toggleNotificationPanel()"
         >
           <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -221,7 +221,7 @@
           </span>
         </button>
 
-        <button type="button" class="px-3 sm:px-5 py-2 sm:py-3 bg-white border border-rose-100 text-rose-600 font-black text-[10px] sm:text-xs uppercase tracking-widest rounded-xl sm:rounded-2xl hover:bg-rose-50 transition-all shadow-sm shadow-rose-100 hidden sm:block" (click)="logout()">
+        <button type="button" class="px-3 sm:px-5 py-2 sm:py-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 font-black text-[10px] sm:text-xs uppercase tracking-widest rounded-xl sm:rounded-2xl hover:bg-rose-500/20 hover:text-rose-700 transition-all hidden sm:block" (click)="logout()">
           Logout
         </button>
 
@@ -266,17 +266,21 @@
         <!-- METRIC CARDS GRID -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <article (click)="setActiveView(metric.view)" 
-                   class="bg-white p-10 rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 relative overflow-hidden group hover:scale-[1.03] transition-all duration-500 cursor-pointer animate-in fade-in" 
+                   class="glass-card p-8 rounded-[2.5rem] relative overflow-hidden group hover:scale-[1.03] transition-all duration-300 cursor-pointer animate-slide-up flex flex-col justify-between min-h-[160px]" 
                    *ngFor="let metric of dashboardMetrics; let i = index">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r" [ngClass]="['from-blue-500 to-blue-600', 'from-purple-500 to-purple-600', 'from-emerald-500 to-emerald-600', 'from-amber-500 to-amber-600'][i % 4]"></div>
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{{ metric.label }}</span>
-            <div class="flex items-baseline gap-2 mt-4 mb-2">
-              <strong class="text-6xl font-black text-slate-900 leading-none tracking-tighter group-hover:text-blue-600 transition-colors">{{ metric.value }}</strong>
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r" [ngClass]="['from-indigo-500 to-indigo-600', 'from-purple-500 to-purple-600', 'from-sky-400 to-teal-500', 'from-amber-500 to-rose-500'][i % 4]"></div>
+            <div>
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{{ metric.label }}</span>
+              <div class="flex items-baseline gap-2 mt-2">
+                <strong class="text-5xl font-black text-slate-900 leading-none tracking-tighter group-hover:text-brand-accent transition-colors">{{ metric.value }}</strong>
+              </div>
             </div>
-            <small class="text-xs font-black text-slate-500 uppercase tracking-widest">{{ metric.helper }}</small>
-            <div class="mt-4 flex items-center gap-1 text-[10px] font-black text-blue-600 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              <span>ไปที่หน้าต่างนี้</span>
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+            <div class="mt-4 flex items-center justify-between">
+              <small class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ metric.helper }}</small>
+              <span class="text-[10px] font-black text-brand-accent uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1">
+                <span>เปิดดู</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+              </span>
             </div>
           </article>
         </div>
@@ -363,14 +367,14 @@
                   <div class="space-y-1">
                     <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อรายงาน</label>
                     <input name="logTitle" type="text" [(ngModel)]="logbookTitle" placeholder="เช่น บันทึกการทำงานวันที่..." required
-                           class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-900 placeholder:text-slate-400 transition-all">
+                           class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold text-slate-900 placeholder:text-slate-400 transition-all">
                   </div>
                   <div class="space-y-1">
                     <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดงานที่ทำ</label>
                     <textarea name="logText" [(ngModel)]="logbookText" placeholder="เขียนรายละเอียดงานที่ทำวันนี้..." required rows="4"
-                              class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-900 placeholder:text-slate-400 transition-all resize-none"></textarea>
+                              class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold text-slate-900 placeholder:text-slate-400 transition-all resize-none"></textarea>
                   </div>
-                  <button type="submit" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-200 cursor-pointer hover:scale-[1.01]">
+                  <button type="submit" class="w-full py-4 bg-brand-accent hover:bg-brand-accent/90 text-white rounded-2xl font-black text-sm transition-all shadow-glow-indigo cursor-pointer hover:scale-[1.01]">
                     บันทึกและส่งรายงาน
                   </button>
                 </form>
@@ -391,7 +395,7 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
                 <h4 class="text-lg font-black text-slate-900">นักศึกษาที่รออนุมัติบัญชี ({{ pendingStudents.length }})</h4>
               </div>
-              <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden">
+              <div class="glass-card rounded-3xl divide-y divide-slate-100/60/60 overflow-hidden shadow-sm">
                 <div *ngFor="let s of pendingStudents" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                   <div class="min-w-0 pr-3">
                     <div class="font-black text-slate-900 text-sm truncate">{{ s.name }}</div>
@@ -415,7 +419,7 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
                 <h4 class="text-lg font-black text-slate-900">บันทึกประจำวันของนักศึกษาที่รอตรวจ ({{ pendingLogbooks.length }})</h4>
               </div>
-              <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden">
+              <div class="glass-card rounded-3xl divide-y divide-slate-100/60/60 overflow-hidden shadow-sm">
                 <div *ngFor="let l of pendingLogbooks" class="p-6 hover:bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 mb-1">
@@ -445,17 +449,17 @@
           <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/20 overflow-hidden animate-in fade-in">
             <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
               <div>
-                <h3 class="text-3xl font-black text-slate-900 tracking-tight">รายชื่อนักศึกษาในสังกัด</h3>
+                <h3 class="text-3xl font-black text-slate-800 tracking-tight">รายชื่อนักศึกษาในสังกัด</h3>
                 <p class="text-xs font-black text-blue-600 uppercase tracking-widest mt-2">{{ currentUser?.school }}</p>
               </div>
-              <button type="button" (click)="setActiveView('students')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+              <button type="button" (click)="setActiveView('students')" class="px-4 py-2.5 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
                 จัดการนักศึกษา
               </button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left">
                 <thead>
-                  <tr class="bg-slate-50/20">
+                  <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อ-นามสกุล</th>
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สาขาวิชา</th>
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">อีเมล</th>
@@ -464,15 +468,15 @@
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะบัญชี</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
-                  <tr *ngFor="let student of advisorStudents" class="hover:bg-blue-50/10 transition-colors">
+                <tbody class="divide-y divide-slate-100/60">
+                  <tr *ngFor="let student of advisorStudents" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                     <td class="px-10 py-6 font-black text-slate-900 text-base">{{ student.name }}</td>
                     <td class="px-10 py-6 font-bold text-blue-600 text-sm">{{ student.field || '—' }}</td>
                     <td class="px-10 py-6 font-bold text-slate-500">{{ student.email }}</td>
                     <td class="px-10 py-6 font-bold text-slate-500">{{ student.phone || '—' }}</td>
                     <td class="px-10 py-6 font-black text-slate-400 text-xs uppercase tracking-wider">{{ student.role }}</td>
                     <td class="px-10 py-6">
-                      <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-600 border-emerald-100">
+                      <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                         {{ student.status }}
                       </span>
                     </td>
@@ -500,7 +504,7 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
                 <h4 class="text-lg font-black text-slate-900">ใบสมัครเข้าฝึกงานที่รอดำเนินการ ({{ pendingApplications.length }})</h4>
               </div>
-              <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden">
+              <div class="glass-card rounded-3xl divide-y divide-slate-100/60/60 overflow-hidden shadow-sm">
                 <div *ngFor="let app of pendingApplications" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                   <div class="min-w-0 pr-3">
                     <div class="font-black text-slate-900 text-sm truncate">{{ userName(app.studentId) }}</div>
@@ -524,7 +528,7 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
                 <h4 class="text-lg font-black text-slate-900">บันทึกเวลาที่รอการอนุมัติ ({{ pendingAttendances.length }})</h4>
               </div>
-              <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden">
+              <div class="glass-card rounded-3xl divide-y divide-slate-100/60/60 overflow-hidden shadow-sm">
                 <div *ngFor="let att of pendingAttendances" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                   <div class="min-w-0 pr-3">
                     <div class="font-black text-slate-900 text-sm truncate">{{ userName(att.studentId) }}</div>
@@ -548,20 +552,20 @@
           </div>
 
           <!-- Active Interns list -->
-          <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/20 overflow-hidden">
+          <article class="glass-card rounded-[2.5rem] overflow-hidden">
             <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
               <div>
-                <h3 class="text-3xl font-black text-slate-900 tracking-tight">นักศึกษาฝึกงานปัจจุบัน</h3>
+                <h3 class="text-3xl font-black text-slate-800 tracking-tight">นักศึกษาฝึกงานปัจจุบัน</h3>
                 <p class="text-xs font-black text-blue-600 uppercase tracking-widest mt-2">กำลังฝึกอบรมกับทางบริษัท</p>
               </div>
-              <button type="button" (click)="setActiveView('internships')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+              <button type="button" (click)="setActiveView('internships')" class="px-4 py-2.5 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
                 ดูทั้งหมด
               </button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left">
                 <thead>
-                  <tr class="bg-slate-50/20">
+                  <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อ-นามสกุล</th>
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ตำแหน่งงาน</th>
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">วันที่เริ่ม - สิ้นสุด</th>
@@ -569,21 +573,21 @@
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
-                  <tr *ngFor="let intern of visibleInternships" class="hover:bg-blue-50/10 transition-colors">
+                <tbody class="divide-y divide-slate-100/60">
+                  <tr *ngFor="let intern of visibleInternships" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                     <td class="px-10 py-6 font-black text-slate-900 text-base">{{ userName(intern.studentId) }}</td>
                     <td class="px-10 py-6 font-bold text-blue-600 text-sm">{{ internshipJobTitle(intern) }}</td>
                     <td class="px-10 py-6 font-bold text-slate-500">{{ intern.startDate | date:'dd MMM yyyy' }} - {{ intern.endDate | date:'dd MMM yyyy' }}</td>
                     <td class="px-10 py-6">
                       <div class="w-32 flex items-center gap-3">
-                        <div class="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                          <div class="bg-blue-600 h-full rounded-full" [style.width.%]="getInternshipProgress(intern).percent"></div>
+                        <div class="flex-1 bg-slate-100/80 rounded-full h-1.5 overflow-hidden">
+                          <div class="bg-gradient-to-r from-indigo-500 to-teal-400 h-full rounded-full" [style.width.%]="getInternshipProgress(intern).percent"></div>
                         </div>
                         <span class="text-xs font-black text-slate-700">{{ getInternshipProgress(intern).percent }}%</span>
                       </div>
                     </td>
                     <td class="px-10 py-6">
-                      <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-600 border-emerald-100">
+                      <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                         {{ intern.status }}
                       </span>
                     </td>
@@ -608,7 +612,7 @@
               <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
               <h4 class="text-lg font-black text-slate-900">ผู้สมัครลงทะเบียนที่รอการเปิดใช้งานบัญชี ({{ pendingUsers.length }})</h4>
             </div>
-            <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100 overflow-hidden max-h-96 overflow-y-auto">
+            <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100/60 overflow-hidden max-h-96 overflow-y-auto">
               <div *ngFor="let u of pendingUsers" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                 <div class="min-w-0 pr-3">
                   <div class="font-black text-slate-900 text-sm truncate">{{ u.name }}</div>
@@ -627,20 +631,20 @@
           </div>
 
           <!-- Roster System-wide -->
-          <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+          <article class="glass-card rounded-[2.5rem] overflow-hidden">
             <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
               <div>
-                <h3 class="text-3xl font-black text-slate-900 tracking-tight">รายชื่อผู้ใช้งานระบบทั้งหมด</h3>
+                <h3 class="text-3xl font-black text-slate-800 tracking-tight">รายชื่อผู้ใช้งานระบบทั้งหมด</h3>
                 <p class="text-xs font-black text-blue-600 uppercase tracking-widest mt-2">ดูแลและปรับแต่งบัญชีในเซิร์ฟเวอร์</p>
               </div>
-              <button type="button" (click)="setActiveView('admin_users')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+              <button type="button" (click)="setActiveView('admin_users')" class="px-4 py-2.5 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
                 จัดการผู้ใช้ทั้งหมด
               </button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left">
                 <thead>
-                  <tr class="bg-slate-50/20">
+                  <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อ-นามสกุล</th>
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">อีเมล</th>
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท</th>
@@ -648,8 +652,8 @@
                     <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
-                  <tr *ngFor="let u of managedStudents" class="hover:bg-blue-50/10 transition-colors">
+                <tbody class="divide-y divide-slate-100/60">
+                  <tr *ngFor="let u of managedStudents" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                     <td class="px-10 py-6 font-black text-slate-900 text-base">{{ u.name }}</td>
                     <td class="px-10 py-6 font-bold text-slate-500 text-sm">{{ u.email }}</td>
                     <td class="px-10 py-6 font-black text-blue-600 text-xs uppercase tracking-wider">{{ u.role }}</td>
@@ -690,31 +694,31 @@
 
             <!-- Create Form -->
             <form *ngIf="!selectedJobToEdit" class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-5" (ngSubmit)="addJob()">
-              <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
-              <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
               
               <div class="grid grid-cols-4 gap-3 md:col-span-2">
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Work Days</label>
-                  <input name="jobWorkDays" [(ngModel)]="newJob.workDays" placeholder="Mon-Fri" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+                  <input name="jobWorkDays" [(ngModel)]="newJob.workDays" placeholder="Mon-Fri" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
                 </div>
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-in</label>
-                  <input name="jobCheckin" type="time" [(ngModel)]="newJob.checkinTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                  <input name="jobCheckin" type="time" [(ngModel)]="newJob.checkinTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-out</label>
-                  <input name="jobCheckout" type="time" [(ngModel)]="newJob.checkoutTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                  <input name="jobCheckout" type="time" [(ngModel)]="newJob.checkoutTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Late After</label>
-                  <input name="jobLated" type="time" [(ngModel)]="newJob.latedTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                  <input name="jobLated" type="time" [(ngModel)]="newJob.latedTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
               </div>
 
-              <textarea name="jobDescription" [(ngModel)]="newJob.description" rows="2" placeholder="Short Summary / Description" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required></textarea>
-              <textarea name="jobRequirements" [(ngModel)]="newJob.requirements" rows="2" placeholder="Job Requirements (เช่น ทักษะที่ต้องการ, คุณสมบัติ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
-              <textarea name="jobBenefits" [(ngModel)]="newJob.benefits" rows="2" placeholder="Benefits (เช่น เบี้ยเลี้ยง, สวัสดิการ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="jobDescription" [(ngModel)]="newJob.description" rows="2" placeholder="Short Summary / Description" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required></textarea>
+              <textarea name="jobRequirements" [(ngModel)]="newJob.requirements" rows="2" placeholder="Job Requirements (เช่น ทักษะที่ต้องการ, คุณสมบัติ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="jobBenefits" [(ngModel)]="newJob.benefits" rows="2" placeholder="Benefits (เช่น เบี้ยเลี้ยง, สวัสดิการ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
 
               <button type="submit" class="md:col-span-2 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/30">
                 Create Posting
@@ -723,31 +727,31 @@
 
             <!-- Edit Form -->
             <form *ngIf="selectedJobToEdit" class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-5" (ngSubmit)="updateJob()">
-              <input name="editJobTitle" [(ngModel)]="editJobForm.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
-              <input name="editJobSlots" type="number" min="1" [(ngModel)]="editJobForm.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="editJobTitle" [(ngModel)]="editJobForm.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="editJobSlots" type="number" min="1" [(ngModel)]="editJobForm.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
               
               <div class="grid grid-cols-4 gap-3 md:col-span-2">
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Work Days</label>
-                  <input name="editJobWorkDays" [(ngModel)]="editJobForm.workDays" placeholder="Mon-Fri" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+                  <input name="editJobWorkDays" [(ngModel)]="editJobForm.workDays" placeholder="Mon-Fri" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
                 </div>
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-in</label>
-                  <input name="editJobCheckin" type="time" [(ngModel)]="editJobForm.checkinTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                  <input name="editJobCheckin" type="time" [(ngModel)]="editJobForm.checkinTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-out</label>
-                  <input name="editJobCheckout" type="time" [(ngModel)]="editJobForm.checkoutTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                  <input name="editJobCheckout" type="time" [(ngModel)]="editJobForm.checkoutTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Late After</label>
-                  <input name="editJobLated" type="time" [(ngModel)]="editJobForm.latedTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 outline-none font-bold transition-all text-slate-900">
+                  <input name="editJobLated" type="time" [(ngModel)]="editJobForm.latedTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
               </div>
 
-              <textarea name="editJobDescription" [(ngModel)]="editJobForm.description" rows="2" placeholder="Short Summary / Description" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required></textarea>
-              <textarea name="editJobRequirements" [(ngModel)]="editJobForm.requirements" rows="2" placeholder="Job Requirements (เช่น ทักษะที่ต้องการ, คุณสมบัติ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
-              <textarea name="editJobBenefits" [(ngModel)]="editJobForm.benefits" rows="2" placeholder="Benefits (เช่น เบี้ยเลี้ยง, สวัสดิการ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="editJobDescription" [(ngModel)]="editJobForm.description" rows="2" placeholder="Short Summary / Description" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required></textarea>
+              <textarea name="editJobRequirements" [(ngModel)]="editJobForm.requirements" rows="2" placeholder="Job Requirements (เช่น ทักษะที่ต้องการ, คุณสมบัติ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="editJobBenefits" [(ngModel)]="editJobForm.benefits" rows="2" placeholder="Benefits (เช่น เบี้ยเลี้ยง, สวัสดิการ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
 
               <div class="md:col-span-2 flex gap-4">
                 <button type="submit" class="flex-1 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-blue-500/20">
@@ -790,7 +794,7 @@
                 </div>
                 <span class="text-xs font-black text-slate-300 uppercase tracking-widest">{{ job.slots }} Openings</span>
               </div>
-              <h3 class="text-3xl font-black text-slate-900 mb-3 group-hover:text-blue-600 transition-colors tracking-tight">{{ job.title }}</h3>
+              <h3 class="text-3xl font-black text-slate-900 mb-3 group-hover:text-brand-accent transition-colors tracking-tight">{{ job.title }}</h3>
               <p class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-3">
                 <span class="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"></path></svg>
@@ -838,11 +842,11 @@
 
       <!-- APPLICATIONS -->
       <section *ngIf="activeView === 'applications'" class="space-y-6">
-        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+        <div class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
-                <tr class="bg-slate-50/50">
+                <tr class="bg-slate-50 border-b border-slate-100">
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Student</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Position</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Applied Date</th>
@@ -850,8 +854,8 @@
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr *ngFor="let app of visibleApplications" class="hover:bg-blue-50/20 transition-colors">
+              <tbody class="divide-y divide-slate-100/60">
+                <tr *ngFor="let app of visibleApplications" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6">
                     <div class="font-black text-slate-900 text-lg leading-tight">{{ userName(app.studentId) }}</div>
                     <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">{{ studentField(app.studentId) }}</div>
@@ -909,11 +913,11 @@
             <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
             <input id="internship-search" type="text" [(ngModel)]="internshipTableSearch"
                    placeholder="ค้นหาชื่อ, ตำแหน่ง, บริษัท..."
-                   class="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-slate-300">
+                   class="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all placeholder:text-slate-300">
           </div>
           <!-- Status filter -->
           <select id="internship-status-filter" [(ngModel)]="internshipTableStatusFilter"
-                  class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                  class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all">
             <option value="">ทุกสถานะ</option>
             <option value="active">Active</option>
             <option value="completed">Completed</option>
@@ -924,7 +928,7 @@
           <select *ngIf="currentUser?.role === 'advisor'"
                   id="advisor-student-filter"
                   [(ngModel)]="advisorStudentFilter"
-                  class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                  class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all">
             <option value="my">👥 นักศึกษาในความดูแลของฉัน (My Group)</option>
             <option value="school_all">🏫 นักศึกษาทั้งหมดในสถาบัน (Same School)</option>
             <option value="school_unassigned">❓ ยังไม่มีอาจารย์ที่ปรึกษา (Unassigned)</option>
@@ -938,7 +942,7 @@
         </div>
 
         <!-- ── Data Table ────────────────────────────────────── -->
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/20 overflow-hidden">
+        <article class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
@@ -952,7 +956,7 @@
                   <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รายละเอียด</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody class="divide-y divide-slate-100/60">
                 <tr *ngIf="filteredVisibleInternships.length === 0">
                   <td [attr.colspan]="currentUser?.role !== 'student' ? 7 : 6" class="px-8 py-16 text-center text-slate-400 font-bold">
                     ไม่พบข้อมูลการฝึกงาน
@@ -1033,8 +1037,8 @@
                       <div class="flex justify-between text-[10px] font-black text-slate-500 mb-1.5">
                         <span>{{ getInternshipProgress(internship).percent }}%</span>
                       </div>
-                      <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div class="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full transition-all"
+                      <div class="w-full bg-slate-100/80 rounded-full h-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-indigo-500 to-teal-400 h-2 rounded-full transition-all"
                              [style.width.%]="getInternshipProgress(internship).percent"></div>
                       </div>
                     </div>
@@ -1287,14 +1291,14 @@
                     </div>
                     <table class="w-full text-left text-xs">
                       <thead>
-                        <tr class="bg-slate-50/50">
+                        <tr class="bg-slate-50 border-b border-slate-100">
                           <th class="px-5 py-3 font-black text-slate-400 uppercase tracking-widest text-[9px]">วัน/เวลา Check-in</th>
                           <th class="px-5 py-3 font-black text-slate-400 uppercase tracking-widest text-[9px]">Check-out</th>
                           <th class="px-5 py-3 font-black text-slate-400 uppercase tracking-widest text-[9px]">สถานะ</th>
                           <th class="px-5 py-3 font-black text-slate-400 uppercase tracking-widest text-[9px]">GPS</th>
                         </tr>
                       </thead>
-                      <tbody class="divide-y divide-slate-100">
+                      <tbody class="divide-y divide-slate-100/60">
                         <tr *ngFor="let a of att.recent" class="hover:bg-slate-50 transition-colors">
                           <td class="px-5 py-3 font-bold text-slate-700">{{ formatDateTime(a.checkInTime) }}</td>
                           <td class="px-5 py-3 font-bold text-slate-500">{{ a.checkOutTime ? formatDateTime(a.checkOutTime) : '—' }}</td>
@@ -1393,7 +1397,7 @@
                           <th class="px-5 py-3 font-black text-slate-400 uppercase tracking-widest text-[9px]">สถานะ</th>
                         </tr>
                       </thead>
-                      <tbody class="divide-y divide-slate-100">
+                      <tbody class="divide-y divide-slate-100/60">
                         <tr *ngFor="let leave of lv.leaves" class="hover:bg-slate-50 transition-colors">
                           <td class="px-5 py-3 font-black text-sm" [class.text-rose-600]="leave.leaveType === 'sick'" [class.text-purple-600]="leave.leaveType === 'personal'">
                             {{ leave.leaveType === 'sick' ? '🤒 ป่วย' : '🏖️ กิจ' }}
@@ -1471,7 +1475,7 @@
              class="flex items-center gap-4 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
           <label class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Filter by Student:</label>
           <select [(ngModel)]="attendanceStudentFilterId" 
-                  class="px-6 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold min-w-[240px]">
+                  class="px-6 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold min-w-[240px]">
             <option [ngValue]="null">All Students</option>
             <option *ngFor="let student of attendanceStudents" [value]="student.id">{{ student.name }}</option>
           </select>
@@ -1502,7 +1506,7 @@
           </div>
         </article>
 
-        <div class="bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+        <div class="glass-card rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left min-w-[700px]">
               <thead>
@@ -1515,7 +1519,7 @@
                   <th class="px-5 sm:px-10 py-5 sm:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Verification</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody class="divide-y divide-slate-100/60">
                 <tr *ngFor="let att of visibleAttendances" class="hover:bg-blue-50/20 transition-colors group">
                   <td class="px-5 sm:px-10 py-5 sm:py-8 font-black text-slate-900 text-base sm:text-lg">{{ userName(att.studentId) }}</td>
                   <td class="px-5 sm:px-10 py-5 sm:py-8 font-black text-slate-700 text-sm">{{ formatDateTime(att.checkInTime) }}</td>
@@ -1589,7 +1593,7 @@
 
       <!-- LOGBOOKS -->
       <section *ngIf="activeView === 'logbooks'" class="space-y-12">
-        <article *ngIf="currentUser?.role === 'student' && activeInternship" class="bg-white rounded-[2.5rem] p-12 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+        <article *ngIf="currentUser?.role === 'student' && activeInternship" class="glass-card p-12 relative overflow-hidden rounded-[2.5rem]">
           <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
           <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div class="lg:col-span-4">
@@ -1600,12 +1604,12 @@
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อบันทึก / งานที่ทำ</label>
                 <input name="logbookTitle" [(ngModel)]="logbookTitle" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard" 
-                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดการปฏิบัติงาน</label>
                 <textarea name="logbookText" [(ngModel)]="logbookText" rows="4" placeholder="ระบุรายละเอียดงานที่ทำ ความรู้ที่ได้รับ และอุปสรรคปัญหาในการทำงาน..." 
-                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
               </div>
               <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
                 ส่งบันทึกประจำวัน
@@ -1614,11 +1618,11 @@
           </div>
         </article>
 
-        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+        <div class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
-                <tr class="bg-slate-50/50">
+                <tr class="bg-slate-50 border-b border-slate-100">
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">นักศึกษา</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">หัวข้อ</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รายละเอียด</th>
@@ -1626,8 +1630,8 @@
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">การจัดการ</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr *ngFor="let logbook of visibleLogbooks" class="hover:bg-blue-50/20 transition-colors">
+              <tbody class="divide-y divide-slate-100/60">
+                <tr *ngFor="let logbook of visibleLogbooks" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(internshipFor(logbook.internshipId)?.studentId || 0) }}</td>
                   <td class="px-10 py-6 font-bold text-slate-700">{{ logbook.title }}</td>
                   <td class="px-10 py-6 font-medium text-slate-500 max-w-xs truncate" title="{{ logbook.content }}">{{ logbook.content }}</td>
@@ -1657,7 +1661,7 @@
 
       <!-- LEAVES -->
       <section *ngIf="activeView === 'leaves'" class="space-y-12">
-        <article *ngIf="currentUser?.role === 'student' && activeInternship" class="bg-white rounded-[2.5rem] p-12 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+        <article *ngIf="currentUser?.role === 'student' && activeInternship" class="glass-card p-12 relative overflow-hidden rounded-[2.5rem]">
           <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
           <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div class="lg:col-span-4">
@@ -1669,7 +1673,7 @@
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทการลา</label>
                   <select name="leaveType" [(ngModel)]="leaveForm.leaveType" 
-                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                     <option value="sick">ลาป่วย</option>
                     <option value="personal">ลากิจ</option>
                   </select>
@@ -1677,18 +1681,18 @@
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ตั้งแต่วันที่</label>
                   <input name="leaveStart" type="date" [(ngModel)]="leaveForm.startDate" 
-                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ถึงวันที่</label>
                   <input name="leaveEnd" type="date" [(ngModel)]="leaveForm.endDate" 
-                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เหตุผลการลา</label>
                 <textarea name="leaveReason" [(ngModel)]="leaveForm.reason" rows="3" placeholder="ระบุเหตุผล เช่น มีไข้สูง ปวดศีรษะ หรือมีความจำเป็นทางครอบครัว..." 
-                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
               </div>
               <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
                 ส่งคำขอลา
@@ -1697,11 +1701,11 @@
           </div>
         </article>
 
-        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+        <div class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
-                <tr class="bg-slate-50/50">
+                <tr class="bg-slate-50 border-b border-slate-100">
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">นักศึกษา</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ประเภท</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ระยะเวลา</th>
@@ -1710,8 +1714,8 @@
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">การจัดการ</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr *ngFor="let leave of visibleLeaves" class="hover:bg-blue-50/20 transition-colors">
+              <tbody class="divide-y divide-slate-100/60">
+                <tr *ngFor="let leave of visibleLeaves" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(leave.studentId) }}</td>
                   <td class="px-10 py-6 font-bold text-slate-700">{{ leaveTypeLabel(leave.leaveType) }}</td>
                   <td class="px-10 py-6 font-medium text-slate-500">
@@ -1745,7 +1749,7 @@
       <!-- EVALUATIONS -->
       <section *ngIf="activeView === 'evaluations'" class="space-y-12">
         <article *ngIf="(currentUser?.role === 'company' || currentUser?.role === 'advisor') && visibleInternships[0]" 
-                 class="bg-white rounded-[2.5rem] p-12 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+                 class="glass-card p-12 relative overflow-hidden rounded-[2.5rem]">
           <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
           <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div class="lg:col-span-4">
@@ -1757,7 +1761,7 @@
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">นักศึกษาฝึกงาน</label>
                   <select name="evaluationInternship" [(ngModel)]="selectedEvaluationInternshipId" 
-                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                     <option [ngValue]="null" disabled>เลือกนักศึกษา</option>
                     <option *ngFor="let internship of visibleInternships" [ngValue]="internship.id">
                       {{ userName(internship.studentId) }} - {{ internshipJobTitle(internship) }}
@@ -1767,7 +1771,7 @@
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทการประเมิน</label>
                   <select name="evaluationType" [(ngModel)]="evaluationType" 
-                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                     <option value="mentor">พี่เลี้ยง (mentor)</option>
                     <option value="advisor">อาจารย์ที่ปรึกษา (advisor)</option>
                   </select>
@@ -1777,12 +1781,12 @@
                 <div class="md:col-span-1 space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คะแนน (0-100)</label>
                   <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore" 
-                         class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="md:col-span-3 space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ข้อเสนอแนะ / ความเห็นเพิ่มเติม</label>
                   <input name="evaluationFeedback" [(ngModel)]="evaluationFeedback" placeholder="ความรับผิดชอบดีมาก เรียนรู้เร็ว ควรพัฒนาทักษะภาษาอังกฤษเพิ่มเติม..." 
-                         class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                         class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
                 </div>
               </div>
               <button type="submit" [disabled]="!selectedEvaluationInternshipId" 
@@ -1793,19 +1797,19 @@
           </div>
         </article>
 
-        <div class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+        <div class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
-                <tr class="bg-slate-50/50">
+                <tr class="bg-slate-50 border-b border-slate-100">
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">นักศึกษา</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ผู้ประเมิน</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">คะแนน</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ข้อเสนอแนะ / Feedback</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr *ngFor="let evaluation of visibleEvaluations" class="hover:bg-blue-50/20 transition-colors">
+              <tbody class="divide-y divide-slate-100/60">
+                <tr *ngFor="let evaluation of visibleEvaluations" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(internshipFor(evaluation.internshipId)?.studentId || 0) }}</td>
                   <td class="px-10 py-6 font-bold text-slate-700">{{ evaluatorLabel(evaluation) }}</td>
                   <td class="px-10 py-6">
@@ -1828,16 +1832,16 @@
       <section *ngIf="activeView === 'students'" class="space-y-8 animate-in fade-in duration-200">
         <div class="flex flex-wrap justify-between items-center gap-4">
           <div>
-            <h3 class="text-4xl font-black mb-2 tracking-tight text-slate-900">จัดการนักศึกษา</h3>
+            <h3 class="text-4xl font-black mb-2 tracking-tight text-slate-800">จัดการนักศึกษา</h3>
             <p class="text-slate-500 font-medium text-lg leading-relaxed">เพิ่มและบริหารจัดการรายชื่อนักศึกษาที่อยู่ในความดูแลของคุณ</p>
           </div>
-          <button type="button" (click)="showAddStudentModal = true; addStudentModalTab = 'pick'; pickStudentSearchQuery = ''" class="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-2">
+          <button type="button" (click)="showAddStudentModal = true; addStudentModalTab = 'pick'; pickStudentSearchQuery = ''" class="px-6 py-4 bg-brand-accent hover:bg-brand-accent/90 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-glow-indigo transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
             เพิ่ม / เลือกนักศึกษา
           </button>
         </div>
 
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/20 overflow-hidden">
+        <article class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
@@ -1850,8 +1854,8 @@
                   <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">จัดการ</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr *ngFor="let s of advisorStudents; let idx = index" class="hover:bg-blue-50/10 transition-colors">
+              <tbody class="divide-y divide-slate-100/60">
+                <tr *ngFor="let s of advisorStudents; let idx = index" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-8 py-5 text-sm font-black text-slate-400">{{ idx + 1 }}</td>
                   <td class="px-8 py-5">
                     <div class="flex items-center gap-3">
@@ -1902,7 +1906,7 @@
             <!-- Modal Header -->
             <div class="p-8 pb-4 border-b border-slate-100 bg-slate-50/50">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-black text-slate-900 tracking-tight">เพิ่ม / เลือกนักศึกษา</h3>
+                <h3 class="text-2xl font-black text-slate-800 tracking-tight">เพิ่ม / เลือกนักศึกษา</h3>
                 <button type="button" (click)="showAddStudentModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -1927,12 +1931,12 @@
               <div class="space-y-4">
                 <div class="relative">
                   <input name="pickSearch" type="text" [(ngModel)]="pickStudentSearchQuery" placeholder="ค้นหาชื่อ, อีเมล หรือสถาบัน..."
-                         class="w-full pl-11 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder-slate-400">
+                         class="w-full pl-11 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder-slate-400">
                   <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
-                <div class="max-h-64 overflow-y-auto divide-y divide-slate-100 border border-slate-200/60 rounded-2xl bg-white shadow-inner">
+                <div class="max-h-64 overflow-y-auto divide-y divide-slate-100/60 border border-slate-200/60 rounded-2xl bg-white shadow-inner">
                   <div *ngFor="let s of pickableStudents" class="p-4 hover:bg-slate-50 flex justify-between items-center transition-colors">
                     <div class="min-w-0 pr-3">
                       <div class="font-black text-slate-900 text-sm truncate">{{ s.name }}</div>
@@ -1968,17 +1972,17 @@
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
                 <input name="newName" type="text" [(ngModel)]="newStudent.name" required placeholder="ชื่อจริง นามสกุล" 
-                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">อีเมลแอดเดรส</label>
                 <input name="newEmail" type="email" [(ngModel)]="newStudent.email" required placeholder="student@school.ac.th" 
-                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสผ่าน (เริ่มต้น)</label>
                 <input name="newPassword" type="password" [(ngModel)]="newStudent.password" required placeholder="อย่างน้อย 6 ตัวอักษร" 
-                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
               </div>
               <div class="flex gap-4 pt-2">
                 <button type="button" (click)="showAddStudentModal = false" 
@@ -1997,7 +2001,7 @@
 
       <!-- EDIT PROFILE -->
       <section *ngIf="activeView === 'edit'" class="space-y-12">
-        <article class="bg-white rounded-[2.5rem] p-12 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+        <article class="glass-card p-12 relative overflow-hidden rounded-[2.5rem]">
           <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
           <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div class="lg:col-span-4">
@@ -2009,42 +2013,42 @@
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
                   <input name="profileName" [(ngModel)]="profileDraft.name" placeholder="Full Name" 
-                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
                   <input name="profileEmail" type="email" [(ngModel)]="profileDraft.email" placeholder="email@example.com" 
-                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เบอร์โทรศัพท์</label>
                   <input name="profilePhone" [(ngModel)]="profileDraft.phone" placeholder="เช่น 0891234567" 
-                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="space-y-2" *ngIf="currentUser?.role === 'student' || currentUser?.role === 'advisor'">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">สถานศึกษา</label>
                   <input name="profileSchool" [(ngModel)]="profileDraft.school" placeholder="School/University Name" 
-                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="currentUser?.role === 'student'">
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">สาขาวิชา / คณะ</label>
                   <input name="profileField" [(ngModel)]="profileDraft.field" placeholder="Field of Study (e.g. Computer Science)" 
-                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Resume / Portfolio URL</label>
                   <input name="profileResume" [(ngModel)]="profileDraft.resumeUrl" placeholder="https://drive.google.com/..." 
-                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
               </div>
               <div class="space-y-2" *ngIf="currentUser?.role === 'student'">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">แนะนำตัวเอง (Introduction)</label>
                 <textarea name="profileIntro" [(ngModel)]="profileDraft.intro" placeholder="Introduce yourself to companies..." rows="4"
-                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold resize-none"></textarea>
+                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold resize-none"></textarea>
               </div>
               <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
                 บันทึกการแก้ไขข้อมูล
@@ -2056,21 +2060,21 @@
 
       <!-- ADMIN USERS VIEW -->
       <section *ngIf="activeView === 'admin_users' && currentUser?.role === 'admin'" class="space-y-12">
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-2xl shadow-slate-200/30 overflow-hidden">
+        <article class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h3 class="text-3xl font-black text-slate-900 tracking-tight">รายชื่อผู้ใช้งานทั้งหมด</h3>
+              <h3 class="text-3xl font-black text-slate-800 tracking-tight">รายชื่อผู้ใช้งานทั้งหมด</h3>
               <p class="text-sm font-black text-blue-600 uppercase tracking-widest mt-2">จัดการสถานะและการเข้าถึงระบบ</p>
             </div>
             
             <div class="flex flex-wrap items-center gap-4">
               <!-- Search Bar -->
               <input type="text" [(ngModel)]="adminUserSearchQuery" placeholder="ค้นหา ชื่อ, อีเมล, สถานศึกษา..."
-                     class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-slate-300">
+                     class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all placeholder:text-slate-300">
               
               <!-- Role Filter -->
               <select [(ngModel)]="adminUserRoleFilter"
-                      class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                      class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all">
                 <option value="">ทุกบทบาท</option>
                 <option value="student">นักศึกษา</option>
                 <option value="advisor">อาจารย์ที่ปรึกษา</option>
@@ -2080,7 +2084,7 @@
 
               <!-- Status Filter -->
               <select [(ngModel)]="adminUserStatusFilter"
-                      class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                      class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all">
                 <option value="">ทุกสถานะ</option>
                 <option value="active">Active (ปกติ)</option>
                 <option value="pending">Pending (รออนุมัติ)</option>
@@ -2092,7 +2096,7 @@
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="bg-slate-50/50">
+                <tr class="bg-slate-50 border-b border-slate-100">
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อผู้ใช้งาน</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">อีเมล / เบอร์โทร</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท</th>
@@ -2101,8 +2105,8 @@
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">จัดการบัญชี</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr *ngFor="let u of filteredUsers" class="hover:bg-blue-50/20 transition-colors">
+              <tbody class="divide-y divide-slate-100/60">
+                <tr *ngFor="let u of filteredUsers" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6 font-black text-slate-900 text-lg flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-600 text-sm">
                       {{ u.name.slice(0, 2) | uppercase }}
@@ -2173,9 +2177,9 @@
       <!-- ADMIN CODES VIEW -->
       <section *ngIf="activeView === 'admin_codes' && currentUser?.role === 'admin'" class="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <!-- Generate Code Form -->
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 h-fit space-y-8">
+        <article class="glass-card rounded-[2.5rem] p-10 h-fit space-y-8">
           <div>
-            <h3 class="text-2xl font-black text-slate-900 tracking-tight">สร้างรหัสสมัคร / รหัสเชิญ</h3>
+            <h3 class="text-2xl font-black text-slate-800 tracking-tight">สร้างรหัสสมัคร / รหัสเชิญ</h3>
             <p class="text-xs font-bold text-slate-400 mt-1">กำหนดสิทธิ์ของระบบให้อัตโนมัติ</p>
           </div>
 
@@ -2184,14 +2188,14 @@
             <div class="space-y-2">
               <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสเชิญ (Invite Code)</label>
               <input name="code" type="text" [(ngModel)]="adminCodeForm.code" placeholder="เช่น BU-STU-2026" required
-                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
             </div>
 
             <!-- Role -->
             <div class="space-y-2">
               <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">บทบาทที่ได้รับ (Role)</label>
               <select name="role" [(ngModel)]="adminCodeForm.role"
-                      class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                      class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 <option value="student">นักศึกษา (Student)</option>
                 <option value="advisor">อาจารย์ที่ปรึกษา (Advisor)</option>
                 <option value="company">สถานประกอบการ (Company)</option>
@@ -2202,7 +2206,7 @@
             <div class="space-y-2" *ngIf="adminCodeForm.role !== 'company'">
               <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">สถานศึกษาต้นสังกัด (School)</label>
               <select name="schoolId" [(ngModel)]="adminCodeForm.schoolId"
-                      class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                      class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 <option [ngValue]="null">-- เลือกสถานศึกษา --</option>
                 <option *ngFor="let s of data.schools" [value]="s.id">{{ s.name }}</option>
               </select>
@@ -2212,14 +2216,14 @@
             <div class="space-y-2">
               <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">จำนวนที่ใช้ได้สูงสุด (Max Uses - ว่างได้หากไม่จำกัด)</label>
               <input name="maxUses" type="number" [(ngModel)]="adminCodeForm.maxUses" placeholder="เช่น 5, 10, ว่างไว้ = ไม่จำกัด"
-                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
             </div>
 
             <!-- Expiration Date -->
             <div class="space-y-2">
               <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">วันหมดอายุ (Expires At - ว่างได้)</label>
               <input name="expiresAt" type="date" [(ngModel)]="adminCodeForm.expiresAt"
-                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
             </div>
 
             <!-- Submit -->
@@ -2230,10 +2234,10 @@
         </article>
 
         <!-- Code List & Edit Panel -->
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 lg:col-span-2 space-y-8">
+        <article class="glass-card rounded-[2.5rem] p-10 lg:col-span-2 space-y-8">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-2xl font-black text-slate-900 tracking-tight">รหัสสมัคร / รหัสเชิญทั้งหมด</h3>
+              <h3 class="text-2xl font-black text-slate-800 tracking-tight">รหัสสมัคร / รหัสเชิญทั้งหมด</h3>
               <p class="text-xs font-bold text-slate-400 mt-1">ประวัติและการจัดการรหัสสมัคร</p>
             </div>
           </div>
@@ -2249,19 +2253,19 @@
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">แก้ไขรหัส (Code)</label>
                 <input name="editCodeStr" type="text" [(ngModel)]="editCodeForm.code" required
-                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
               </div>
 
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">จำนวนใช้งานสูงสุด</label>
                 <input name="editMaxUses" type="number" [(ngModel)]="editCodeForm.maxUses" placeholder="ว่างไว้หากไม่จำกัด"
-                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
               </div>
 
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">วันหมดอายุ (Expires At)</label>
                 <input name="editExpiresAt" type="date" [(ngModel)]="editCodeForm.expiresAt"
-                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold">
+                       class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
               </div>
 
               <div class="space-y-2 flex flex-col justify-end">
@@ -2282,7 +2286,7 @@
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
-                <tr class="bg-slate-50/50">
+                <tr class="bg-slate-50 border-b border-slate-100">
                   <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รหัส (Code)</th>
                   <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท / สถานศึกษา</th>
                   <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">การใช้งาน</th>
@@ -2291,7 +2295,7 @@
                   <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">จัดการ</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody class="divide-y divide-slate-100/60">
                 <tr *ngFor="let c of data.enrollmentCodes" class="hover:bg-slate-50/40 transition-colors">
                   <td class="px-6 py-4 font-black text-slate-900 text-lg">{{ c.code }}</td>
                   <td class="px-6 py-4">
@@ -2331,9 +2335,9 @@
       <!-- ADMIN SCHOOLS VIEW -->
       <section *ngIf="activeView === 'admin_schools' && currentUser?.role === 'admin'" class="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <!-- Add School Form -->
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 h-fit space-y-8">
+        <article class="glass-card rounded-[2.5rem] p-10 h-fit space-y-8">
           <div>
-            <h3 class="text-2xl font-black text-slate-900 tracking-tight">เพิ่มสถานศึกษาใหม่</h3>
+            <h3 class="text-2xl font-black text-slate-800 tracking-tight">เพิ่มสถานศึกษาใหม่</h3>
             <p class="text-xs font-bold text-slate-400 mt-1">เพิ่มทางเลือกสำหรับระบบคัดสรรและบทบาท</p>
           </div>
 
@@ -2341,7 +2345,7 @@
             <div class="space-y-2">
               <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อสถานศึกษา</label>
               <input name="schoolName" type="text" [(ngModel)]="adminSchoolInput.name" placeholder="เช่น มหาวิทยาลัยธรรมศาสตร์" required
-                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
             </div>
 
             <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
@@ -2351,22 +2355,22 @@
         </article>
 
         <!-- School List -->
-        <article class="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-10 lg:col-span-2 space-y-8">
+        <article class="glass-card rounded-[2.5rem] p-10 lg:col-span-2 space-y-8">
           <div>
-            <h3 class="text-2xl font-black text-slate-900 tracking-tight">รายชื่อสถานศึกษาทั้งหมด</h3>
+            <h3 class="text-2xl font-black text-slate-800 tracking-tight">รายชื่อสถานศึกษาทั้งหมด</h3>
             <p class="text-xs font-bold text-slate-400 mt-1">รายชื่อสถานศึกษาในระบบ</p>
           </div>
 
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
-                <tr class="bg-slate-50/50">
+                <tr class="bg-slate-50 border-b border-slate-100">
                   <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รหัส (ID)</th>
                   <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ชื่อสถานศึกษา</th>
                   <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">วันที่สร้าง</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody class="divide-y divide-slate-100/60">
                 <tr *ngFor="let s of data.schools" class="hover:bg-slate-50/40 transition-colors">
                   <td class="px-8 py-5 font-black text-slate-900 text-lg">#{{ s.id }}</td>
                   <td class="px-8 py-5 font-black text-slate-800 text-lg">{{ s.name }}</td>
@@ -2381,7 +2385,7 @@
       <!-- DATABASE / SQL WORKBENCH -->
       <section *ngIf="activeView === 'schema' && currentUser?.role === 'admin'" class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Workbench Left Sidebar: Schemas Explorer -->
-        <article class="bg-white rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-8 h-fit space-y-6">
+        <article class="glass-card rounded-[2.5rem] p-8 h-fit space-y-6">
           <div class="border-b border-slate-100 pb-4">
             <h3 class="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
               <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
@@ -2410,7 +2414,7 @@
         </article>
 
         <!-- Workbench Right Content: Editor, Tabs, & Results -->
-        <article class="bg-white rounded-[2rem] border border-slate-200/60 shadow-xl shadow-slate-200/20 p-8 lg:col-span-3 space-y-6">
+        <article class="glass-card rounded-[2.5rem] p-8 lg:col-span-3 space-y-6">
           <!-- Workbench Tab Bar -->
           <div class="flex p-1 bg-slate-100 rounded-xl" role="tablist">
             <button
@@ -2443,7 +2447,7 @@
             <form (ngSubmit)="executeAdminQuery()" class="space-y-4">
               <div class="space-y-2">
                 <textarea name="queryText" [(ngModel)]="adminQueryText" placeholder="SELECT * FROM users LIMIT 10;" rows="6" required
-                          class="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-mono text-sm text-slate-800 transition-all outline-none leading-relaxed"></textarea>
+                          class="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent font-mono text-sm text-slate-800 transition-all outline-none leading-relaxed"></textarea>
               </div>
 
               <div class="flex justify-between items-center">
@@ -2491,12 +2495,12 @@
               <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm max-h-[380px] scrollbar-thin">
                 <table class="w-full text-left border-collapse">
                   <thead>
-                    <tr class="bg-slate-50/50">
+                    <tr class="bg-slate-50 border-b border-slate-100">
                       <th class="px-4 py-3 border-r border-b border-slate-200 text-[10px] font-black text-slate-400 text-center w-12 bg-slate-100">#</th>
                       <th *ngFor="let col of adminQueryResults.columns" class="px-6 py-3 border-r border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">{{ col }}</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-100 bg-white">
+                  <tbody class="divide-y divide-slate-100/60 bg-white">
                     <tr *ngFor="let row of getQueryResultRows(adminQueryResults); let idx = index" class="hover:bg-slate-50/40 transition-colors font-mono text-xs">
                       <td class="px-4 py-3 border-r border-slate-200 text-center font-bold text-slate-400 bg-slate-50/50">{{ idx + 1 }}</td>
                       <td *ngFor="let col of adminQueryResults.columns" class="px-6 py-3 border-r border-slate-200 text-slate-600 truncate max-w-xs" [title]="row[col] !== null ? row[col] : 'NULL'">
@@ -2523,11 +2527,11 @@
             <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm">
               <table class="w-full text-left border-collapse">
                 <thead>
-                  <tr class="bg-slate-50/50">
+                  <tr class="bg-slate-50 border-b border-slate-100">
                     <th *ngFor="let col of tableSchemaInfo.columns" class="px-6 py-4 font-black uppercase text-slate-400 text-xs tracking-wider border-b border-slate-200">{{ col }}</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 bg-white">
+                <tbody class="divide-y divide-slate-100/60 bg-white">
                   <tr *ngFor="let row of getQueryResultRows(tableSchemaInfo)" class="hover:bg-slate-50/40 transition-colors font-mono text-xs">
                     <td *ngFor="let col of tableSchemaInfo.columns" class="px-6 py-4 text-slate-600 font-bold">
                       {{ row[col] !== null ? row[col] : 'NULL' }}
@@ -2570,7 +2574,7 @@
       <nav class="space-y-1 flex-1 overflow-y-auto p-4">
         <button *ngFor="let view of availableViews" (click)="setActiveView(view); closeSidebar()" 
                 class="w-full px-5 py-4 flex items-center gap-3 rounded-2xl font-black text-sm transition-all"
-                [class.bg-blue-50]="activeView === view" [class.text-blue-600]="activeView === view"
+                [class.bg-blue-50]="activeView === view" [class.text-brand-accent]="activeView === view"
                 [class.text-slate-500]="activeView !== view" [class.hover:bg-slate-50]="activeView !== view">
           <span>{{ viewLabels[view] }}</span>
         </button>

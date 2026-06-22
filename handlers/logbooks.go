@@ -40,8 +40,8 @@ func CreateLogbookHandler(c *gin.Context) {
 	}
 
 	_, err = config.DB.Exec(
-		"INSERT INTO logbooks (internship_id, student_id, title, content, attachment_url) VALUES (?, ?, ?, ?, ?)",
-		input.InternshipID, reqUserID.(int), input.Title, input.Content, input.AttachmentURL,
+		"INSERT INTO logbooks (internship_id, title, content, attachment_url) VALUES (?, ?, ?, ?)",
+		input.InternshipID, input.Title, input.Content, input.AttachmentURL,
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ส่งรายงานบันทึกไม่สำเร็จ: " + err.Error()})

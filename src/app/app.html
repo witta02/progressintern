@@ -163,6 +163,26 @@
 </main>
 
 <main *ngIf="initialized && isAuthenticated" class="min-h-screen bg-slate-50 flex flex-col font-sans">
+
+  <!-- API Error Banner – shown when logged in but backend is unreachable -->
+  <div *ngIf="!data.apiConnected && !useMockData" class="w-full bg-amber-50 border-b border-amber-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <svg class="w-5 h-5 text-amber-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <div>
+        <p class="text-sm font-black text-amber-900">ไม่สามารถเชื่อมต่อกับ Server ได้</p>
+        <p class="text-xs text-amber-700 mt-0.5">Backend กำลังเริ่มต้น (serverless cold start) — กรุณารอสักครู่แล้วลองใหม่</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button type="button" (click)="retryApiConnect()" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-xl transition-colors">
+        ลองใหม่
+      </button>
+      <button type="button" (click)="logout()" class="px-5 py-2.5 bg-white border border-amber-300 text-amber-800 text-xs font-black rounded-xl transition-colors hover:bg-amber-50">
+        ออกจากระบบ
+      </button>
+    </div>
+  </div>
+
   <!-- Top Global Navbar -->
   <nav class="sticky top-0 z-40 glass-navbar px-4 sm:px-8 h-16 sm:h-20 flex items-center justify-between">
     <div class="flex items-center gap-4 sm:gap-12 h-full">

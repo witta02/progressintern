@@ -43,6 +43,7 @@ export class App {
 
   protected currentUserId: number | null = null;
   protected initialized = false;
+  protected apiRetrying = false;
 
   constructor() {
     console.log('App Initialized v2.0 - Leaves & SweetAlert2');
@@ -72,12 +73,26 @@ export class App {
       }
     }
 
-    // 2. Load API data in the background
+    // 2. Load API data – retry up to 3 times if the backend is slow to wake up (serverless cold start)
     if (!this.useMockData) {
-      try {
-        await this.data.refreshFromApi();
-      } catch (err) {
-        console.error('[App] Failed to load initial data from API', err);
+      let loaded = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await this.data.refreshFromApi();
+          if (this.data.apiConnected) {
+            loaded = true;
+            break;
+          }
+        } catch (err) {
+          console.error(`[App] API load attempt ${attempt + 1} failed`, err);
+        }
+        if (attempt < 2) {
+          // Wait 2s before retry (gives cold-start serverless time to wake up)
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      if (!loaded) {
+        console.warn('[App] API not reachable after 3 attempts. Showing error state.');
       }
     }
 
@@ -710,6 +725,28 @@ export class App {
     this.notificationPanelOpen = false;
     this.selectedEvaluationInternshipId = null;
     this.notifications.info('คุณออกจากระบบแล้ว', 'ออกจากระบบ');
+    this.cdr.detectChanges();
+  }
+
+  protected async retryApiConnect(): Promise<void> {
+    this.notifications.info('กำลังเชื่อมต่อ Server ใหม่...', 'Retry');
+    try {
+      await this.data.refreshFromApi();
+      if (this.data.apiConnected) {
+        // Re-verify session after successful reconnect
+        const user = this.users.find((u) => u.id === this.currentUserId);
+        if (user) {
+          await this.finishLogin(user, false);
+          this.notifications.success('เชื่อมต่อ Server สำเร็จ!', 'Connected');
+        } else {
+          this.logout();
+        }
+      } else {
+        this.notifications.error('ยังไม่สามารถเชื่อมต่อ Server ได้', 'Error');
+      }
+    } catch (err: any) {
+      this.notifications.error(`เชื่อมต่อล้มเหลว: ${err.message || err}`, 'Error');
+    }
     this.cdr.detectChanges();
   }
 

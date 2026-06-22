@@ -264,7 +264,7 @@ export class InternshipApiService {
   }
 
   createLogbook(body: Omit<Logbook, 'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'> & { status?: Logbook['status'] }): Observable<Logbook | null> {
-    return this.postOne<ApiLogbook, Logbook>('logbooks', {
+    return this.postOneRequired<ApiLogbook, Logbook>('logbooks', {
       internship_id: body.internshipId,
       title: body.title,
       content: body.content,
@@ -274,7 +274,7 @@ export class InternshipApiService {
   }
 
   patchLogbook(id: number, patch: Partial<Pick<Logbook, 'status' | 'mentorComment'>>): Observable<Logbook | null> {
-    return this.putOne<ApiLogbook, Logbook>(`logbooks/${id}/approve`, {
+    return this.putOneRequired<ApiLogbook, Logbook>(`logbooks/${id}/approve`, {
       status: patch.status,
       comment: patch.mentorComment ?? null,
       mentor_comment: patch.mentorComment ?? null
@@ -292,7 +292,7 @@ export class InternshipApiService {
   }
 
   createLeave(body: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): Observable<LeaveRequest | null> {
-    return this.postOne<ApiLeaveRequest, LeaveRequest>('leaves', {
+    return this.postOneRequired<ApiLeaveRequest, LeaveRequest>('leaves', {
       internship_id: (body as any).internshipId,
       student_id: (body as any).studentId,
       leave_type: (body as any).leaveType,
@@ -303,7 +303,7 @@ export class InternshipApiService {
   }
 
   patchLeaveStatus(id: number, status: 'approved' | 'rejected', comment?: string): Observable<LeaveRequest | null> {
-    return this.putOne<ApiLeaveRequest, LeaveRequest>(`leaves/${id}/status`, {
+    return this.putOneRequired<ApiLeaveRequest, LeaveRequest>(`leaves/${id}/status`, {
       status,
       comment: comment ?? null
     }, mapLeaveRequest);
@@ -350,6 +350,25 @@ export class InternshipApiService {
         return of(null);
       })
     );
+  }
+
+  private postOneRequired<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M> {
+    return this.http.post<any>(`${this.base}/${path}`, body, this.authOptions()).pipe(
+      map((res) => mapper(this.requireResponseData<D>(res)))
+    );
+  }
+
+  private putOneRequired<D, M>(path: string, body: unknown, mapper: (dto: D) => M): Observable<M> {
+    return this.http.put<any>(`${this.base}/${path}`, body, this.authOptions()).pipe(
+      map((res) => mapper(this.requireResponseData<D>(res)))
+    );
+  }
+
+  private requireResponseData<D>(res: any): D {
+    if (res?.data !== undefined && res.data !== null) {
+      return res.data as D;
+    }
+    throw new Error(res?.error || res?.message || 'API response did not include saved data');
   }
 
   private setToken(token: string): void {

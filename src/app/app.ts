@@ -63,7 +63,7 @@ export class App {
       const id = parseInt(saved, 10);
       if (!isNaN(id)) {
         this.currentUserId = id;
-        
+
         // Also restore activeView pre-emptively to avoid dashboard tab flicker
         const savedView = localStorage.getItem('intern-manager-active-view-v1');
         if (savedView) {
@@ -81,13 +81,21 @@ export class App {
       }
     }
 
-    // 3. Re-verify the session with the loaded user list from API
+    // 3. Re-verify the session – but ONLY log out if the API is confirmed connected
+    //    If the API load failed, keep the stored session to avoid forcing re-login on every refresh.
     if (this.currentUserId) {
       const user = this.users.find((u) => u.id === this.currentUserId);
       if (user) {
-        this.finishLogin(user, false);
-      } else {
+        await this.finishLogin(user, false);
+      } else if (this.data.apiConnected) {
+        // API loaded successfully but user was not found → session is invalid
         this.logout();
+      } else {
+        // API failed to load – keep the user logged in with their stored ID
+        // so they don't have to re-login every time there is a transient network hiccup.
+        console.warn('[App] API not reachable on startup — keeping stored session alive.');
+        const savedView = localStorage.getItem('intern-manager-active-view-v1');
+        if (savedView) this.activeView = savedView;
       }
     }
 
@@ -703,9 +711,6 @@ export class App {
     this.selectedEvaluationInternshipId = null;
     this.notifications.info('คุณออกจากระบบแล้ว', 'ออกจากระบบ');
     this.cdr.detectChanges();
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
   }
 
   protected toggleNotificationPanel(): void {
@@ -1383,7 +1388,7 @@ export class App {
       this.logbookTitle = '';
       this.logbookText = '';
       this.notifications.success('ส่งบันทึกแล้ว (รออนุมัติ)', 'บันทึก');
-      window.location.reload();
+      this.cdr.detectChanges();
     } catch (err: any) {
       this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'บันทึก');
     }
@@ -1429,10 +1434,10 @@ export class App {
         endDate: this.leaveForm.endDate,
         reason: this.leaveForm.reason.trim()
       });
-      
+
       this.leaveForm.reason = '';
       this.notifications.success('ส่งคำขอลาแล้ว (รออนุมัติ)', 'การลา');
-      window.location.reload();
+      this.cdr.detectChanges();
     } catch (err: any) {
       this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'การลา');
     }
@@ -1442,13 +1447,13 @@ export class App {
     const student = this.userName(leave.studentId);
     try {
       await this.data.updateLeaveStatus(leave.id, status);
-      
+
       if (status === 'approved') {
         this.notifications.success(`อนุมัติคำขอลาของ ${student} แล้ว`, 'การลา');
       } else {
         this.notifications.warning(`ปฏิเสธคำขอลาของ ${student} แล้ว`, 'การลา');
       }
-      window.location.reload();
+      this.cdr.detectChanges();
     } catch (err: any) {
       this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'การลา');
     }

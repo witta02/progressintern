@@ -1476,7 +1476,7 @@ export class App {
       this.notifications.success('ส่งคำขอลาแล้ว (รออนุมัติ)', 'การลา');
       this.cdr.detectChanges();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'การลา');
+      this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'การลา');
     }
   }
 
@@ -2104,5 +2104,20 @@ export class App {
   protected getStudentAdvisor(advisorId: number | undefined): User | undefined {
     if (!advisorId) return undefined;
     return this.users.find(u => u.id === advisorId && u.role === 'advisor');
+  }
+
+  private extractErrorMessage(err: any): string {
+    if (err && err.error) {
+      if (typeof err.error === 'string') {
+        try {
+          const parsed = JSON.parse(err.error);
+          return parsed.error || parsed.message || err.message || String(err);
+        } catch {
+          return err.error;
+        }
+      }
+      return err.error.error || err.error.message || err.message || String(err);
+    }
+    return err.message || String(err);
   }
 }

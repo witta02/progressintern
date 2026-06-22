@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -28,8 +29,11 @@ func InitDatabase() error {
 
 	fmt.Printf("🔍 กำลังเชื่อมต่อฐานข้อมูลที่: %s:%s...\n", dbHost, dbPort)
 
-	// สร้าง DSN
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?tls=true&parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	// สร้าง DSN พร้อม timeout parameters สำหรับ serverless environment
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?tls=true&parseTime=true&timeout=10s&readTimeout=30s&writeTimeout=30s&interpolateParams=true",
+		dbUser, dbPass, dbHost, dbPort, dbName,
+	)
 
 	// เชื่อมต่อ
 	DB, err = sql.Open("mysql", dsn)
@@ -38,20 +42,34 @@ func InitDatabase() error {
 		return err
 	}
 
+	// ตั้งค่า connection pooling สำหรับ serverless
+	DB.SetMaxOpenConns(5)
+	DB.SetMaxIdleConns(2)
+	DB.SetConnMaxLifetime(5 * time.Minute)
+	DB.SetConnMaxIdleTime(1 * time.Minute)
+
 	// ตรวจสอบการเชื่อมต่อ
 	if err := DB.Ping(); err != nil {
 		log.Println("❌ TiDB ปฏิเสธการเชื่อมต่อ: ", err)
 		return err
 	}
 
-	// ตั้งค่า connection pooling
-	DB.SetMaxOpenConns(25)
-	DB.SetMaxIdleConns(5)
-
 	// รันการตรวจสอบการย้ายฐานข้อมูล (Migration check)
 	migrateDatabase(DB)
 
 	fmt.Println("💖 ระบบหลังบ้านเชื่อมต่อ TiDB Cloud สำเร็จแล้ว!")
+	return nil
+}
+
+// EnsureConnected ตรวจสอบและ reconnect ถ้า DB หลุด (สำหรับ serverless)
+func EnsureConnected() error {
+	if DB == nil {
+		return fmt.Errorf("DB is not initialized")
+	}
+	if err := DB.Ping(); err != nil {
+		log.Println("⚠️ DB Ping failed, attempting to reconnect:", err)
+		return InitDatabase()
+	}
 	return nil
 }
 

@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	router *gin.Engine
-	once   sync.Once
-	dbErr  error
+	router     *gin.Engine
+	once       sync.Once
+	initDbErr  error
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -22,18 +22,26 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		gin.SetMode(gin.ReleaseMode)
 
 		// Initialize Database Connection
-		dbErr = config.InitDatabase()
-		if dbErr == nil {
-			router = gin.Default()
+		initDbErr = config.InitDatabase()
+		if initDbErr == nil {
+			router = gin.New()
+			router.Use(gin.Recovery())
 			routes.SetupRoutes(router)
 		}
 	})
 
-	if dbErr != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte(`{"status":"error","message":"database connection failed: ` + dbErr.Error() + `"}`))
-		return
+	// If router is nil (init failed), try to reinitialize
+	if router == nil {
+		// Attempt re-initialization on each request if first init failed
+		if err := config.InitDatabase(); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(`{"status":503,"error":"database connection failed: ` + err.Error() + `"}`))
+			return
+		}
+		router = gin.New()
+		router.Use(gin.Recovery())
+		routes.SetupRoutes(router)
 	}
 
 	router.ServeHTTP(w, r)

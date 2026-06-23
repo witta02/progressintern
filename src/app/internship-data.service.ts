@@ -368,7 +368,22 @@ export class InternshipDataService {
       return;
     }
 
-    this.applications = [...this.applications, { ...application, id: this.nextId(this.applications) }];
+    const existing = this.applications.find(
+      (app) => app.studentId === application.studentId && app.jobPostingId === application.jobPostingId
+    );
+
+    if (existing) {
+      this.applications = this.applications.map((app) =>
+        app.id === existing.id
+          ? { ...app, status: 'pending', updatedAt: new Date().toISOString() }
+          : app
+      );
+    } else {
+      this.applications = [
+        ...this.applications,
+        { ...application, id: this.nextId(this.applications), appliedAt: new Date().toISOString() }
+      ];
+    }
     this.persist();
   }
 

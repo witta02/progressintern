@@ -1089,7 +1089,9 @@ export class App {
       job.status === 'open' &&
       !this.applications.some(
         (application) =>
-          application.studentId === user?.id && application.jobPostingId === job.id
+          application.studentId === user?.id &&
+          application.jobPostingId === job.id &&
+          application.status !== 'rejected'
       )
     );
   }

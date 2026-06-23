@@ -238,6 +238,10 @@ export class InternshipApiService {
   createInternship(body: Omit<Internship, 'id' | 'createdAt' | 'updatedAt'>): Observable<Internship | null> {
     return this.postOne<ApiInternship, Internship>('internships', toApiInternship(body), mapInternship);
   }
+ 
+  patchInternshipStatus(id: number, status: 'active' | 'completed' | 'terminated'): Observable<Internship | null> {
+    return this.putOne<ApiInternship, Internship>(`internships/${id}/status`, { status }, mapInternship);
+  }
 
   createAttendance(body: Omit<Attendance, 'id' | 'createdAt'>): Observable<Attendance | null> {
     return this.postOne<ApiAttendance, Attendance>('attendance/check-in', {

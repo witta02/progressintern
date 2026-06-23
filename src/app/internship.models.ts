@@ -81,6 +81,7 @@ export interface JobPosting {
   isDeleted?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  applicantCount?: number;
 }
 
 export interface Application {

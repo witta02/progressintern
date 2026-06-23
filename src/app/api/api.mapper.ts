@@ -57,6 +57,7 @@ export type ApiJobPosting = {
   is_deleted?: boolean | null;
   created_at?: string;
   updated_at?: string;
+  applicant_count?: number;
 };
 
 export type ApiApplication = {
@@ -183,7 +184,8 @@ export function mapJobPosting(dto: ApiJobPosting): JobPosting {
     status: dto.status,
     isDeleted: dto.is_deleted ?? false,
     createdAt: dto.created_at,
-    updatedAt: dto.updated_at
+    updatedAt: dto.updated_at,
+    applicantCount: dto.applicant_count ?? 0
   };
 }
 

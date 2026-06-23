@@ -796,6 +796,9 @@
                     {{ job.status }}
                   </span>
                   <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ job.slots }} Openings</span>
+                  <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border border-blue-100 shadow-sm" *ngIf="getApplicantCount(job.id) > 0">
+                    {{ getApplicantCount(job.id) }} Applied
+                  </span>
                   
                   <!-- Company actions (Edit/Delete) if owner -->
                   <div class="flex items-center gap-1" *ngIf="currentUser?.role === 'company' && job.companyId === currentCompanyId">
@@ -872,6 +875,20 @@
 
       <!-- APPLICATIONS -->
       <section *ngIf="activeView === 'applications'" class="space-y-6">
+        <!-- Processed Applications Clear Bar for Company -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm animate-fade-in" *ngIf="currentUser?.role === 'company'">
+          <div>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">ตัวเลือกการจัดการ (Management Options)</h3>
+            <p class="text-[10px] text-slate-500 font-bold mt-1">รายการที่ได้รับการอนุมัติหรือปฏิเสธจะถูกล้างอัตโนมัติภายใน 1 วัน</p>
+          </div>
+          <button type="button" 
+                  (click)="clearAllProcessedApplications()" 
+                  class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            ล้างรายการที่ดำเนินการแล้วทั้งหมด (Clear All Processed)
+          </button>
+        </div>
+
         <div class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
@@ -923,6 +940,13 @@
                               (click)="openInternshipDetailByStudentId(app.studentId)">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         ดูข้อมูลนักศึกษา
+                      </button>
+                      <button *ngIf="currentUser?.role === 'company' && (app.status === 'approved' || app.status === 'rejected')"
+                              type="button"
+                              (click)="clearApplication(app.id)"
+                              class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-50 hover:bg-slate-600 text-slate-600 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-slate-200 hover:border-slate-600 transition-all cursor-pointer shadow-sm">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        ล้าง (Clear)
                       </button>
                     </div>
                   </td>
@@ -1257,21 +1281,32 @@
                   </div>
                   <div class="text-[10px] font-bold text-slate-400 mt-2">{{ getInternshipProgress(selectedInternshipDetail!).label }}</div>
                 </div>
-                <!-- Status -->
-                <div class="flex items-center gap-3">
-                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">สถานะสัญญา:</span>
-                  <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
-                        [class.bg-emerald-50]="selectedInternshipDetail!.status === 'active'"
-                        [class.text-emerald-600]="selectedInternshipDetail!.status === 'active'"
-                        [class.border-emerald-100]="selectedInternshipDetail!.status === 'active'"
-                        [class.bg-blue-50]="selectedInternshipDetail!.status === 'completed'"
-                        [class.text-blue-600]="selectedInternshipDetail!.status === 'completed'"
-                        [class.border-blue-100]="selectedInternshipDetail!.status === 'completed'"
-                        [class.bg-slate-100]="selectedInternshipDetail!.status === 'terminated'"
-                        [class.text-slate-500]="selectedInternshipDetail!.status === 'terminated'"
-                        [class.border-slate-200]="selectedInternshipDetail!.status === 'terminated'">
-                    {{ selectedInternshipDetail!.status }}
-                  </span>
+                <!-- Status & Terminate Actions -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">สถานะสัญญา:</span>
+                    <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm"
+                          [class.bg-emerald-50]="selectedInternshipDetail!.status === 'active'"
+                          [class.text-emerald-600]="selectedInternshipDetail!.status === 'active'"
+                          [class.border-emerald-100]="selectedInternshipDetail!.status === 'active'"
+                          [class.bg-blue-50]="selectedInternshipDetail!.status === 'completed'"
+                          [class.text-blue-600]="selectedInternshipDetail!.status === 'completed'"
+                          [class.border-blue-100]="selectedInternshipDetail!.status === 'completed'"
+                          [class.bg-slate-100]="selectedInternshipDetail!.status === 'terminated'"
+                          [class.text-slate-500]="selectedInternshipDetail!.status === 'terminated'"
+                          [class.border-slate-200]="selectedInternshipDetail!.status === 'terminated'">
+                      {{ selectedInternshipDetail!.status }}
+                    </span>
+                  </div>
+
+                  <!-- Terminate Button for Company User -->
+                  <button *ngIf="currentUser?.role === 'company' && selectedInternshipDetail!.status === 'active'"
+                          type="button"
+                          (click)="terminateInternship(selectedInternshipDetail!.id)"
+                          class="no-print inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-rose-100 hover:border-rose-600 transition-all cursor-pointer shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    นำนักศึกษาออก (Terminate)
+                  </button>
                 </div>
                 <!-- Job description -->
                 <div *ngIf="detailJob?.description" class="pt-3 border-t border-slate-100">

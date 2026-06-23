@@ -385,6 +385,19 @@ export class InternshipDataService {
     this.internships = [...this.internships, { ...internship, id: this.nextId(this.internships) }];
     this.persist();
   }
+ 
+  async updateInternshipStatus(internshipId: number, status: 'active' | 'completed' | 'terminated'): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.patchInternshipStatus(internshipId, status));
+      await this.refreshFromApi();
+      return;
+    }
+
+    this.internships = this.internships.map((item) =>
+      item.id === internshipId ? { ...item, status, updatedAt: new Date().toISOString() } : item
+    );
+    this.persist();
+  }
 
   async addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): Promise<void> {
     if (this.api.apiEnabled()) {

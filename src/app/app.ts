@@ -503,17 +503,27 @@ export class App {
       return list;
     }
 
-    if (this.currentUser?.role === 'company' && this.currentCompanyId) {
-      return list.filter((job) => job.companyId === this.currentCompanyId);
-    }
-
-    // For students, advisors, and others, filter out filled jobs
-    return list.filter((job) => {
+    // Filter out jobs that have reached their capacity
+    const unfilledList = list.filter((job) => {
       const filledCount = this.internships.filter(
         (internship) => internship.jobPostingId === job.id && (internship.status === 'active' || internship.status === 'completed')
       ).length;
       return filledCount < job.slots;
     });
+
+    if (this.currentUser?.role === 'company' && this.currentCompanyId) {
+      return unfilledList.filter((job) => job.companyId === this.currentCompanyId);
+    }
+
+    return unfilledList;
+  }
+
+  protected getApplicantCount(jobId: number): number {
+    const job = this.jobPostings.find((j) => j.id === jobId);
+    if (job && job.applicantCount !== undefined) {
+      return job.applicantCount;
+    }
+    return this.applications.filter((a) => a.jobPostingId === jobId).length;
   }
 
   protected get visibleApplications(): Application[] {
@@ -531,9 +541,46 @@ export class App {
         .filter((job) => job.companyId === this.currentCompanyId)
         .map((job) => job.id);
 
-      return this.applications.filter((application) =>
+      const list = this.applications.filter((application) =>
         companyJobIds.includes(application.jobPostingId)
       );
+
+      // Load manually dismissed application IDs from localStorage
+      let dismissedIds: number[] = [];
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = window.localStorage.getItem('dismissed_application_ids');
+        if (stored) {
+          try {
+            dismissedIds = JSON.parse(stored);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+
+      // Filter out dismissed applications and those processed > 1 day ago
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      const now = new Date().getTime();
+
+      return list.filter((app) => {
+        // If manually dismissed
+        if (dismissedIds.includes(app.id)) {
+          return false;
+        }
+
+        // If approved/rejected more than 1 day ago
+        if (app.status === 'approved' || app.status === 'rejected') {
+          const dateStr = app.updatedAt || app.appliedAt;
+          if (dateStr) {
+            const lastUpdated = new Date(dateStr).getTime();
+            if (now - lastUpdated > oneDayMs) {
+              return false;
+            }
+          }
+        }
+
+        return true;
+      });
     }
 
     const studentIds = this.managedStudents.map((student) => student.id);
@@ -2269,6 +2316,73 @@ export class App {
         this.data.persist();
         this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว (Mock)`, "สำเร็จ");
       }
+    }
+  }
+
+  protected async terminateInternship(internshipId: number): Promise<void> {
+    const result = await Swal.fire({
+      title: 'ยืนยันการนำนักศึกษาออกจากบริษัท?',
+      text: 'คุณต้องการสิ้นสุดการฝึกงาน of นักศึกษาคนนี้และนำออกจากบริษัทหรือไม่? เมื่อทำแล้วไม่สามารถเปลี่ยนกลับได้',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'ยืนยันนำออก',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#6B7280'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await this.data.updateInternshipStatus(internshipId, 'terminated');
+        this.notifications.success('นำนักศึกษาออกจากบริษัทสำเร็จ', 'สำเร็จ');
+        this.closeInternshipDetail();
+      } catch (err: any) {
+        this.notifications.error(this.extractErrorMessage(err) || 'ไม่สามารถนำนักศึกษาออกจากบริษัทได้', 'ล้มเหลว');
+      }
+    }
+  }
+
+  protected clearApplication(appId: number): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const stored = window.localStorage.getItem('dismissed_application_ids');
+      let ids: number[] = stored ? JSON.parse(stored) : [];
+      if (!ids.includes(appId)) {
+        ids.push(appId);
+        window.localStorage.setItem('dismissed_application_ids', JSON.stringify(ids));
+        this.notifications.success('ซ่อนใบสมัครออกจากรายการแล้ว', 'สำเร็จ');
+        this.cdr.markForCheck();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  protected clearAllProcessedApplications(): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const processedVisible = this.visibleApplications.filter(
+        (app) => app.status === 'approved' || app.status === 'rejected'
+      );
+      if (processedVisible.length === 0) {
+        this.notifications.info('ไม่มีใบสมัครที่ดำเนินการแล้วให้ล้าง', 'แจ้งเตือน');
+        return;
+      }
+
+      const stored = window.localStorage.getItem('dismissed_application_ids');
+      let ids: number[] = stored ? JSON.parse(stored) : [];
+      
+      processedVisible.forEach((app) => {
+        if (!ids.includes(app.id)) {
+          ids.push(app.id);
+        }
+      });
+
+      window.localStorage.setItem('dismissed_application_ids', JSON.stringify(ids));
+      this.notifications.success('ล้างรายการใบสมัครที่ดำเนินการแล้วทั้งหมดสำเร็จ', 'สำเร็จ');
+      this.cdr.markForCheck();
+    } catch (e) {
+      console.error(e);
     }
   }
 

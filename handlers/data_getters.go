@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"internship-backend/config"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -252,6 +253,7 @@ func GetAllCompaniesHandler(c *gin.Context) {
 }
 
 // GetAllApplicationsHandler fetches all applications with student + job info, filtered by role
+// GetAllApplicationsHandler fetches all applications with student + job info, filtered by role
 func GetAllApplicationsHandler(c *gin.Context) {
 	reqRole, _ := c.Get("role")
 	reqUserID, _ := c.Get("user_id")
@@ -264,7 +266,7 @@ func GetAllApplicationsHandler(c *gin.Context) {
 
 	if roleStr == "admin" {
 		rows, err = config.DB.Query(
-			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
+			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at, a.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
 			        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
 			 FROM applications a
@@ -278,7 +280,7 @@ func GetAllApplicationsHandler(c *gin.Context) {
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
+			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at, a.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
 			        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
 			 FROM applications a
@@ -291,7 +293,7 @@ func GetAllApplicationsHandler(c *gin.Context) {
 		)
 	} else if roleStr == "company" {
 		rows, err = config.DB.Query(
-			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
+			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at, a.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
 			        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
 			 FROM applications a
@@ -304,7 +306,7 @@ func GetAllApplicationsHandler(c *gin.Context) {
 		)
 	} else { // student
 		rows, err = config.DB.Query(
-			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at,
+			`SELECT a.id, a.student_id, a.job_posting_id, a.status, a.applied_at, a.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(u.email, '') as student_email,
 			        COALESCE(j.title, '') as job_title, COALESCE(c.company_name, '') as company_name
 			 FROM applications a
@@ -327,14 +329,15 @@ func GetAllApplicationsHandler(c *gin.Context) {
 	for rows.Next() {
 		var id, stuID, jpID int
 		var status, studentName, studentEmail, jobTitle, companyName string
-		var appliedAt interface{}
-		rows.Scan(&id, &stuID, &jpID, &status, &appliedAt, &studentName, &studentEmail, &jobTitle, &companyName)
+		var appliedAt, updatedAt interface{}
+		rows.Scan(&id, &stuID, &jpID, &status, &appliedAt, &updatedAt, &studentName, &studentEmail, &jobTitle, &companyName)
 		list = append(list, gin.H{
 			"id":             id,
 			"student_id":     stuID,
 			"job_posting_id": jpID,
 			"status":         status,
 			"applied_at":     appliedAt,
+			"updated_at":     updatedAt,
 			"student_name":   studentName,
 			"student_email":  studentEmail,
 			"job_title":      jobTitle,
@@ -973,4 +976,65 @@ func UpdateUserHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"status": 200, "message": "แก้ไขข้อมูลผู้ใช้สำเร็จ"})
+}
+
+// UpdateInternshipStatusHandler updates status of an internship (e.g. active, completed, terminated)
+func UpdateInternshipStatusHandler(c *gin.Context) {
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	internshipIDStr := c.Param("id")
+	internshipID, err := strconv.Atoi(internshipIDStr)
+	if err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "ID การฝึกงานไม่ถูกต้อง"})
+		return
+	}
+
+	var input struct {
+		Status string `json:"status" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
+		return
+	}
+
+	// Verify authorization
+	if roleStr != "admin" {
+		if roleStr != "company" {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการแก้ไขข้อมูลการฝึกงาน"})
+			return
+		}
+		// If role is company, check if the company owns this internship
+		var companyUserID int
+		err = config.DB.QueryRow(
+			"SELECT c.user_id FROM internships i LEFT JOIN companies c ON i.company_id = c.id WHERE i.id = ?",
+			internshipID,
+		).Scan(&companyUserID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				c.JSON(404, gin.H{"status": 404, "error": "ไม่พบข้อมูลการฝึกงาน"})
+				return
+			}
+			c.JSON(500, gin.H{"status": 500, "error": "เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์: " + err.Error()})
+			return
+		}
+		if companyUserID != userIDInt {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการจัดการข้อมูลการฝึกงานนี้"})
+			return
+		}
+	}
+
+	// Update status
+	_, err = config.DB.Exec(
+		"UPDATE internships SET status = ? WHERE id = ?",
+		input.Status, internshipID,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "อัปเดตสถานะฝึกงานไม่สำเร็จ: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"status": 200, "message": "อัปเดตสถานะฝึกงานสำเร็จ"})
 }

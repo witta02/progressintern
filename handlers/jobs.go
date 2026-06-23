@@ -75,7 +75,8 @@ func GetAllJobsHandler(c *gin.Context) {
 		`SELECT j.id, j.company_id, j.title, j.description, j.requirements, j.benefits, 
 		        j.slots, j.status, COALESCE(j.checkin_time,''), COALESCE(j.checkout_time,''), 
 		        COALESCE(j.lated_time,''), COALESCE(j.work_days,''), j.created_at,
-		        c.company_name, COALESCE(j.is_deleted, FALSE)
+		        c.company_name, COALESCE(j.is_deleted, FALSE),
+		        (SELECT COUNT(*) FROM applications a WHERE a.job_posting_id = j.id) AS applicant_count
 		 FROM job_postings j
 		 JOIN companies c ON j.company_id = c.id
 		 ORDER BY j.created_at DESC`,
@@ -93,25 +94,27 @@ func GetAllJobsHandler(c *gin.Context) {
 		var checkinTime, checkoutTime, latedTime, workDays string
 		var createdAt interface{}
 		var isDeleted bool
+		var applicantCount int
 
-		rows.Scan(&id, &companyID, &title, &description, &requirements, &benefits, &slots, &status, &checkinTime, &checkoutTime, &latedTime, &workDays, &createdAt, &companyName, &isDeleted)
+		rows.Scan(&id, &companyID, &title, &description, &requirements, &benefits, &slots, &status, &checkinTime, &checkoutTime, &latedTime, &workDays, &createdAt, &companyName, &isDeleted, &applicantCount)
 
 		list = append(list, gin.H{
-			"id":            id,
-			"company_id":    companyID,
-			"title":         title,
-			"description":   description,
-			"requirements":  requirements,
-			"benefits":      benefits,
-			"slots":         slots,
-			"status":        status,
-			"checkin_time":  checkinTime,
-			"checkout_time": checkoutTime,
-			"lated_time":    latedTime,
-			"work_days":     workDays,
-			"created_at":    createdAt,
-			"company_name":  companyName,
-			"is_deleted":    isDeleted,
+			"id":              id,
+			"company_id":      companyID,
+			"title":           title,
+			"description":     description,
+			"requirements":    requirements,
+			"benefits":        benefits,
+			"slots":           slots,
+			"status":          status,
+			"checkin_time":    checkinTime,
+			"checkout_time":   checkoutTime,
+			"lated_time":      latedTime,
+			"work_days":       workDays,
+			"created_at":      createdAt,
+			"company_name":    companyName,
+			"is_deleted":      isDeleted,
+			"applicant_count": applicantCount,
 		})
 	}
 

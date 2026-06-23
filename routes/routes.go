@@ -86,6 +86,7 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		internshipGroup.GET("", handlers.GetAllInternshipsHandler)
 		internshipGroup.POST("", handlers.CreateInternshipHandler)
+		internshipGroup.PUT("/:id/status", handlers.UpdateInternshipStatusHandler)
 	}
 
 	// ========================================================

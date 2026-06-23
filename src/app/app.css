@@ -204,3 +204,11 @@
   /* Force colour for status badges */
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* --- Hide details summary default marker -------------------- */
+summary::-webkit-details-marker {
+  display: none;
+}
+summary {
+  list-style: none;
+}

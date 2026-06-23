@@ -37,6 +37,33 @@ func ApplyJobHandler(c *gin.Context) {
 		return
 	}
 
+	// ตรวจสอบว่าประกาศรับสมัครงานยังไม่เต็ม และยังเปิดอยู่
+	var jobStatus string
+	var slots int
+	err = config.DB.QueryRow("SELECT status, slots FROM job_postings WHERE id = ?", input.JobPostingID).Scan(&jobStatus, &slots)
+	if err != nil {
+		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบประกาศงานที่ระบุ"})
+		return
+	}
+	if jobStatus != "open" {
+		c.JSON(400, gin.H{"status": 400, "error": "ตำแหน่งงานนี้ปิดรับสมัครแล้ว"})
+		return
+	}
+
+	var filledCount int
+	err = config.DB.QueryRow(
+		"SELECT COUNT(*) FROM internships WHERE job_posting_id = ? AND status IN ('active', 'completed')",
+		input.JobPostingID,
+	).Scan(&filledCount)
+	if err != nil {
+		c.JSON(500, gin.H{"status": 500, "error": "เกิดข้อผิดพลาดในการตรวจสอบจำนวนผู้สมัคร: " + err.Error()})
+		return
+	}
+	if filledCount >= slots {
+		c.JSON(400, gin.H{"status": 400, "error": "ตำแหน่งงานนี้มีผู้ฝึกงานเต็มจำนวนแล้ว"})
+		return
+	}
+
 	_, err = config.DB.Exec(
 		"INSERT INTO applications (student_id, job_posting_id) VALUES (?, ?)",
 		input.StudentID, input.JobPostingID,

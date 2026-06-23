@@ -50,7 +50,7 @@ export class App {
     this.applyRoleTheme(undefined);
     this.initSession();
     setTimeout(() => {
-      this.notifications.success('ยินดีต้อนรับสู่ระบบจัดการฝึกงาน', 'Welcome');
+      this.notifications.success('ยินดีต้อนรับสู่ระบบจัดการฝึกงาน', 'ยินดีต้อนรับ');
     }, 2000);
   }
 
@@ -1973,6 +1973,14 @@ export class App {
     }[status];
   }
 
+  protected internshipStatusLabel(status: string): string {
+    return {
+      active: 'กำลังฝึกงาน',
+      completed: 'เสร็จสิ้นการฝึกงาน',
+      terminated: 'สิ้นสุดการฝึกงาน'
+    }[status] || status;
+  }
+
   protected attendanceStatusLabel(status: AttendanceStatus): string {
     return {
       present: 'มาตรงเวลา',
@@ -2013,6 +2021,16 @@ export class App {
     }[status];
   }
 
+  protected userStatusLabel(status: string | undefined): string {
+    if (!status) return '';
+    return {
+      active: 'อนุมัติแล้ว',
+      pending: 'รออนุมัติ',
+      rejected: 'ระงับการใช้งาน',
+      suspended: 'ระงับการใช้งาน'
+    }[status] || status;
+  }
+
   protected get filteredUsers(): User[] {
     return this.users.filter(u => {
       const query = this.adminUserSearchQuery.trim().toLowerCase();
@@ -2035,7 +2053,7 @@ export class App {
     }
     try {
       await this.data.updateUser(user.id, { status: newStatus });
-      this.notifications.success(`ปรับปรุงสถานะ of ${user.name} เป็น ${newStatus} แล้ว`, 'จัดการผู้ใช้');
+      this.notifications.success(`ปรับปรุงสถานะของ ${user.name} เป็น ${this.userStatusLabel(newStatus)} เรียบร้อยแล้ว`, 'จัดการผู้ใช้');
       window.location.reload();
     } catch (err: any) {
       this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการผู้ใช้');
@@ -2209,7 +2227,7 @@ export class App {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    this.notifications.success('ส่งออกผลลัพธ์เป็น CSV สำเร็จ', 'Export CSV');
+    this.notifications.success('ส่งออกผลลัพธ์เป็น CSV สำเร็จ', 'ส่งออก CSV');
     window.location.reload();
   }
 

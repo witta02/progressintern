@@ -181,6 +181,13 @@ func UpdateAppStatusHandler(c *gin.Context) {
 			return
 		}
 
+		// ลบใบสมัครอื่นๆ ของนักศึกษาคนนี้ออก
+		_, err = tx.Exec("DELETE FROM applications WHERE student_id = ? AND id <> ?", sID, appID)
+		if err != nil {
+			c.JSON(500, gin.H{"status": 500, "error": "ไม่สามารถลบใบสมัครอื่นได้: " + err.Error()})
+			return
+		}
+
 		// สร้างข้อมูลฝึกงานใหม่
 		err = tx.QueryRow("SELECT company_id FROM job_postings WHERE id = ?", jpID).Scan(&cID)
 		if err != nil {

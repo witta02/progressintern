@@ -1123,17 +1123,24 @@
                       </button>
                       <button *ngIf="currentUser?.role === 'company' && internship.status === 'active'"
                               type="button"
+                              (click)="$event.stopPropagation(); completeInternship(internship.id)"
+                              class="p-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white rounded-xl border border-emerald-100 hover:border-emerald-600 transition-all cursor-pointer shadow-sm shrink-0"
+                              title="เสร็จสิ้นการฝึกงาน (Finish)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </button>
+                      <button *ngIf="currentUser?.role === 'company' && internship.status === 'active'"
+                              type="button"
                               (click)="$event.stopPropagation(); terminateInternship(internship.id)"
                               class="p-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white rounded-xl border border-rose-100 hover:border-rose-600 transition-all cursor-pointer shadow-sm shrink-0"
                               title="นำนักศึกษาออก (Terminate)">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
-                      <button *ngIf="currentUser?.role === 'company' && internship.status === 'terminated'"
+                      <button *ngIf="currentUser?.role === 'company' && (internship.status === 'terminated' || internship.status === 'completed')"
                               type="button"
                               (click)="$event.stopPropagation(); dismissInternship(internship.id)"
                               class="p-2 bg-slate-50 hover:bg-rose-600 text-slate-500 hover:text-white rounded-xl border border-slate-200 hover:border-rose-600 transition-all cursor-pointer shadow-sm shrink-0"
                               title="ล้างรายการที่สิ้นสุดแล้ว (Clear)">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     </div>
                   </td>
@@ -1316,14 +1323,35 @@
                     </span>
                   </div>
 
-                  <!-- Terminate Button for Company User -->
-                  <button *ngIf="currentUser?.role === 'company' && selectedInternshipDetail!.status === 'active'"
-                          type="button"
-                          (click)="terminateInternship(selectedInternshipDetail!.id)"
-                          class="no-print inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-rose-100 hover:border-rose-600 transition-all cursor-pointer shadow-sm">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    นำนักศึกษาออก (Terminate)
-                  </button>
+                  <!-- Actions for Company User -->
+                  <div class="flex items-center gap-2" *ngIf="currentUser?.role === 'company'">
+                    <!-- Complete Button (if active) -->
+                    <button *ngIf="selectedInternshipDetail!.status === 'active'"
+                            type="button"
+                            (click)="completeInternship(selectedInternshipDetail!.id)"
+                            class="no-print inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-emerald-100 hover:border-emerald-600 transition-all cursor-pointer shadow-sm">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      เสร็จสิ้นการฝึกงาน (Finish)
+                    </button>
+
+                    <!-- Terminate Button (if active) -->
+                    <button *ngIf="selectedInternshipDetail!.status === 'active'"
+                            type="button"
+                            (click)="terminateInternship(selectedInternshipDetail!.id)"
+                            class="no-print inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-rose-100 hover:border-rose-600 transition-all cursor-pointer shadow-sm">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      นำนักศึกษาออก (Terminate)
+                    </button>
+
+                    <!-- Clear Button (if completed or terminated) -->
+                    <button *ngIf="selectedInternshipDetail!.status === 'completed' || selectedInternshipDetail!.status === 'terminated'"
+                            type="button"
+                            (click)="dismissInternship(selectedInternshipDetail!.id); closeInternshipDetail()"
+                            class="no-print inline-flex items-center gap-1.5 px-4 py-2 bg-slate-50 hover:bg-rose-600 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-slate-200 hover:border-rose-600 transition-all cursor-pointer shadow-sm">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      ล้างรายการ (Clear)
+                    </button>
+                  </div>
                 </div>
                 <!-- Job description -->
                 <div *ngIf="detailJob?.description" class="pt-3 border-t border-slate-100">

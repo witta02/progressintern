@@ -2435,10 +2435,33 @@ export class App {
     }
   }
 
+  protected async completeInternship(internshipId: number): Promise<void> {
+    const result = await Swal.fire({
+      title: 'ยืนยันการเสร็จสิ้นการฝึกงาน?',
+      text: 'คุณต้องการเปลี่ยนสถานะการฝึกงานของนักศึกษาคนนี้เป็น "เสร็จสิ้นการฝึกงาน" หรือไม่?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'ยืนยัน',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#10B981',
+      cancelButtonColor: '#6B7280'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await this.data.updateInternshipStatus(internshipId, 'completed');
+        this.notifications.success('บันทึกการเสร็จสิ้นการฝึกงานสำเร็จ', 'สำเร็จ');
+        this.closeInternshipDetail();
+      } catch (err: any) {
+        this.notifications.error(this.extractErrorMessage(err) || 'ไม่สามารถบันทึกข้อมูลได้', 'ล้มเหลว');
+      }
+    }
+  }
+
   protected async terminateInternship(internshipId: number): Promise<void> {
     const result = await Swal.fire({
       title: 'ยืนยันการนำนักศึกษาออกจากบริษัท?',
-      text: 'คุณต้องการสิ้นสุดการฝึกงาน of นักศึกษาคนนี้และนำออกจากบริษัทหรือไม่? เมื่อทำแล้วไม่สามารถเปลี่ยนกลับได้',
+      text: 'คุณต้องการสิ้นสุดการฝึกงานของนักศึกษาคนนี้และนำออกจากบริษัทหรือไม่? เมื่อทำแล้วไม่สามารถย้อนกลับได้',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'ยืนยันนำออก',

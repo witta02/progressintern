@@ -64,12 +64,37 @@ func ApplyJobHandler(c *gin.Context) {
 		return
 	}
 
+	var existingStatus string
+	var existingID int
+	err = config.DB.QueryRow(
+		"SELECT id, status FROM applications WHERE student_id = ? AND job_posting_id = ?",
+		input.StudentID, input.JobPostingID,
+	).Scan(&existingID, &existingStatus)
+
+	if err == nil {
+		if existingStatus == "rejected" {
+			_, err = config.DB.Exec(
+				"UPDATE applications SET status = 'pending', rejection_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+				existingID,
+			)
+			if err != nil {
+				c.JSON(500, gin.H{"status": 500, "error": "ส่งใบสมัครใหม่ไม่สำเร็จ: " + err.Error()})
+				return
+			}
+			c.JSON(200, gin.H{"status": 200, "message": "ส่งใบสมัครใหม่เรียบร้อยแล้ว รอการพิจารณา"})
+			return
+		} else {
+			c.JSON(400, gin.H{"status": 400, "error": "คุณได้สมัครตำแหน่งนี้ไปแล้วและอยู่ในขั้นตอนการพิจารณา"})
+			return
+		}
+	}
+
 	_, err = config.DB.Exec(
 		"INSERT INTO applications (student_id, job_posting_id) VALUES (?, ?)",
 		input.StudentID, input.JobPostingID,
 	)
 	if err != nil {
-		c.JSON(500, gin.H{"status": 500, "error": "สมัครงานไม่สำเร็จ (อาจสมัครไปแล้ว)"})
+		c.JSON(500, gin.H{"status": 500, "error": "สมัครงานไม่สำเร็จ: " + err.Error()})
 		return
 	}
 

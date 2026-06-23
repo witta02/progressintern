@@ -1141,6 +1141,7 @@ export class App {
         endDate: '2026-09-30',
         status: 'active'
       });
+      await this.data.deleteOtherApplications(application.studentId, application.id);
       this.notifications.success(
         `สร้างฝึกงานให้ ${student} ตำแหน่ง ${job.title} แล้ว`,
         'ฝึกงาน'

@@ -758,6 +758,16 @@ export class InternshipDataService {
     return Math.max(0, ...items.map((item) => item.id)) + 1;
   }
 
+  async deleteOtherApplications(studentId: number, keepAppId: number): Promise<void> {
+    if (this.api.apiEnabled()) {
+      return;
+    }
+    this.applications = this.applications.filter(
+      (app) => app.studentId !== studentId || app.id === keepAppId
+    );
+    this.persist();
+  }
+
   persist(): void {
     if (!environment.useMockData || !this.hasLocalStorage()) {
       return;

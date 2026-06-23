@@ -589,20 +589,53 @@ export class App {
 
   protected get visibleInternships(): Internship[] {
     const user = this.currentUser;
+    let list = this.internships;
+
     if (user?.role === 'admin') {
       return this.internships;
+    } else if (user?.role === 'student') {
+      list = this.internships.filter((internship) => internship.studentId === user.id);
+    } else if (user?.role === 'company' && this.currentCompanyId) {
+      list = this.internships.filter((internship) => internship.companyId === this.currentCompanyId);
+    } else {
+      const studentIds = this.managedStudents.map((student) => student.id);
+      list = this.internships.filter((internship) => studentIds.includes(internship.studentId));
     }
 
-    if (user?.role === 'student') {
-      return this.internships.filter((internship) => internship.studentId === user.id);
+    // Load manually dismissed internship IDs from localStorage
+    let dismissedIds: number[] = [];
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem('dismissed_internship_ids');
+      if (stored) {
+        try {
+          dismissedIds = JSON.parse(stored);
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
 
-    if (user?.role === 'company' && this.currentCompanyId) {
-      return this.internships.filter((internship) => internship.companyId === this.currentCompanyId);
-    }
+    // Filter out dismissed internships and those terminated > 24 hours
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const now = new Date().getTime();
 
-    const studentIds = this.managedStudents.map((student) => student.id);
-    return this.internships.filter((internship) => studentIds.includes(internship.studentId));
+    return list.filter((internship) => {
+      if (dismissedIds.includes(internship.id)) {
+        return false;
+      }
+
+      if (internship.status === 'terminated') {
+        const dateStr = internship.updatedAt || internship.endDate;
+        if (dateStr) {
+          const lastUpdated = new Date(dateStr).getTime();
+          if (now - lastUpdated > oneDayMs) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
   }
 
   protected attendanceStudentFilterId: number | null = null;
@@ -1816,6 +1849,24 @@ export class App {
     };
     this.evaluationType = user.role === 'advisor' ? 'advisor' : 'mentor';
 
+    // Notify student if they have any terminated internships that haven't been acknowledged yet
+    if (user.role === 'student') {
+      const myInternships = this.internships.filter((i) => i.studentId === user.id);
+      myInternships.forEach((internship) => {
+        if (internship.status === 'terminated') {
+          const notifiedKey = `notified_terminated_internship_${internship.id}`;
+          if (typeof window !== 'undefined' && window.localStorage && !window.localStorage.getItem(notifiedKey)) {
+            const compName = this.companyName(internship.companyId) || 'บริษัท';
+            this.notifications.warning(
+              `การฝึกงานของคุณกับ ${compName} ได้ถูกยกเลิก/สิ้นสุดแล้ว (Terminated)`,
+              'แจ้งเตือนการสิ้นสุดการฝึกงาน'
+            );
+            window.localStorage.setItem(notifiedKey, 'true');
+          }
+        }
+      });
+    }
+
     this.cdr.detectChanges();
   }
 
@@ -2381,6 +2432,22 @@ export class App {
       window.localStorage.setItem('dismissed_application_ids', JSON.stringify(ids));
       this.notifications.success('ล้างรายการใบสมัครที่ดำเนินการแล้วทั้งหมดสำเร็จ', 'สำเร็จ');
       this.cdr.markForCheck();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  protected dismissInternship(internshipId: number): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const stored = window.localStorage.getItem('dismissed_internship_ids');
+      let ids: number[] = stored ? JSON.parse(stored) : [];
+      if (!ids.includes(internshipId)) {
+        ids.push(internshipId);
+        window.localStorage.setItem('dismissed_internship_ids', JSON.stringify(ids));
+        this.notifications.success('ซ่อนประวัติการฝึกงานออกจากรายการแล้ว', 'สำเร็จ');
+        this.cdr.markForCheck();
+      }
     } catch (e) {
       console.error(e);
     }

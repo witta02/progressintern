@@ -1074,6 +1074,16 @@ export class App {
       return false;
     }
 
+    // Check if the job posting is already full
+    const filledCount = this.internships.filter(
+      (internship) =>
+        internship.jobPostingId === job.id &&
+        (internship.status === 'active' || internship.status === 'completed')
+    ).length;
+    if (filledCount >= job.slots) {
+      return false;
+    }
+
     return (
       user?.status === 'active' &&
       job.status === 'open' &&

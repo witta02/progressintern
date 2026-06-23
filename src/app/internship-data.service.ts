@@ -78,14 +78,21 @@ export class InternshipDataService {
     this.apiConnected = true;
     this.apiLoadError = '';
 
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('intern-manager-api-token-v1')) {
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('intern-manager-api-token-v1') : null;
+    if (token) {
       try {
-        const schools = await firstValueFrom(this.api.getAdminSchools());
-        this.schools = schools || [];
-        const codes = await firstValueFrom(this.api.getAdminCodes());
-        this.enrollmentCodes = codes || [];
+        const parts = token.split('.');
+        if (parts.length === 3 && typeof atob !== 'undefined') {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload && payload.role === 'admin') {
+            const schools = await firstValueFrom(this.api.getAdminSchools());
+            this.schools = schools || [];
+            const codes = await firstValueFrom(this.api.getAdminCodes());
+            this.enrollmentCodes = codes || [];
+          }
+        }
       } catch (e) {
-        // Safe fail if user is not admin
+        // Safe fail if user is not admin or parsing failed
       }
     }
   }

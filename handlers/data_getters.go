@@ -363,7 +363,7 @@ func GetAllInternshipsHandler(c *gin.Context) {
 
 	if roleStr == "admin" {
 		rows, err = config.DB.Query(
-			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
+			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status, i.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
 			        COALESCE(j.title, '') as job_title
 			 FROM internships i
@@ -377,7 +377,7 @@ func GetAllInternshipsHandler(c *gin.Context) {
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
+			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status, i.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
 			        COALESCE(j.title, '') as job_title
 			 FROM internships i
@@ -390,7 +390,7 @@ func GetAllInternshipsHandler(c *gin.Context) {
 		)
 	} else if roleStr == "company" {
 		rows, err = config.DB.Query(
-			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
+			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status, i.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
 			        COALESCE(j.title, '') as job_title
 			 FROM internships i
@@ -403,7 +403,7 @@ func GetAllInternshipsHandler(c *gin.Context) {
 		)
 	} else { // student
 		rows, err = config.DB.Query(
-			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status,
+			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status, i.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
 			        COALESCE(j.title, '') as job_title
 			 FROM internships i
@@ -426,7 +426,8 @@ func GetAllInternshipsHandler(c *gin.Context) {
 	for rows.Next() {
 		var id, studentID, companyID, jobID int
 		var startDate, endDate, status, studentName, companyName, jobTitle string
-		rows.Scan(&id, &studentID, &companyID, &jobID, &startDate, &endDate, &status,
+		var updatedAt interface{}
+		rows.Scan(&id, &studentID, &companyID, &jobID, &startDate, &endDate, &status, &updatedAt,
 			&studentName, &companyName, &jobTitle)
 		list = append(list, gin.H{
 			"id":             id,
@@ -439,6 +440,7 @@ func GetAllInternshipsHandler(c *gin.Context) {
 			"student_name":   studentName,
 			"company_name":   companyName,
 			"job_title":      jobTitle,
+			"updated_at":     updatedAt,
 		})
 	}
 	if list == nil {

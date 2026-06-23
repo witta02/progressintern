@@ -1038,5 +1038,18 @@ func UpdateInternshipStatusHandler(c *gin.Context) {
 		return
 	}
 
+	// If status is terminated, reopen the associated job posting
+	if input.Status == "terminated" {
+		var jobPostingID int
+		err = config.DB.QueryRow("SELECT job_posting_id FROM internships WHERE id = ?", internshipID).Scan(&jobPostingID)
+		if err == nil && jobPostingID > 0 {
+			_, err = config.DB.Exec("UPDATE job_postings SET status = 'open' WHERE id = ?", jobPostingID)
+			if err != nil {
+				c.JSON(500, gin.H{"status": 500, "error": "ไม่สามารถเปิดประกาศงานใหม่ได้: " + err.Error()})
+				return
+			}
+		}
+	}
+
 	c.JSON(200, gin.H{"status": 200, "message": "อัปเดตสถานะฝึกงานสำเร็จ"})
 }

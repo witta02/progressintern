@@ -298,6 +298,7 @@ export class InternshipDataService {
       await firstValueFrom(this.api.createJob(job));
       await this.refreshFromApi();
     } else {
+      const nowStr = new Date().toISOString();
       this.jobPostings = [
         ...this.jobPostings,
         { 
@@ -307,7 +308,9 @@ export class InternshipDataService {
           checkinTime: job.checkinTime || '09:00:00',
           checkoutTime: job.checkoutTime || '17:00:00',
           latedTime: job.latedTime || '09:15:00',
-          workDays: job.workDays || 'Monday - Friday'
+          workDays: job.workDays || 'Monday - Friday',
+          createdAt: nowStr,
+          updatedAt: nowStr
         }
       ];
       this.persist();
@@ -320,7 +323,7 @@ export class InternshipDataService {
       await this.refreshFromApi();
     } else {
       this.jobPostings = this.jobPostings.map((item) =>
-        item.id === id ? { ...item, ...job } : item
+        item.id === id ? { ...item, ...job, updatedAt: new Date().toISOString() } : item
       );
       this.persist();
     }
@@ -389,7 +392,13 @@ export class InternshipDataService {
       return;
     }
 
-    this.internships = [...this.internships, { ...internship, id: this.nextId(this.internships) }];
+    const nowStr = new Date().toISOString();
+    this.internships = [...this.internships, { 
+      ...internship, 
+      id: this.nextId(this.internships),
+      createdAt: nowStr,
+      updatedAt: nowStr
+    }];
     this.persist();
   }
  
@@ -400,9 +409,20 @@ export class InternshipDataService {
       return;
     }
 
+    const nowStr = new Date().toISOString();
     this.internships = this.internships.map((item) =>
-      item.id === internshipId ? { ...item, status, updatedAt: new Date().toISOString() } : item
+      item.id === internshipId ? { ...item, status, updatedAt: nowStr } : item
     );
+
+    if (status === 'terminated') {
+      const internship = this.internships.find((i) => i.id === internshipId);
+      if (internship) {
+        this.jobPostings = this.jobPostings.map((job) =>
+          job.id === internship.jobPostingId ? { ...job, status: 'open', updatedAt: nowStr } : job
+        );
+      }
+    }
+
     this.persist();
   }
 

@@ -503,19 +503,53 @@ export class App {
       return list;
     }
 
-    // Filter out jobs that have reached their capacity
-    const unfilledList = list.filter((job) => {
-      const filledCount = this.internships.filter(
-        (internship) => internship.jobPostingId === job.id && (internship.status === 'active' || internship.status === 'completed')
-      ).length;
-      return filledCount < job.slots;
+    const now = new Date().getTime();
+    const oneDay = 24 * 60 * 60 * 1000;
+
+    const filteredList = list.filter((job) => {
+      // 1. Check capacity
+      const jobInternships = this.internships
+        .filter(
+          (internship) =>
+            internship.jobPostingId === job.id &&
+            (internship.status === 'active' || internship.status === 'completed')
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt || a.updatedAt || 0).getTime() -
+            new Date(b.createdAt || b.updatedAt || 0).getTime()
+        );
+      
+      const isFull = jobInternships.length >= job.slots;
+      if (isFull) {
+        const lastFillingInternship = jobInternships[job.slots - 1];
+        const filledTime = lastFillingInternship
+          ? new Date(lastFillingInternship.createdAt || lastFillingInternship.updatedAt || 0).getTime()
+          : 0;
+        if (now - filledTime >= oneDay) {
+          return false; // Hide if full for more than 24 hours
+        }
+      }
+
+      // 2. Check status
+      const isNotOpen = job.status !== 'open';
+      if (isNotOpen) {
+        const closedTime = job.updatedAt
+          ? new Date(job.updatedAt).getTime()
+          : (job.createdAt ? new Date(job.createdAt).getTime() : 0);
+        if (now - closedTime >= oneDay) {
+          return false; // Hide if not open for more than 24 hours
+        }
+      }
+
+      return true;
     });
 
     if (this.currentUser?.role === 'company' && this.currentCompanyId) {
-      return unfilledList.filter((job) => job.companyId === this.currentCompanyId);
+      return filteredList.filter((job) => job.companyId === this.currentCompanyId);
     }
 
-    return unfilledList;
+    return filteredList;
   }
 
   protected getApplicantCount(jobId: number): number {

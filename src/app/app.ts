@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import * as tslib_1 from 'tslib';
 import { environment } from '../environments/environment';
 import { InternshipDataService } from './internship-data.service';
 import { NotificationHostComponent } from './notification-host.component';

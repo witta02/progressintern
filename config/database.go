@@ -79,6 +79,41 @@ func migrateDatabase(db *sql.DB) {
 	_, _ = db.Exec("DROP TABLE IF EXISTS audit_logs")
 	_, _ = db.Exec("ALTER TABLE users ADD COLUMN advisor_id INT NULL")
 	_, _ = db.Exec("ALTER TABLE users ADD CONSTRAINT fk_users_advisor_id FOREIGN KEY (advisor_id) REFERENCES users(id) ON DELETE SET NULL")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN intern_start_date VARCHAR(10) NULL")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN intern_end_date VARCHAR(10) NULL")
+
+	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS assignments (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		title VARCHAR(255) NOT NULL,
+		description TEXT,
+		due_date DATETIME NULL,
+		points INT DEFAULT 100,
+		creator_id INT NOT NULL,
+		creator_role VARCHAR(50) NOT NULL,
+		school_id INT NULL,
+		company_id INT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+
+	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS submissions (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		assignment_id INT NOT NULL,
+		student_id INT NOT NULL,
+		content TEXT,
+		file_name VARCHAR(255) DEFAULT '',
+		file_path VARCHAR(500) DEFAULT '',
+		status VARCHAR(50) DEFAULT 'submitted',
+		score DECIMAL(5, 2) NULL,
+		feedback TEXT,
+		submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		graded_at TIMESTAMP NULL,
+		FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
+		FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+
+	_, _ = db.Exec("ALTER TABLE companies ADD COLUMN latitude DECIMAL(10, 8) NULL")
+	_, _ = db.Exec("ALTER TABLE companies ADD COLUMN longitude DECIMAL(11, 8) NULL")
 }
 
 

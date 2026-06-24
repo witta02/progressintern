@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"database/sql"
 	"internship-backend/config"
 	"internship-backend/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -247,10 +249,23 @@ func UpdateAppStatusHandler(c *gin.Context) {
 			return
 		}
 
+		var sStartDate, sEndDate sql.NullString
+		_ = tx.QueryRow("SELECT intern_start_date, intern_end_date FROM users WHERE id = ?", sID).Scan(&sStartDate, &sEndDate)
+
+		startDateStr := time.Now().Format("2006-01-02")
+		if sStartDate.Valid && sStartDate.String != "" {
+			startDateStr = sStartDate.String
+		}
+
+		endDateStr := time.Now().AddDate(0, 4, 0).Format("2006-01-02")
+		if sEndDate.Valid && sEndDate.String != "" {
+			endDateStr = sEndDate.String
+		}
+
 		_, err = tx.Exec(
 			"INSERT INTO internships (student_id, company_id, job_posting_id, start_date, end_date) "+
-				"VALUES (?, ?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 4 MONTH))",
-			sID, cID, jpID,
+				"VALUES (?, ?, ?, ?, ?)",
+			sID, cID, jpID, startDateStr, endDateStr,
 		)
 		if err != nil {
 			c.JSON(500, gin.H{"status": 500, "error": "สร้างประวัติการฝึกงานไม่สำเร็จ: " + err.Error()})

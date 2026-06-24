@@ -76,6 +76,8 @@ type Company struct {
 	Industry      string    `json:"industry" db:"industry"`
 	EmployeeCount int       `json:"employee_count" db:"employee_count"`
 	Description   string    `json:"description" db:"description"`
+	Latitude      *float64  `json:"latitude" db:"latitude"`
+	Longitude     *float64  `json:"longitude" db:"longitude"`
 	CreatedAt     time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -408,4 +410,56 @@ type UpdateCodeInput struct {
 	MaxUses   *int       `json:"max_uses"`
 	ExpiresAt *time.Time `json:"expires_at"`
 	IsActive  *bool      `json:"is_active"`
+}
+
+// ==================== Assignments (Google Classroom Style) ====================
+
+type Assignment struct {
+	ID          int        `json:"id" db:"id"`
+	Title       string     `json:"title" db:"title"`
+	Description string     `json:"description" db:"description"`
+	DueDate     *time.Time `json:"due_date" db:"due_date"`
+	Points      int        `json:"points" db:"points"`
+	CreatorID   int        `json:"creator_id" db:"creator_id"`
+	CreatorRole string     `json:"creator_role" db:"creator_role"` // advisor, company
+	SchoolID    *int       `json:"school_id,omitempty" db:"school_id"`
+	CompanyID   *int       `json:"company_id,omitempty" db:"company_id"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
+}
+
+type CreateAssignmentInput struct {
+	Title       string     `json:"title" binding:"required"`
+	Description string     `json:"description"`
+	DueDate     *time.Time `json:"due_date"`
+	Points      int        `json:"points"`
+	SchoolID    *int       `json:"school_id"`
+	CompanyID   *int       `json:"company_id"`
+}
+
+type Submission struct {
+	ID           int        `json:"id" db:"id"`
+	AssignmentID int        `json:"assignment_id" db:"assignment_id"`
+	StudentID    int        `json:"student_id" db:"student_id"`
+	Content      string     `json:"content" db:"content"`
+	FileName     string     `json:"file_name" db:"file_name"`
+	FilePath     string     `json:"file_path" db:"file_path"`
+	Status       string     `json:"status" db:"status"` // submitted, late, graded
+	Score        *float64   `json:"score" db:"score"`
+	Feedback     string     `json:"feedback" db:"feedback"`
+	SubmittedAt  time.Time  `json:"submitted_at" db:"submitted_at"`
+	GradedAt     *time.Time `json:"graded_at,omitempty" db:"graded_at"`
+}
+
+type CreateSubmissionInput struct {
+	AssignmentID int    `json:"assignment_id" binding:"required"`
+	StudentID    int    `json:"student_id" binding:"required"`
+	Content      string `json:"content"`
+	FileName     string `json:"file_name"`
+	FilePath     string `json:"file_path"`
+}
+
+type GradeSubmissionInput struct {
+	Score    float64 `json:"score" binding:"required,min=0"`
+	Feedback string  `json:"feedback"`
 }

@@ -137,6 +137,24 @@ func SetupRoutes(router *gin.Engine) {
 	}
 
 	// ========================================================
+	// 📚 Assignment & Submission Routes
+	// ========================================================
+	assignmentGroup := router.Group("/api/assignments")
+	assignmentGroup.Use(middleware.AuthMiddleware())
+	{
+		assignmentGroup.GET("", handlers.GetAllAssignmentsHandler)
+		assignmentGroup.POST("", handlers.CreateAssignmentHandler)
+	}
+
+	submissionGroup := router.Group("/api/submissions")
+	submissionGroup.Use(middleware.AuthMiddleware())
+	{
+		submissionGroup.GET("", handlers.GetAllSubmissionsHandler)
+		submissionGroup.POST("", handlers.CreateSubmissionHandler)
+		submissionGroup.PUT("/:id/grade", handlers.GradeSubmissionHandler)
+	}
+
+	// ========================================================
 	// 👑 Admin Management Routes
 	// ========================================================
 	adminGroup := router.Group("/api/admin")

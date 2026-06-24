@@ -25,13 +25,13 @@ func GetAllUsersHandler(c *gin.Context) {
 	userIDInt := reqUserID.(int)
 
 	if roleStr == "admin" {
-		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id FROM users")
+		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users")
 	} else if roleStr == "advisor" {
 		var school string
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id 
+			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') 
 			 FROM users 
 			 WHERE id = ? 
 			    OR (school = ? AND school <> '' AND role IN ('student', 'advisor')) 
@@ -41,7 +41,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		)
 	} else if roleStr == "company" {
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
 			 FROM users u
 			 LEFT JOIN companies c ON c.user_id = ?
 			 LEFT JOIN job_postings j ON j.company_id = c.id
@@ -63,7 +63,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
 			 FROM users u
 			 LEFT JOIN companies c ON c.user_id = u.id
 			 LEFT JOIN job_postings j ON j.company_id = c.id
@@ -87,9 +87,9 @@ func GetAllUsersHandler(c *gin.Context) {
 	var list []gin.H
 	for rows.Next() {
 		var id int
-		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field string
+		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, internStartDate, internEndDate string
 		var advisorID sql.NullInt64
-		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID)
+		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &internStartDate, &internEndDate)
 
 		var advIDVal interface{} = nil
 		if advisorID.Valid {
@@ -109,6 +109,8 @@ func GetAllUsersHandler(c *gin.Context) {
 			"intro":         intro,
 			"field":         field,
 			"advisor_id":    advIDVal,
+			"intern_start_date": internStartDate,
+			"intern_end_date":   internEndDate,
 		})
 	}
 	if list == nil {
@@ -194,12 +196,12 @@ func GetUserByIDHandler(c *gin.Context) {
 	}
 
 	var id int
-	var name, email, role, phone, profileImage, school, status, resumeURL, intro, field string
+	var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, internStartDate, internEndDate string
 	var advisorID sql.NullInt64
 	err := config.DB.QueryRow(
-		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id FROM users WHERE id = ?",
+		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users WHERE id = ?",
 		targetUserIDInt,
-	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID)
+	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &internStartDate, &internEndDate)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบผู้ใช้"})
 		return
@@ -217,6 +219,8 @@ func GetUserByIDHandler(c *gin.Context) {
 			"phone": phone, "profile_image": profileImage, "school": school,
 			"status": status, "resume_url": resumeURL, "intro": intro, "field": field,
 			"advisor_id": advIDVal,
+			"intern_start_date": internStartDate,
+			"intern_end_date":   internEndDate,
 		},
 	})
 }
@@ -224,7 +228,7 @@ func GetUserByIDHandler(c *gin.Context) {
 // GetAllCompaniesHandler fetches all companies
 func GetAllCompaniesHandler(c *gin.Context) {
 	rows, err := config.DB.Query(
-		"SELECT id, user_id, company_name, COALESCE(description,''), COALESCE(address,''), COALESCE(website,'') FROM companies",
+		"SELECT id, user_id, company_name, COALESCE(description,''), COALESCE(address,''), COALESCE(website,''), latitude, longitude FROM companies",
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลบริษัทล้มเหลว"})
@@ -236,7 +240,18 @@ func GetAllCompaniesHandler(c *gin.Context) {
 	for rows.Next() {
 		var id, userID int
 		var name, desc, addr, website string
-		rows.Scan(&id, &userID, &name, &desc, &addr, &website)
+		var lat, lng sql.NullFloat64
+		rows.Scan(&id, &userID, &name, &desc, &addr, &website, &lat, &lng)
+
+		var latVal interface{} = nil
+		var lngVal interface{} = nil
+		if lat.Valid {
+			latVal = lat.Float64
+		}
+		if lng.Valid {
+			lngVal = lng.Float64
+		}
+
 		list = append(list, gin.H{
 			"id":           id,
 			"user_id":      userID,
@@ -244,6 +259,8 @@ func GetAllCompaniesHandler(c *gin.Context) {
 			"description":  desc,
 			"address":      addr,
 			"website":      website,
+			"latitude":     latVal,
+			"longitude":    lngVal,
 		})
 	}
 	if list == nil {
@@ -824,15 +841,22 @@ func CreateEvaluationHandler(c *gin.Context) {
 func UpdateUserHandler(c *gin.Context) {
 	userID := c.Param("id")
 	var input struct {
-		Name      string `json:"name"`
-		Email     string `json:"email"`
-		Phone     string `json:"phone"`
-		School    string `json:"school"`
-		Status    string `json:"status"`
-		ResumeURL string `json:"resume_url"`
-		Intro     string `json:"intro"`
-		Field     string `json:"field"`
-		AdvisorID *int   `json:"advisor_id"`
+		Name            string   `json:"name"`
+		Email           string   `json:"email"`
+		Phone           string   `json:"phone"`
+		School          string   `json:"school"`
+		Status          string   `json:"status"`
+		ResumeURL       string   `json:"resume_url"`
+		Intro           string   `json:"intro"`
+		Field           string   `json:"field"`
+		AdvisorID       *int     `json:"advisor_id"`
+		InternStartDate string   `json:"intern_start_date"`
+		InternEndDate   string   `json:"intern_end_date"`
+		CompanyName     string   `json:"company_name"`
+		Description     string   `json:"description"`
+		Address         string   `json:"address"`
+		Latitude        *float64 `json:"latitude"`
+		Longitude       *float64 `json:"longitude"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
@@ -869,15 +893,15 @@ func UpdateUserHandler(c *gin.Context) {
 			var args []interface{}
 			if input.AdvisorID != nil {
 				if *input.AdvisorID == 0 {
-					query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = NULL WHERE id = ?"
-					args = []interface{}{input.Status, advisorSchool, targetUserIDInt}
+					query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = NULL, intern_start_date = ?, intern_end_date = ? WHERE id = ?"
+					args = []interface{}{input.Status, advisorSchool, input.InternStartDate, input.InternEndDate, targetUserIDInt}
 				} else {
-					query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = ? WHERE id = ?"
-					args = []interface{}{input.Status, advisorSchool, *input.AdvisorID, targetUserIDInt}
+					query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?"
+					args = []interface{}{input.Status, advisorSchool, *input.AdvisorID, input.InternStartDate, input.InternEndDate, targetUserIDInt}
 				}
 			} else {
-				query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ? WHERE id = ?"
-				args = []interface{}{input.Status, advisorSchool, targetUserIDInt}
+				query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?"
+				args = []interface{}{input.Status, advisorSchool, input.InternStartDate, input.InternEndDate, targetUserIDInt}
 			}
 
 			_, err = config.DB.Exec(query, args...)
@@ -920,10 +944,25 @@ func UpdateUserHandler(c *gin.Context) {
 				school = ?, 
 				resume_url = ?,
 				intro = ?,
-				field = ?
+				field = ?,
+				intern_start_date = ?,
+				intern_end_date = ?
 			 WHERE id = ?`,
-			input.Name, input.Email, input.Phone, input.School, input.ResumeURL, input.Intro, input.Field, userIDInt,
+			input.Name, input.Email, input.Phone, input.School, input.ResumeURL, input.Intro, input.Field, input.InternStartDate, input.InternEndDate, userIDInt,
 		)
+
+		if err == nil && targetRole == "company" {
+			_, _ = config.DB.Exec(
+				`UPDATE companies 
+				 SET company_name = COALESCE(NULLIF(?,''), company_name), 
+				     description = ?, 
+				     address = ?,
+				     latitude = ?,
+				     longitude = ?
+				 WHERE user_id = ?`,
+				input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, userIDInt,
+			)
+		}
 	} else {
 		var query string
 		var args []interface{}
@@ -941,9 +980,11 @@ func UpdateUserHandler(c *gin.Context) {
 				resume_url = ?,
 				intro = ?,
 				field = ?,
-				advisor_id = ?
+				advisor_id = ?,
+				intern_start_date = ?,
+				intern_end_date = ?
 			 WHERE id = ?`
-			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, advVal, targetUserIDInt}
+			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, advVal, input.InternStartDate, input.InternEndDate, targetUserIDInt}
 		} else {
 			query = `UPDATE users SET 
 				name = COALESCE(NULLIF(?,''), name), 
@@ -953,12 +994,27 @@ func UpdateUserHandler(c *gin.Context) {
 				status = COALESCE(NULLIF(?,''), status), 
 				resume_url = ?,
 				intro = ?,
-				field = ?
+				field = ?,
+				intern_start_date = ?,
+				intern_end_date = ?
 			 WHERE id = ?`
-			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, targetUserIDInt}
+			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, input.InternStartDate, input.InternEndDate, targetUserIDInt}
 		}
 
 		_, err = config.DB.Exec(query, args...)
+
+		if err == nil && targetRole == "company" {
+			_, _ = config.DB.Exec(
+				`UPDATE companies 
+				 SET company_name = COALESCE(NULLIF(?,''), company_name), 
+				     description = ?, 
+				     address = ?,
+				     latitude = ?,
+				     longitude = ?
+				 WHERE user_id = ?`,
+				input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, targetUserIDInt,
+			)
+		}
 
 		// Sync supervisor_id in internships table for active internship
 		if err == nil && input.AdvisorID != nil && targetRole == "student" {

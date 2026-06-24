@@ -135,8 +135,15 @@ func GetAllAssignmentsHandler(c *gin.Context) {
 
 		query = `SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, student_id, job_posting_id, created_at, updated_at 
 		         FROM assignments 
-		         WHERE creator_id = ? OR company_id = ?`
-		args = append(args, userIDInt, cID)
+		         WHERE creator_id = ? 
+		            OR company_id = ?
+		            OR student_id IN (
+		                SELECT student_id FROM internships WHERE company_id = ? AND status = 'active'
+		            )
+		            OR job_posting_id IN (
+		                SELECT job_posting_id FROM internships WHERE company_id = ? AND status = 'active'
+		            )`
+		args = append(args, userIDInt, cID, cID, cID)
 	} else { // student
 		var sID int
 		_ = config.DB.QueryRow("SELECT school_id FROM users WHERE id = ?", userIDInt).Scan(&sID)
@@ -303,7 +310,7 @@ func CreateSubmissionHandler(c *gin.Context) {
 	} else if err == nil {
 		res, err = config.DB.Exec(
 			`UPDATE submissions 
-			 SET content = ?, file_name = ?, file_path = ?, status = ?, submitted_at = NOW() 
+			 SET content = ?, file_name = ?, file_path = ?, status = ?, score = NULL, feedback = NULL, graded_at = NULL, submitted_at = NOW() 
 			 WHERE id = ?`,
 			input.Content, input.FileName, input.FilePath, status, existingID,
 		)
@@ -374,8 +381,11 @@ func GetAllSubmissionsHandler(c *gin.Context) {
 		query = `SELECT s.id, s.assignment_id, s.student_id, COALESCE(s.content,''), COALESCE(s.file_name,''), COALESCE(s.file_path,''), s.status, s.score, COALESCE(s.feedback,''), s.submitted_at, s.graded_at 
 		         FROM submissions s
 		         JOIN assignments a ON s.assignment_id = a.id
-		         WHERE a.company_id = ?`
-		args = append(args, cID)
+		         WHERE a.company_id = ?
+		            OR s.student_id IN (
+		                SELECT student_id FROM internships WHERE company_id = ? AND status IN ('active', 'completed')
+		            )`
+		args = append(args, cID, cID)
 	}
 
 	rows, err := config.DB.Query(query, args...)
@@ -470,7 +480,9 @@ func GradeSubmissionHandler(c *gin.Context) {
 	var submittedAt time.Time
 	var gradedAt time.Time
 	_ = config.DB.QueryRow(
-		"SELECT assignment_id, student_id, content, file_name, file_path, status, score, feedback, submitted_at, graded_at FROM submissions WHERE id = ?",
+		`SELECT assignment_id, student_id, COALESCE(content, ''), COALESCE(file_name, ''), COALESCE(file_path, ''), status, score, COALESCE(feedback, ''), submitted_at, graded_at 
+		 FROM submissions 
+		 WHERE id = ?`,
 		submissionID,
 	).Scan(&assignmentID, &studentID, &content, &fileName, &filePath, &status, &score, &feedback, &submittedAt, &gradedAt)
 

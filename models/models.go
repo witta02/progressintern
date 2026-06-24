@@ -415,26 +415,30 @@ type UpdateCodeInput struct {
 // ==================== Assignments (Google Classroom Style) ====================
 
 type Assignment struct {
-	ID          int        `json:"id" db:"id"`
-	Title       string     `json:"title" db:"title"`
-	Description string     `json:"description" db:"description"`
-	DueDate     *time.Time `json:"due_date" db:"due_date"`
-	Points      int        `json:"points" db:"points"`
-	CreatorID   int        `json:"creator_id" db:"creator_id"`
-	CreatorRole string     `json:"creator_role" db:"creator_role"` // advisor, company
-	SchoolID    *int       `json:"school_id,omitempty" db:"school_id"`
-	CompanyID   *int       `json:"company_id,omitempty" db:"company_id"`
-	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
+	ID           int        `json:"id" db:"id"`
+	Title        string     `json:"title" db:"title"`
+	Description  string     `json:"description" db:"description"`
+	DueDate      *time.Time `json:"due_date" db:"due_date"`
+	Points       int        `json:"points" db:"points"`
+	CreatorID    int        `json:"creator_id" db:"creator_id"`
+	CreatorRole  string     `json:"creator_role" db:"creator_role"` // advisor, company
+	SchoolID     *int       `json:"school_id,omitempty" db:"school_id"`
+	CompanyID    *int       `json:"company_id,omitempty" db:"company_id"`
+	StudentID    *int       `json:"student_id,omitempty" db:"student_id"`
+	JobPostingID *int       `json:"job_posting_id,omitempty" db:"job_posting_id"`
+	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 type CreateAssignmentInput struct {
-	Title       string     `json:"title" binding:"required"`
-	Description string     `json:"description"`
-	DueDate     *time.Time `json:"due_date"`
-	Points      int        `json:"points"`
-	SchoolID    *int       `json:"school_id"`
-	CompanyID   *int       `json:"company_id"`
+	Title        string     `json:"title" binding:"required"`
+	Description  string     `json:"description"`
+	DueDate      *time.Time `json:"due_date"`
+	Points       int        `json:"points"`
+	SchoolID     *int       `json:"school_id"`
+	CompanyID    *int       `json:"company_id"`
+	StudentID    *int       `json:"student_id"`
+	JobPostingID *int       `json:"job_posting_id"`
 }
 
 type Submission struct {

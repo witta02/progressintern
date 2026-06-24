@@ -114,6 +114,8 @@ func migrateDatabase(db *sql.DB) {
 
 	_, _ = db.Exec("ALTER TABLE companies ADD COLUMN latitude DECIMAL(10, 8) NULL")
 	_, _ = db.Exec("ALTER TABLE companies ADD COLUMN longitude DECIMAL(11, 8) NULL")
+	_, _ = db.Exec("ALTER TABLE assignments ADD COLUMN student_id INT NULL")
+	_, _ = db.Exec("ALTER TABLE assignments ADD COLUMN job_posting_id INT NULL")
 }
 
 

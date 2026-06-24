@@ -27,10 +27,12 @@ func CreateAssignmentHandler(c *gin.Context) {
 	}
 
 	var input struct {
-		Title       string `json:"title" binding:"required"`
-		Description string `json:"description"`
-		DueDate     string `json:"due_date"` // YYYY-MM-DD HH:MM:SS or RFC3339
-		Points      int    `json:"points"`
+		Title        string `json:"title" binding:"required"`
+		Description  string `json:"description"`
+		DueDate      string `json:"due_date"` // YYYY-MM-DD HH:MM:SS or RFC3339
+		Points       int    `json:"points"`
+		StudentID    *int   `json:"student_id"`
+		JobPostingID *int   `json:"job_posting_id"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
@@ -74,9 +76,9 @@ func CreateAssignmentHandler(c *gin.Context) {
 	}
 
 	res, err := config.DB.Exec(
-		`INSERT INTO assignments (title, description, due_date, points, creator_id, creator_role, school_id, company_id)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		input.Title, input.Description, dueDateVal, points, userIDInt, roleStr, schoolID, companyID,
+		`INSERT INTO assignments (title, description, due_date, points, creator_id, creator_role, school_id, company_id, student_id, job_posting_id)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		input.Title, input.Description, dueDateVal, points, userIDInt, roleStr, schoolID, companyID, input.StudentID, input.JobPostingID,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ไม่สามารถสร้างงานมอบหมายได้: " + err.Error()})
@@ -89,15 +91,17 @@ func CreateAssignmentHandler(c *gin.Context) {
 		"status":  201,
 		"message": "สร้างงานที่มอบหมายสำเร็จ",
 		"data": gin.H{
-			"id":           id,
-			"title":        input.Title,
-			"description":  input.Description,
-			"due_date":     dueDateVal,
-			"points":       points,
-			"creator_id":   userIDInt,
-			"creator_role": roleStr,
-			"school_id":    schoolID,
-			"company_id":   companyID,
+			"id":             id,
+			"title":          input.Title,
+			"description":    input.Description,
+			"due_date":       dueDateVal,
+			"points":         points,
+			"creator_id":     userIDInt,
+			"creator_role":   roleStr,
+			"school_id":      schoolID,
+			"company_id":     companyID,
+			"student_id":     input.StudentID,
+			"job_posting_id": input.JobPostingID,
 		},
 	})
 }
@@ -116,12 +120,12 @@ func GetAllAssignmentsHandler(c *gin.Context) {
 	var args []interface{}
 
 	if roleStr == "admin" {
-		query = "SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, created_at, updated_at FROM assignments"
+		query = "SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, student_id, job_posting_id, created_at, updated_at FROM assignments"
 	} else if roleStr == "advisor" {
 		var sID int
 		_ = config.DB.QueryRow("SELECT school_id FROM users WHERE id = ?", userIDInt).Scan(&sID)
 
-		query = `SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, created_at, updated_at 
+		query = `SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, student_id, job_posting_id, created_at, updated_at 
 		         FROM assignments 
 		         WHERE creator_id = ? OR school_id = ?`
 		args = append(args, userIDInt, sID)
@@ -129,7 +133,7 @@ func GetAllAssignmentsHandler(c *gin.Context) {
 		var cID int
 		_ = config.DB.QueryRow("SELECT id FROM companies WHERE user_id = ?", userIDInt).Scan(&cID)
 
-		query = `SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, created_at, updated_at 
+		query = `SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, student_id, job_posting_id, created_at, updated_at 
 		         FROM assignments 
 		         WHERE creator_id = ? OR company_id = ?`
 		args = append(args, userIDInt, cID)
@@ -137,36 +141,54 @@ func GetAllAssignmentsHandler(c *gin.Context) {
 		var sID int
 		_ = config.DB.QueryRow("SELECT school_id FROM users WHERE id = ?", userIDInt).Scan(&sID)
 
-		// Get companies where student has/had internships
-		rowsCompany, _ := config.DB.Query("SELECT DISTINCT company_id FROM internships WHERE student_id = ? AND status IN ('active', 'completed')", userIDInt)
+		// Get company_id and job_posting_id where student has/had internships
+		rowsInternships, _ := config.DB.Query("SELECT company_id, job_posting_id FROM internships WHERE student_id = ? AND status IN ('active', 'completed')", userIDInt)
 		var companyIDs []interface{}
+		var jobPostingIDs []interface{}
 		companyIDs = append(companyIDs, 0) // default fallback
-		if rowsCompany != nil {
-			for rowsCompany.Next() {
-				var cid int
-				if err := rowsCompany.Scan(&cid); err == nil {
+		jobPostingIDs = append(jobPostingIDs, 0) // default fallback
+		if rowsInternships != nil {
+			for rowsInternships.Next() {
+				var cid, jpid int
+				if err := rowsInternships.Scan(&cid, &jpid); err == nil {
 					companyIDs = append(companyIDs, cid)
+					jobPostingIDs = append(jobPostingIDs, jpid)
 				}
 			}
-			rowsCompany.Close()
+			rowsInternships.Close()
 		}
 
-		inClause := ""
+		inCompanyClause := ""
 		for i := range companyIDs {
 			if i > 0 {
-				inClause += ","
+				inCompanyClause += ","
 			}
-			inClause += "?"
+			inCompanyClause += "?"
+		}
+
+		inJobClause := ""
+		for i := range jobPostingIDs {
+			if i > 0 {
+				inJobClause += ","
+			}
+			inJobClause += "?"
 		}
 
 		query = fmt.Sprintf(
-			`SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, created_at, updated_at 
+			`SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, student_id, job_posting_id, created_at, updated_at 
 			 FROM assignments 
-			 WHERE school_id = ? OR company_id IN (%s)`,
-			inClause,
+			 WHERE (school_id = ? AND (student_id IS NULL OR student_id = ?))
+			    OR (company_id IN (%s) AND (
+			          (student_id IS NULL AND job_posting_id IS NULL)
+			          OR student_id = ?
+			          OR job_posting_id IN (%s)
+			       ))`,
+			inCompanyClause, inJobClause,
 		)
-		args = append(args, sID)
+		args = append(args, sID, userIDInt)
 		args = append(args, companyIDs...)
+		args = append(args, userIDInt)
+		args = append(args, jobPostingIDs...)
 	}
 
 	rows, err := config.DB.Query(query, args...)
@@ -181,10 +203,10 @@ func GetAllAssignmentsHandler(c *gin.Context) {
 		var id, points, creatorID int
 		var title, description, creatorRole string
 		var dueDate *time.Time
-		var schoolID, companyID sql.NullInt64
+		var schoolID, companyID, studentID, jobPostingID sql.NullInt64
 		var createdAt, updatedAt time.Time
 
-		err := rows.Scan(&id, &title, &description, &dueDate, &points, &creatorID, &creatorRole, &schoolID, &companyID, &createdAt, &updatedAt)
+		err := rows.Scan(&id, &title, &description, &dueDate, &points, &creatorID, &creatorRole, &schoolID, &companyID, &studentID, &jobPostingID, &createdAt, &updatedAt)
 		if err != nil {
 			continue
 		}
@@ -197,19 +219,29 @@ func GetAllAssignmentsHandler(c *gin.Context) {
 		if companyID.Valid {
 			compID = companyID.Int64
 		}
+		var studID interface{} = nil
+		if studentID.Valid {
+			studID = studentID.Int64
+		}
+		var jbID interface{} = nil
+		if jobPostingID.Valid {
+			jbID = jobPostingID.Int64
+		}
 
 		list = append(list, gin.H{
-			"id":           id,
-			"title":        title,
-			"description":  description,
-			"due_date":     dueDate,
-			"points":       points,
-			"creator_id":   creatorID,
-			"creator_role": creatorRole,
-			"school_id":    schID,
-			"company_id":   compID,
-			"created_at":   createdAt,
-			"updated_at":   updatedAt,
+			"id":             id,
+			"title":          title,
+			"description":    description,
+			"due_date":       dueDate,
+			"points":         points,
+			"creator_id":     creatorID,
+			"creator_role":   creatorRole,
+			"school_id":      schID,
+			"company_id":     compID,
+			"student_id":     studID,
+			"job_posting_id": jbID,
+			"created_at":     createdAt,
+			"updated_at":     updatedAt,
 		})
 	}
 

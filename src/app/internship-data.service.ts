@@ -296,7 +296,25 @@ export class InternshipDataService {
       return;
     }
 
-    this.users = this.users.map((user) => (user.id === userId ? { ...user, ...updates } : user));
+    const user = this.users.find((u) => u.id === userId);
+    this.users = this.users.map((u) => (u.id === userId ? { ...u, ...updates } : u));
+
+    if (user && user.role === 'company') {
+      this.companies = this.companies.map((c) => {
+        if (c.userId === userId) {
+          return {
+            ...c,
+            companyName: (updates as any).companyName ?? c.companyName,
+            description: (updates as any).description !== undefined ? (updates as any).description : c.description,
+            address: (updates as any).address !== undefined ? (updates as any).address : c.address,
+            latitude: (updates as any).latitude !== undefined ? (updates as any).latitude : c.latitude,
+            longitude: (updates as any).longitude !== undefined ? (updates as any).longitude : c.longitude
+          };
+        }
+        return c;
+      });
+    }
+
     this.persist();
   }
 

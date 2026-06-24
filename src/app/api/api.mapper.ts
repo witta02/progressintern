@@ -316,6 +316,8 @@ export type ApiAssignment = {
   creator_role: string;
   school_id?: number | null;
   company_id?: number | null;
+  student_id?: number | null;
+  job_posting_id?: number | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -345,6 +347,8 @@ export function mapAssignment(dto: ApiAssignment): Assignment {
     creatorRole: dto.creator_role,
     schoolId: dto.school_id ?? undefined,
     companyId: dto.company_id ?? undefined,
+    studentId: dto.student_id ?? undefined,
+    jobPostingId: dto.job_posting_id ?? undefined,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };
@@ -375,7 +379,9 @@ export function toApiAssignment(body: Omit<Assignment, 'id' | 'createdAt' | 'upd
     creator_id: body.creatorId,
     creator_role: body.creatorRole,
     school_id: body.schoolId ?? null,
-    company_id: body.companyId ?? null
+    company_id: body.companyId ?? null,
+    student_id: body.studentId ?? null,
+    job_posting_id: body.jobPostingId ?? null
   };
 }
 

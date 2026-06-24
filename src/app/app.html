@@ -2288,6 +2288,42 @@
                           class="w-full px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900"></textarea>
               </div>
 
+              <!-- Target selection dropdowns -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">เป้าหมายผู้รับงาน (Target Group)</label>
+                  <select name="assTargetType" [(ngModel)]="newAssignment.targetType" 
+                          class="w-full px-6 py-4.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900">
+                    <option value="all">ทุกคนในความดูแล (All)</option>
+                    <option value="student">เฉพาะนักศึกษาบางคน (Student)</option>
+                    <option value="position" *ngIf="currentUser?.role === 'company'">เฉพาะตำแหน่งงาน (Position)</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1 md:col-span-2 animate-in fade-in duration-150" *ngIf="newAssignment.targetType === 'student'">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">เลือกนักศึกษาผู้รับงาน</label>
+                  <select name="assTargetStudent" [(ngModel)]="newAssignment.studentId" required
+                          class="w-full px-6 py-4.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900">
+                    <option [ngValue]="null" disabled selected>-- กรุณาเลือกนักศึกษา --</option>
+                    <ng-container *ngIf="currentUser?.role === 'advisor'">
+                      <option *ngFor="let s of advisorStudents" [value]="s.id">{{ s.name }} ({{ s.email }})</option>
+                    </ng-container>
+                    <ng-container *ngIf="currentUser?.role === 'company'">
+                      <option *ngFor="let s of companyStudents" [value]="s.id">{{ s.name }}</option>
+                    </ng-container>
+                  </select>
+                </div>
+
+                <div class="space-y-1 md:col-span-2 animate-in fade-in duration-150" *ngIf="newAssignment.targetType === 'position' && currentUser?.role === 'company'">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">เลือกตำแหน่งงานผู้รับงาน</label>
+                  <select name="assTargetPosition" [(ngModel)]="newAssignment.jobPostingId" required
+                          class="w-full px-6 py-4.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900">
+                    <option [ngValue]="null" disabled selected>-- กรุณาเลือกตำแหน่งงาน --</option>
+                    <option *ngFor="let j of companyJobPostings" [value]="j.id">{{ j.title }}</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="space-y-1">
                   <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">กำหนดส่งงาน (Due Date)</label>
@@ -2321,6 +2357,9 @@
                   <div class="flex justify-between items-start mb-2">
                     <span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-wider border">
                       {{ ass.creatorRole === 'advisor' ? '🏫 สถาบัน' : '🏢 บริษัท' }}
+                    </span>
+                    <span *ngIf="ass.studentId || ass.jobPostingId" class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-full text-[8px] font-black uppercase tracking-wider border border-amber-100">
+                      🎯 {{ getAssignmentTargetLabel(ass) }}
                     </span>
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       คะแนนเต็ม: {{ ass.points }}
@@ -2373,6 +2412,7 @@
                   <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mt-2">
                     สั่งโดย: {{ assignments[selectedAssignmentIdForDetails-1]?.creatorRole === 'advisor' ? 'อาจารย์ที่ปรึกษา' : 'พี่เลี้ยงสถานประกอบการ' }}
                     | คะแนนเต็ม: {{ assignments[selectedAssignmentIdForDetails-1]?.points }}
+                    | สำหรับ: {{ getAssignmentTargetLabel(assignments[selectedAssignmentIdForDetails-1]) }}
                   </p>
                 </div>
                 <button type="button" (click)="selectedAssignmentIdForDetails = null" class="text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest bg-slate-50 px-3.5 py-2 rounded-xl transition-all">
@@ -2450,7 +2490,7 @@
                 
                 <div class="divide-y divide-slate-100">
                   
-                  <div *ngFor="let s of pendingStudents" class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div *ngFor="let s of assignmentStudents" class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2 mb-1">
                         <span class="text-sm font-black text-slate-900">{{ s.name }}</span>
@@ -2497,7 +2537,7 @@
                     </div>
                   </div>
 
-                  <div *ngIf="pendingStudents.length === 0" class="py-8 text-center text-slate-400 font-bold text-sm">
+                  <div *ngIf="assignmentStudents.length === 0" class="py-8 text-center text-slate-400 font-bold text-sm">
                     ไม่พบนิสิตหรือนักศึกษาฝึกงานสำหรับงานชิ้นนี้
                   </div>
                 </div>
@@ -2612,6 +2652,11 @@
                   <input name="profileSchool" [(ngModel)]="profileDraft.school" placeholder="School/University Name" 
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
+                <div class="space-y-2" *ngIf="currentUser?.role === 'company'">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อสถานประกอบการ</label>
+                  <input name="profileCompanyName" [(ngModel)]="profileDraft.companyName" placeholder="Company Name" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="currentUser?.role === 'student'">
                 <div class="space-y-2">
@@ -2644,6 +2689,45 @@
                 <textarea name="profileIntro" [(ngModel)]="profileDraft.intro" placeholder="Introduce yourself to companies..." rows="4"
                        class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold resize-none"></textarea>
               </div>
+
+              <!-- Company Settings (Address, Description, Coordinates) -->
+              <div class="space-y-6" *ngIf="currentUser?.role === 'company'">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คำอธิบาย/แนะนำสถานประกอบการ</label>
+                  <textarea name="profileDescription" [(ngModel)]="profileDraft.description" placeholder="Description about the company..." rows="3"
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold resize-none"></textarea>
+                </div>
+                
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ที่อยู่สถานประกอบการ</label>
+                  <input name="profileAddress" [(ngModel)]="profileDraft.address" placeholder="Company Address" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">พิกัดละติจูด (Latitude)</label>
+                    <input name="profileLatitude" [(ngModel)]="profileDraft.latitude" placeholder="เช่น 13.7563" 
+                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">พิกัดลองจิจูด (Longitude)</label>
+                    <input name="profileLongitude" [(ngModel)]="profileDraft.longitude" placeholder="เช่น 100.5018" 
+                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                  </div>
+                </div>
+
+                <div class="pt-2">
+                  <button type="button" (click)="pinProfileCoordinates()" 
+                          class="w-full py-4.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-200 hover:scale-[1.01] cursor-pointer flex items-center justify-center gap-2">
+                    📍 ปักหมุดตำแหน่งปัจจุบันของบริษัท (Pin Current Geolocation)
+                  </button>
+                  <p class="text-[10px] text-slate-400 font-bold text-center mt-2">
+                    * พิกัดนี้จะใช้ตรวจจับขอบเขต Geofencing ในระยะห่างไม่เกิน 200 เมตร เมื่อนักศึกษาลงเวลาทำงาน
+                  </p>
+                </div>
+              </div>
+
               <button type="submit" class="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
                 บันทึกการแก้ไขข้อมูล
               </button>

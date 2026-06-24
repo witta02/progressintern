@@ -205,6 +205,8 @@ export interface Assignment {
   creatorRole: string; // 'advisor' | 'company'
   schoolId?: number;
   companyId?: number;
+  studentId?: number;
+  jobPostingId?: number;
   createdAt?: string;
   updatedAt?: string;
 }

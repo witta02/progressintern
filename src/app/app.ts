@@ -173,7 +173,12 @@ export class App {
     intro: '',
     field: '',
     internStartDate: '',
-    internEndDate: ''
+    internEndDate: '',
+    companyName: '',
+    description: '',
+    address: '',
+    latitude: '' as string | number,
+    longitude: '' as string | number
   };
 
   protected leaveForm = {
@@ -262,7 +267,10 @@ export class App {
     title: '',
     description: '',
     dueDate: '',
-    points: 100
+    points: 100,
+    targetType: 'all' as 'all' | 'student' | 'position',
+    studentId: null as number | null,
+    jobPostingId: null as number | null
   };
   protected assignmentSubmitForm = {
     content: '',
@@ -318,7 +326,48 @@ export class App {
   };
 
   protected get assignments(): Assignment[] {
-    return this.data.assignments;
+    const user = this.currentUser;
+    if (!user) return [];
+
+    return this.data.assignments.filter(ass => {
+      if (user.role === 'admin') return true;
+
+      if (user.role === 'advisor') {
+        const advisorSchool = this.data.schools.find(s => s.name === user.school);
+        return ass.creatorId === user.id || (ass.schoolId !== undefined && ass.schoolId === advisorSchool?.id);
+      }
+
+      if (user.role === 'company') {
+        const company = this.currentCompany;
+        return ass.creatorId === user.id || (ass.companyId !== undefined && ass.companyId === company?.id);
+      }
+
+      if (user.role === 'student') {
+        const studentSchool = this.data.schools.find(s => s.name === user.school);
+        const matchesSchool = ass.schoolId !== undefined && ass.schoolId === studentSchool?.id;
+        
+        const activeInternship = this.internships.find(i => i.studentId === user.id && i.status === 'active');
+        const matchesCompany = activeInternship && ass.companyId !== undefined && ass.companyId === activeInternship.companyId;
+
+        if (matchesSchool) {
+          return ass.studentId === undefined || ass.studentId === null || ass.studentId === user.id;
+        }
+
+        if (matchesCompany) {
+          if (ass.studentId !== undefined && ass.studentId !== null) {
+            return ass.studentId === user.id;
+          }
+          if (ass.jobPostingId !== undefined && ass.jobPostingId !== null) {
+            return ass.jobPostingId === activeInternship.jobPostingId;
+          }
+          return true;
+        }
+
+        return false;
+      }
+
+      return false;
+    });
   }
 
   protected get submissions(): Submission[] {
@@ -473,6 +522,61 @@ export class App {
   
   protected get advisorStudents(): User[] {
     return this.users.filter(u => u.role === 'student' && u.advisorId === this.currentUser?.id);
+  }
+
+  protected get companyStudents(): User[] {
+    const company = this.currentCompany;
+    if (!company) return [];
+    const activeInternships = this.internships.filter(
+      (i) => i.companyId === company.id && i.status === 'active'
+    );
+    const studentIds = activeInternships.map((i) => i.studentId);
+    return this.users.filter((u) => studentIds.includes(u.id));
+  }
+
+  protected get companyJobPostings(): JobPosting[] {
+    const company = this.currentCompany;
+    if (!company) return [];
+    return this.jobPostings.filter((j) => j.companyId === company.id && j.status === 'open' && !j.isDeleted);
+  }
+
+  protected get assignmentStudents(): User[] {
+    const assId = this.selectedAssignmentIdForDetails;
+    if (!assId) return [];
+    
+    const ass = this.assignments.find(a => a.id === assId);
+    if (!ass) return [];
+
+    const user = this.currentUser;
+    if (!user) return [];
+
+    if (user.role === 'advisor') {
+      const students = this.advisorStudents;
+      if (ass.studentId) {
+        return students.filter(s => s.id === ass.studentId);
+      }
+      return students;
+    }
+
+    if (user.role === 'company') {
+      const company = this.currentCompany;
+      if (!company) return [];
+      
+      const students = this.companyStudents;
+      if (ass.studentId) {
+        return students.filter(s => s.id === ass.studentId);
+      }
+      if (ass.jobPostingId) {
+        const activeInternships = this.internships.filter(
+          (i) => i.companyId === company.id && i.status === 'active' && i.jobPostingId === ass.jobPostingId
+        );
+        const studentIds = activeInternships.map((i) => i.studentId);
+        return students.filter(s => studentIds.includes(s.id));
+      }
+      return students;
+    }
+
+    return [];
   }
   
   protected get pickableStudents(): User[] {
@@ -1028,6 +1132,7 @@ export class App {
     }
     
     if (this.activeView === 'edit' && user) {
+      const comp = user.role === 'company' ? this.companies.find(c => c.userId === user.id) : undefined;
       this.profileDraft = {
         name: user.name,
         email: user.email,
@@ -1037,7 +1142,12 @@ export class App {
         intro: user.intro ?? '',
         field: user.field ?? '',
         internStartDate: user.internStartDate ?? '',
-        internEndDate: user.internEndDate ?? ''
+        internEndDate: user.internEndDate ?? '',
+        companyName: comp?.companyName ?? '',
+        description: comp?.description ?? '',
+        address: comp?.address ?? '',
+        latitude: comp?.latitude ?? '',
+        longitude: comp?.longitude ?? ''
       };
     }
 
@@ -1332,7 +1442,7 @@ export class App {
     const user = this.currentUser;
     if (!user) return;
     try {
-      await this.data.updateUser(user.id, {
+      const payload: any = {
         name: this.profileDraft.name,
         email: this.profileDraft.email,
         phone: this.profileDraft.phone,
@@ -1340,11 +1450,51 @@ export class App {
         resumeUrl: this.profileDraft.resumeUrl,
         internStartDate: this.profileDraft.internStartDate || null,
         internEndDate: this.profileDraft.internEndDate || null
-      } as any);
+      };
+
+      if (user.role === 'company') {
+        payload.companyName = this.profileDraft.companyName;
+        payload.description = this.profileDraft.description;
+        payload.address = this.profileDraft.address;
+
+        const lat = parseFloat(String(this.profileDraft.latitude));
+        const lng = parseFloat(String(this.profileDraft.longitude));
+        payload.latitude = isNaN(lat) ? null : lat;
+        payload.longitude = isNaN(lng) ? null : lng;
+      }
+
+      await this.data.updateUser(user.id, payload);
       this.notifications.success('บันทึกข้อมูลส่วนตัวแล้ว', 'โปรไฟล์');
       window.location.reload();
     } catch (err: any) {
       this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'โปรไฟล์');
+    }
+  }
+
+  protected pinProfileCoordinates(): void {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      Swal.fire({
+        title: 'กำลังดึงพิกัดปัจจุบัน...',
+        text: 'กรุณาอนุญาตให้ระบบเข้าถึงตำแหน่งของคุณ',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          Swal.close();
+          this.profileDraft.latitude = position.coords.latitude;
+          this.profileDraft.longitude = position.coords.longitude;
+          this.notifications.success('ปักหมุดพิกัดปัจจุบันเรียบร้อยแล้ว', 'ตำแหน่ง');
+        },
+        (error) => {
+          Swal.close();
+          this.notifications.error('ไม่สามารถดึงตำแหน่งได้ กรุณากรอกด้วยตนเอง', 'ตำแหน่ง');
+        }
+      );
+    } else {
+      this.notifications.error('เบราว์เซอร์ของคุณไม่สนับสนุนการดึงตำแหน่ง', 'ตำแหน่ง');
     }
   }
 
@@ -1727,6 +1877,19 @@ export class App {
     }
   }
 
+  protected getAssignmentTargetLabel(ass: Assignment | undefined): string {
+    if (!ass) return '';
+    if (ass.studentId) {
+      const student = this.users.find(u => u.id === ass.studentId);
+      return `เฉพาะนักศึกษา: ${student?.name || 'ไม่ระบุ'}`;
+    }
+    if (ass.jobPostingId) {
+      const job = this.jobPostings.find(j => j.id === ass.jobPostingId);
+      return `เฉพาะตำแหน่งงาน: ${job?.title || 'ไม่ระบุ'}`;
+    }
+    return 'ทุกคนในสังกัด/ความดูแล';
+  }
+
   protected async addAssignment(): Promise<void> {
     const user = this.currentUser;
     if (!user) return;
@@ -1745,7 +1908,7 @@ export class App {
       companyId = this.currentCompanyId;
     }
 
-    const payload = {
+    const payload: any = {
       title: this.newAssignment.title.trim(),
       description: this.newAssignment.description.trim(),
       dueDate: this.newAssignment.dueDate ? new Date(this.newAssignment.dueDate).toISOString() : undefined,
@@ -1756,9 +1919,23 @@ export class App {
       companyId
     };
 
+    if (this.newAssignment.targetType === 'student' && this.newAssignment.studentId) {
+      payload.studentId = Number(this.newAssignment.studentId);
+    } else if (this.newAssignment.targetType === 'position' && this.newAssignment.jobPostingId) {
+      payload.jobPostingId = Number(this.newAssignment.jobPostingId);
+    }
+
     try {
       await this.data.addAssignment(payload);
-      this.newAssignment = { title: '', description: '', dueDate: '', points: 100 };
+      this.newAssignment = {
+        title: '',
+        description: '',
+        dueDate: '',
+        points: 100,
+        targetType: 'all',
+        studentId: null,
+        jobPostingId: null
+      };
       this.notifications.success('สร้างงานมอบหมายเรียบร้อยแล้ว', 'สำเร็จ');
     } catch (err: any) {
       this.notifications.error('สร้างงานล้มเหลว: ' + err.message, 'ผิดพลาด');
@@ -2242,6 +2419,7 @@ export class App {
     }
     this.setActiveView(targetView);
     this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
+    const comp = user.role === 'company' ? this.companies.find(c => c.userId === user.id) : undefined;
     this.profileDraft = {
       name: user.name,
       email: user.email,
@@ -2251,7 +2429,12 @@ export class App {
       intro: user.intro ?? '',
       field: user.field ?? '',
       internStartDate: user.internStartDate ?? '',
-      internEndDate: user.internEndDate ?? ''
+      internEndDate: user.internEndDate ?? '',
+      companyName: comp?.companyName ?? '',
+      description: comp?.description ?? '',
+      address: comp?.address ?? '',
+      latitude: comp?.latitude ?? '',
+      longitude: comp?.longitude ?? ''
     };
     this.evaluationType = user.role === 'advisor' ? 'advisor' : 'mentor';
 

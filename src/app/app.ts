@@ -320,7 +320,7 @@ export class App {
     logbooks: 'บันทึก',
     leaves: 'การลา',
     evaluations: 'ประเมินผล',
-    classwork: 'ระบบงาน',
+    classwork: 'งาน',
     edit: 'แก้ไขข้อมูล',
     schema: 'ฐานข้อมูล'
   };
@@ -455,7 +455,11 @@ export class App {
     };
 
     if (!this.currentUser) return [];
-    return viewsByRole[this.currentUser.role] || [];
+    let views = viewsByRole[this.currentUser.role] || [];
+    if (this.currentUser.role === 'student' && this.activeInternship) {
+      views = views.filter(v => v !== 'jobs' && v !== 'applications');
+    }
+    return views;
   }
 
   protected get dashboardMetrics() {
@@ -486,12 +490,20 @@ export class App {
       ];
     }
 
-    return [
-      { label: 'งานที่เปิดรับ', value: this.visibleJobs.length, helper: 'ตำแหน่งที่สามารถสมัครได้', view: 'jobs' },
-      { label: 'ใบสมัครของฉัน', value: this.visibleApplications.length, helper: 'ประวัติสมัครงาน', view: 'applications' },
-      { label: 'สถานะฝึกงานของฉัน', value: this.visibleInternships.length, helper: 'internship ที่ active', view: 'internships' },
-      { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'รายการลงเวลาของตัวเอง', view: 'attendance' }
-    ];
+    if (this.currentUser?.role === 'student') {
+      const metrics = [
+        { label: 'งานที่เปิดรับ', value: this.visibleJobs.length, helper: 'ตำแหน่งที่สามารถสมัครได้', view: 'jobs' },
+        { label: 'ใบสมัครของฉัน', value: this.visibleApplications.length, helper: 'ประวัติสมัครงาน', view: 'applications' },
+        { label: 'สถานะฝึกงานของฉัน', value: this.visibleInternships.length, helper: 'internship ที่ active', view: 'internships' },
+        { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'รายการลงเวลาของตัวเอง', view: 'attendance' }
+      ];
+      if (this.activeInternship) {
+        return metrics.filter(m => m.view !== 'jobs' && m.view !== 'applications');
+      }
+      return metrics;
+    }
+
+    return [];
   }
 
   protected get currentCompany(): Company | undefined {

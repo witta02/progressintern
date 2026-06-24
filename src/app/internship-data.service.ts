@@ -21,7 +21,10 @@ import {
   UserStatus,
   VerificationStatus,
   School,
-  EnrollmentCode
+  EnrollmentCode,
+  Assignment,
+  Submission,
+  SubmissionStatus
 } from './internship.models';
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +41,8 @@ export class InternshipDataService {
   logbooks: Logbook[] = [];
   evaluations: Evaluation[] = [];
   leaves: LeaveRequest[] = [];
+  assignments: Assignment[] = [];
+  submissions: Submission[] = [];
 
   /** Set after API load attempt */
   apiConnected = false;
@@ -75,6 +80,8 @@ export class InternshipDataService {
     this.logbooks = snapshot.logbooks;
     this.evaluations = snapshot.evaluations;
     this.leaves = snapshot.leaves;
+    this.assignments = snapshot.assignments;
+    this.submissions = snapshot.submissions;
     this.apiConnected = true;
     this.apiLoadError = '';
 
@@ -608,6 +615,29 @@ export class InternshipDataService {
     this.logbooks = [];
     this.evaluations = [];
     this.leaves = [];
+    this.assignments = [
+      {
+        id: 1,
+        title: 'รายงานการฝึกงานสัปดาห์ที่ 1',
+        description: 'กรุณาสรุปสิ่งที่ได้เรียนรู้และทักษะที่ใช้ในการทำงานของสัปดาห์แรก พร้อมแนบไฟล์รายงาน PDF',
+        dueDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T23:59:59Z',
+        points: 100,
+        creatorId: 1001,
+        creatorRole: 'advisor',
+        schoolId: 1
+      },
+      {
+        id: 2,
+        title: 'ออกแบบหน้าจอ UI (UX/UI Design Challenge)',
+        description: 'ออกแบบหน้าจอหลักของระบบจัดการตามโจทย์ที่ได้รับ โดยใช้ Figma หรือ Sketch และส่งลิงก์งาน',
+        dueDate: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T18:00:00Z',
+        points: 100,
+        creatorId: 2001,
+        creatorRole: 'company',
+        companyId: 1
+      }
+    ];
+    this.submissions = [];
     this.schools = [
       { id: 1, name: 'Bangkok University' },
       { id: 2, name: 'Chulalongkorn University' }
@@ -821,7 +851,9 @@ export class InternshipDataService {
         evaluations: this.evaluations,
         leaves: this.leaves,
         schools: this.schools,
-        enrollmentCodes: this.enrollmentCodes
+        enrollmentCodes: this.enrollmentCodes,
+        assignments: this.assignments,
+        submissions: this.submissions
       })
     );
   }
@@ -849,9 +881,84 @@ export class InternshipDataService {
       this.leaves = Array.isArray(state.leaves) ? state.leaves : this.leaves;
       this.schools = Array.isArray(state.schools) ? state.schools : this.schools;
       this.enrollmentCodes = Array.isArray(state.enrollmentCodes) ? state.enrollmentCodes : this.enrollmentCodes;
+      this.assignments = Array.isArray(state.assignments) ? state.assignments : this.assignments;
+      this.submissions = Array.isArray(state.submissions) ? state.submissions : this.submissions;
     } catch {
       localStorage.removeItem(this.storageKey);
     }
+  }
+
+  async addAssignment(assignment: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.createAssignment(assignment));
+      await this.refreshFromApi();
+      return;
+    }
+
+    const nowStr = new Date().toISOString();
+    const newAss = {
+      ...assignment,
+      id: this.nextId(this.assignments),
+      createdAt: nowStr,
+      updatedAt: nowStr
+    };
+    this.assignments = [...this.assignments, newAss];
+    this.persist();
+  }
+
+  async addSubmission(submission: Omit<Submission, 'id' | 'submittedAt' | 'gradedAt' | 'score' | 'feedback' | 'status'>): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.createSubmission(submission));
+      await this.refreshFromApi();
+      return;
+    }
+
+    const nowStr = new Date().toISOString();
+    const idx = this.submissions.findIndex(s => s.assignmentId === submission['assignmentId'] && s.studentId === submission['studentId']);
+    
+    let status: SubmissionStatus = 'submitted';
+    const ass = this.assignments.find(a => a.id === submission['assignmentId']);
+    if (ass && ass.dueDate && new Date().getTime() > new Date(ass.dueDate).getTime()) {
+      status = 'late';
+    }
+
+    if (idx >= 0) {
+      this.submissions = this.submissions.map((s, i) => i === idx ? {
+        ...s,
+        content: submission['content'],
+        fileName: submission['fileName'],
+        filePath: submission['filePath'],
+        status,
+        submittedAt: nowStr
+      } : s);
+    } else {
+      const newSub: Submission = {
+        ...submission,
+        id: this.nextId(this.submissions),
+        status,
+        submittedAt: nowStr
+      };
+      this.submissions = [...this.submissions, newSub];
+    }
+    this.persist();
+  }
+
+  async gradeSubmission(id: number, score: number, feedback: string): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.gradeSubmission(id, score, feedback));
+      await this.refreshFromApi();
+      return;
+    }
+
+    const nowStr = new Date().toISOString();
+    this.submissions = this.submissions.map(s => s.id === id ? {
+      ...s,
+      score,
+      feedback,
+      status: 'graded' as SubmissionStatus,
+      gradedAt: nowStr
+    } : s);
+    this.persist();
   }
 
   private hasLocalStorage(): boolean {

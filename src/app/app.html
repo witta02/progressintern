@@ -213,6 +213,7 @@
             <svg *ngSwitchCase="'logbooks'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
             <svg *ngSwitchCase="'leaves'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
             <svg *ngSwitchCase="'evaluations'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <svg *ngSwitchCase="'classwork'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
             <svg *ngSwitchCase="'edit'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <svg *ngSwitchCase="'schema'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
           </ng-container>
@@ -269,17 +270,32 @@
       <section *ngIf="activeView === 'dashboard'" class="space-y-12 animate-in fade-in duration-200">
         
         <!-- PENDING BANNER FOR STUDENT -->
-        <div *ngIf="currentUser?.role === 'student' && currentUser?.status === 'pending'" class="bg-amber-50 border border-amber-200 rounded-[2rem] p-10 flex items-start gap-8 shadow-lg shadow-amber-500/5">
-          <div class="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-amber-500 shrink-0 shadow-xl shadow-amber-200 border border-amber-100">
-            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <div class="bg-amber-50 border border-amber-200 rounded-[2rem] p-10 flex flex-col items-start gap-8 shadow-lg shadow-amber-500/5" *ngIf="currentUser?.role === 'student' && currentUser?.status === 'pending'">
+          <div class="flex items-start gap-8">
+            <div class="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-amber-500 shrink-0 shadow-xl shadow-amber-200 border border-amber-100">
+              <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <div>
+              <h3 class="text-2xl font-black text-amber-900 mb-2">บัญชีผู้ใช้กำลังรอการอนุมัติ</h3>
+              <p class="text-lg text-amber-800 font-medium max-w-2xl leading-relaxed">
+                บัญชีของคุณกำลังอยู่ในระหว่างการตรวจสอบโดยอาจารย์ที่ปรึกษาของคุณที่ 
+                <span class="font-black text-amber-950 underline decoration-amber-500/50 underline-offset-4">{{ currentUser?.school }}</span> 
+                กรุณากลับมาตรวจสอบความคืบหน้าอีกครั้งในภายหลัง
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-2xl font-black text-amber-900 mb-2">บัญชีผู้ใช้กำลังรอการอนุมัติ</h3>
-            <p class="text-lg text-amber-800 font-medium max-w-2xl leading-relaxed">
-              บัญชีของคุณกำลังอยู่ในระหว่างการตรวจสอบโดยอาจารย์ที่ปรึกษาของคุณที่ 
-              <span class="font-black text-amber-950 underline decoration-amber-500/50 underline-offset-4">{{ currentUser?.school }}</span> 
-              กรุณากลับมาตรวจสอบความคืบหน้าอีกครั้งในภายหลัง
-            </p>
+          
+          <div *ngIf="getSchoolAdvisors().length > 0" class="w-full mt-6 pt-6 border-t border-amber-200/50">
+            <h4 class="text-xs font-black text-amber-900 uppercase tracking-widest mb-3">อาจารย์ที่ปรึกษาในสถาบันของคุณ (ติดต่อเพื่อเร่งอนุมัติ):</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div *ngFor="let adv of getSchoolAdvisors()" class="bg-white/80 rounded-2xl p-4 border border-amber-100 flex flex-col justify-between">
+                <div>
+                  <strong class="text-slate-800 text-sm font-black block">{{ adv.name }}</strong>
+                  <span class="text-slate-500 text-xs font-bold block mt-1">📧 {{ adv.email }}</span>
+                  <span class="text-slate-500 text-xs font-bold block mt-0.5" *ngIf="adv.phone">📞 {{ adv.phone }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -333,6 +349,15 @@
               <div class="relative z-10 mt-8">
                 <!-- If not checked in today -->
                 <div *ngIf="activeInternship && !isTodayCheckedIn" class="flex flex-col gap-4">
+                  <!-- GPS Warning Badge -->
+                  <div *ngIf="currentLatitude && currentLongitude" class="text-[10px] font-black text-blue-200/80 bg-white/5 border border-white/10 rounded-xl p-3">
+                    📍 พิกัดลงเวลาปัจจุบัน: {{ currentLatitude | number:'1.4-4' }}, {{ currentLongitude | number:'1.4-4' }}
+                    <span *ngIf="getCompanyDistance() !== null" class="block mt-1 font-bold" [class.text-rose-300]="getCompanyDistance()! > 200" [class.text-emerald-300]="getCompanyDistance()! <= 200">
+                      ระยะห่างจากบริษัท: {{ getCompanyDistance()! | number:'1.0-0' }} เมตร 
+                      <span *ngIf="getCompanyDistance()! > 200">⚠️ (เกินระยะ 200ม.)</span>
+                      <span *ngIf="getCompanyDistance()! <= 200">✓ (อยู่ในขอบเขตบริษัท)</span>
+                    </span>
+                  </div>
                   <button type="button" (click)="checkIn()" class="w-full py-5 bg-white text-blue-600 hover:bg-slate-50 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
                     ลงเวลาเข้างาน (Check In)
                   </button>
@@ -411,15 +436,27 @@
             
             <!-- Pending Students -->
             <div class="xl:col-span-5 space-y-4" *ngIf="pendingStudents.length > 0">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                <h4 class="text-lg font-black text-slate-900">นักศึกษาที่รออนุมัติบัญชี ({{ pendingStudents.length }})</h4>
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  <h4 class="text-lg font-black text-slate-900">นักศึกษาที่รออนุมัติบัญชี ({{ pendingStudents.length }})</h4>
+                </div>
+                <button type="button" (click)="bulkApproveStudents()" class="px-3.5 py-2 bg-slate-950 hover:bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm">
+                  อนุมัติที่เลือก
+                </button>
               </div>
-              <div class="glass-card rounded-3xl divide-y divide-slate-100/60/60 overflow-hidden shadow-sm">
+              <div class="glass-card rounded-3xl divide-y divide-slate-100/60 overflow-hidden shadow-sm">
+                <div class="p-4 bg-slate-100/50 flex items-center gap-3">
+                  <input type="checkbox" [checked]="isAllStudentsSelected" (change)="toggleSelectAllStudents($event)" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
+                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">เลือกทั้งหมด</span>
+                </div>
                 <div *ngFor="let s of pendingStudents" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
-                  <div class="min-w-0 pr-3">
-                    <div class="font-black text-slate-900 text-sm truncate">{{ s.name }}</div>
-                    <div class="text-xs text-slate-500 truncate">{{ s.email }}</div>
+                  <div class="flex items-center gap-3 min-w-0 pr-3">
+                    <input type="checkbox" [(ngModel)]="selectedStudentIds[s.id]" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
+                    <div class="min-w-0">
+                      <div class="font-black text-slate-900 text-sm truncate">{{ s.name }}</div>
+                      <div class="text-xs text-slate-500 truncate">{{ s.email }}</div>
+                    </div>
                   </div>
                   <div class="flex gap-2 shrink-0">
                     <button type="button" (click)="approveStudent(s)" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm">
@@ -544,17 +581,29 @@
 
             <!-- Pending Attendances -->
             <div class="space-y-4" [ngClass]="pendingApplications.length > 0 ? 'xl:col-span-6' : 'xl:col-span-12'" *ngIf="pendingAttendances.length > 0">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                <h4 class="text-lg font-black text-slate-900">บันทึกเวลาที่รอการอนุมัติ ({{ pendingAttendances.length }})</h4>
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  <h4 class="text-lg font-black text-slate-900">บันทึกเวลาที่รอการอนุมัติ ({{ pendingAttendances.length }})</h4>
+                </div>
+                <button type="button" (click)="bulkApproveAttendances()" class="px-3.5 py-2 bg-slate-950 hover:bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm">
+                  อนุมัติที่เลือก
+                </button>
               </div>
-              <div class="glass-card rounded-3xl divide-y divide-slate-100/60/60 overflow-hidden shadow-sm">
+              <div class="glass-card rounded-3xl divide-y divide-slate-100/60 overflow-hidden shadow-sm">
+                <div class="p-4 bg-slate-100/50 flex items-center gap-3">
+                   <input type="checkbox" [checked]="isAllAttendancesSelected" (change)="toggleSelectAllAttendances($event)" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
+                   <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">เลือกทั้งหมด</span>
+                </div>
                 <div *ngFor="let att of pendingAttendances" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
-                  <div class="min-w-0 pr-3">
-                    <div class="font-black text-slate-900 text-sm truncate">{{ userName(att.studentId) }}</div>
-                    <div class="text-xs text-slate-500 mt-0.5">
-                      <span>เข้า: {{ att.checkInTime | date:'HH:mm' }} น.</span>
-                      <span *ngIf="att.checkOutTime"> | ออก: {{ att.checkOutTime | date:'HH:mm' }} น.</span>
+                  <div class="flex items-center gap-3 min-w-0 pr-3">
+                    <input type="checkbox" [(ngModel)]="selectedAttendanceIds[att.id]" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
+                    <div class="min-w-0">
+                      <div class="font-black text-slate-900 text-sm truncate">{{ userName(att.studentId) }}</div>
+                      <div class="text-xs text-slate-500 mt-0.5">
+                        <span>เข้า: {{ att.checkInTime | date:'HH:mm' }} น.</span>
+                        <span *ngIf="att.checkOutTime"> | ออก: {{ att.checkOutTime | date:'HH:mm' }} น.</span>
+                      </div>
                     </div>
                   </div>
                   <div class="flex gap-2 shrink-0">
@@ -906,6 +955,13 @@
                   <td class="px-10 py-6">
                     <div class="font-black text-slate-900 text-lg leading-tight">{{ userName(app.studentId) }}</div>
                     <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">{{ studentField(app.studentId) }}</div>
+                    <div *ngIf="studentStartDate(app.studentId) || studentEndDate(app.studentId)" class="mt-2 text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                      <span>📅 ช่วงฝึกงานที่ต้องการ:</span>
+                      <span class="text-brand-accent">
+                        {{ studentStartDate(app.studentId) ? formatTermDate(studentStartDate(app.studentId)) : 'ยังไม่ระบุ' }} – 
+                        {{ studentEndDate(app.studentId) ? formatTermDate(studentEndDate(app.studentId)) : 'ยังไม่ระบุ' }}
+                      </span>
+                    </div>
                     <div *ngIf="studentIntro(app.studentId)" class="text-xs text-slate-400 font-medium mt-2 max-w-xs italic line-clamp-2" [title]="studentIntro(app.studentId)">
                       "{{ studentIntro(app.studentId) }}"
                     </div>
@@ -1236,6 +1292,14 @@
                       <div *ngIf="detailStudent?.status">
                         <div class="text-blue-300 text-[10px] font-black uppercase tracking-widest">สถานะบัญชี</div>
                         <div class="font-bold text-white mt-0.5">{{ userStatusLabel(detailStudent?.status) }}</div>
+                      </div>
+
+                      <div *ngIf="detailStudent?.internStartDate || detailStudent?.internEndDate" class="col-span-2 mt-2">
+                        <div class="text-blue-300 text-[10px] font-black uppercase tracking-widest">ช่วงเวลาฝึกงานที่ต้องการ</div>
+                        <div class="font-bold text-white mt-0.5">
+                          📅 {{ detailStudent?.internStartDate ? formatTermDate(detailStudent?.internStartDate) : 'ยังไม่ระบุ' }} – 
+                          {{ detailStudent?.internEndDate ? formatTermDate(detailStudent?.internEndDate) : 'ยังไม่ระบุ' }}
+                        </div>
                       </div>
                       
                       <!-- Advisor details visible to all roles -->
@@ -2190,6 +2254,331 @@
         </div>
       </section>
 
+      <!-- CLASSWORK (Google Classroom Work System) -->
+      <section *ngIf="activeView === 'classwork'" class="space-y-12 animate-in fade-in duration-200">
+        
+        <!-- ADVISOR & COMPANY CREATION PANEL -->
+        <article *ngIf="currentUser?.role === 'advisor' || currentUser?.role === 'company'" class="bg-white rounded-[2.5rem] p-12 text-slate-900 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
+          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-4">
+              <h3 class="text-4xl font-black mb-4 tracking-tight">มอบหมายงานใหม่</h3>
+              <p class="text-slate-500 font-medium text-lg leading-relaxed">
+                ส่งหัวข้อ รายละเอียด และกำหนดการส่งงานให้กับนักศึกษาฝึกงานในสังกัดของคุณในแบบ Google Classroom
+              </p>
+            </div>
+            
+            <form class="lg:col-span-8 space-y-5" (ngSubmit)="addAssignment()">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="md:col-span-2 space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">หัวข้องาน (Assignment Title)</label>
+                  <input name="assTitle" [(ngModel)]="newAssignment.title" placeholder="เช่น รายงานความก้าวหน้าโครงงาน" required
+                         class="w-full px-6 py-4.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900">
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">คะแนนเต็ม (Points)</label>
+                  <input name="assPoints" type="number" [(ngModel)]="newAssignment.points" min="1" max="100" required
+                         class="w-full px-6 py-4.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900">
+                </div>
+              </div>
+              
+              <div class="space-y-1">
+                <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">รายละเอียดงาน (Instructions)</label>
+                <textarea name="assDesc" [(ngModel)]="newAssignment.description" rows="4" placeholder="ระบุสิ่งที่ต้องการให้นักศึกษาทำ ขั้นตอน หรือแนบลิงก์เพิ่มเติม..." required
+                          class="w-full px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900"></textarea>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-1">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">กำหนดส่งงาน (Due Date)</label>
+                  <input name="assDueDate" type="datetime-local" [(ngModel)]="newAssignment.dueDate" 
+                         class="w-full px-6 py-4.5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900">
+                </div>
+                <div class="flex items-end">
+                  <button type="submit" class="w-full py-4.5 bg-brand-accent hover:bg-brand-accent/90 text-white rounded-2xl font-black text-lg transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-indigo-500/20">
+                    มอบหมายงานทันที
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </article>
+
+        <!-- ASSIGNMENTS WORKPLACE LIST -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Assignment Cards (Left Panel) -->
+          <div class="lg:col-span-5 space-y-6">
+            <h4 class="text-xl font-black text-slate-900 mb-2">รายการงานที่มอบหมาย</h4>
+            <div class="flex flex-col gap-4">
+              
+              <div *ngFor="let ass of assignments" 
+                   (click)="selectAssignmentForDetails(ass.id)"
+                   [class.border-brand-accent]="selectedAssignmentIdForDetails === ass.id"
+                   [class.shadow-lg]="selectedAssignmentIdForDetails === ass.id"
+                   class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md hover:border-brand-accent/40 transition-all cursor-pointer group relative flex flex-col justify-between min-h-[140px]">
+                <div>
+                  <div class="flex justify-between items-start mb-2">
+                    <span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-wider border">
+                      {{ ass.creatorRole === 'advisor' ? '🏫 สถาบัน' : '🏢 บริษัท' }}
+                    </span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      คะแนนเต็ม: {{ ass.points }}
+                    </span>
+                  </div>
+                  <h5 class="text-base font-black text-slate-900 group-hover:text-brand-accent transition-colors truncate">{{ ass.title }}</h5>
+                  <p class="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">{{ ass.description }}</p>
+                </div>
+                
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    ⏰ กำหนดส่ง: {{ ass.dueDate ? (ass.dueDate | date:'dd MMM yyyy HH:mm') : 'ไม่มีกำหนด' }}
+                  </span>
+                  
+                  <span *ngIf="currentUser?.role === 'advisor' || currentUser?.role === 'company'" class="text-[10px] font-black text-brand-accent uppercase tracking-wider">
+                    ส่งงานแล้ว: {{ getSubmissionsForAssignment(ass.id).length }} คน
+                  </span>
+                  <span *ngIf="currentUser?.role === 'student'" class="text-[10px] font-black uppercase tracking-wider">
+                    {{ getStudentSubmission(ass.id, currentUser?.id || 0) ? '✓ ส่งแล้ว' : '⚠️ ยังไม่ส่ง' }}
+                  </span>
+                </div>
+              </div>
+
+              <div *ngIf="assignments.length === 0" class="p-12 text-center text-slate-400 font-bold bg-white rounded-3xl border border-dashed">
+                ยังไม่มีการมอบหมายงานในระบบขณะนี้
+              </div>
+            </div>
+          </div>
+
+          <!-- Assignment Details / Submission Grading (Right Panel) -->
+          <div class="lg:col-span-7">
+            
+            <div *ngIf="!selectedAssignmentIdForDetails" class="h-full bg-slate-100/50 border border-slate-200/60 rounded-[2.5rem] p-10 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div class="w-20 h-20 rounded-full bg-white flex items-center justify-center text-slate-300 shadow-sm mb-4">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              </div>
+              <h4 class="text-xl font-black text-slate-800">เลือกหัวข้องาน</h4>
+              <p class="text-slate-400 text-xs mt-2 max-w-xs">คลิกเลือกงานที่มอบหมายทางด้านซ้ายเพื่อดูรายละเอียด ส่งงาน หรือตรวจรายงานคะแนน</p>
+            </div>
+
+            <!-- Detailed assignment view -->
+            <div *ngIf="selectedAssignmentIdForDetails" class="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm space-y-6">
+              
+              <!-- Header Info -->
+              <div class="border-b border-slate-100 pb-6 flex justify-between items-start gap-4">
+                <div>
+                  <h3 class="text-2xl font-black text-slate-900">
+                    {{ assignments[selectedAssignmentIdForDetails-1]?.title }}
+                  </h3>
+                  <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mt-2">
+                    สั่งโดย: {{ assignments[selectedAssignmentIdForDetails-1]?.creatorRole === 'advisor' ? 'อาจารย์ที่ปรึกษา' : 'พี่เลี้ยงสถานประกอบการ' }}
+                    | คะแนนเต็ม: {{ assignments[selectedAssignmentIdForDetails-1]?.points }}
+                  </p>
+                </div>
+                <button type="button" (click)="selectedAssignmentIdForDetails = null" class="text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest bg-slate-50 px-3.5 py-2 rounded-xl transition-all">
+                  ปิด
+                </button>
+              </div>
+
+              <!-- Description -->
+              <div>
+                <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">รายละเอียดและข้อกำหนด</h4>
+                <p class="text-slate-700 font-medium text-sm whitespace-pre-line leading-relaxed">
+                  {{ assignments[selectedAssignmentIdForDetails-1]?.description }}
+                </p>
+              </div>
+
+              <!-- STUDENT SUBMISSION PANEL -->
+              <div *ngIf="currentUser?.role === 'student'" class="pt-6 border-t border-slate-100">
+                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">ส่งงานของคุณ (Your Work)</h4>
+                
+                <!-- If already submitted & graded -->
+                <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.status === 'graded'" class="bg-emerald-50 border border-emerald-200 rounded-3xl p-6 space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="px-3.5 py-1.5 bg-emerald-500 text-white rounded-full text-[9px] font-black uppercase tracking-wider">ตรวจแล้ว (Graded)</span>
+                    <strong class="text-2xl font-black text-emerald-700">
+                      {{ getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.score }} / {{ assignments[selectedAssignmentIdForDetails-1]?.points }} คะแนน
+                    </strong>
+                  </div>
+                  <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.feedback" class="text-xs text-emerald-800 font-bold bg-white/50 border border-emerald-100 rounded-xl p-3.5 mt-2">
+                    💬 คอมเมนต์จากผู้ตรวจ: "{{ getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.feedback }}"
+                  </div>
+                </div>
+
+                <!-- If not graded yet or resubmitting -->
+                <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.status !== 'graded'" class="space-y-4">
+                  
+                  <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)" class="bg-blue-50/50 border border-blue-200 rounded-2xl p-4 flex justify-between items-center text-blue-900">
+                    <div>
+                      <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest block mb-0.5">สถานะล่าสุด</span>
+                      <strong class="text-sm font-black">{{ getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.status === 'late' ? 'ส่งช้า (Late)' : 'ส่งเรียบร้อยแล้ว (Submitted)' }}</strong>
+                      <small class="block text-[10px] text-blue-500 font-medium mt-1">ส่งเมื่อ: {{ getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.submittedAt | date:'dd MMM yyyy HH:mm' }}</small>
+                    </div>
+                  </div>
+
+                  <form class="space-y-4" (ngSubmit)="submitAssignment(selectedAssignmentIdForDetails)">
+                    <div class="space-y-1">
+                      <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">คำอธิบายเพิ่มเติม / โน้ตย่อส่งงาน</label>
+                      <textarea name="subContent" [(ngModel)]="assignmentSubmitForm.content" rows="3" placeholder="ระบุสิ่งที่ได้ดำเนินการ ลิงก์แนบงานเพิ่มเติม หรือสรุปความก้าวหน้า..."
+                                class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold text-slate-900 transition-all"></textarea>
+                    </div>
+
+                    <div class="space-y-1">
+                      <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">แนบไฟล์รายงาน (.pdf, .docx, .zip, .png)</label>
+                      <div class="flex items-center gap-3">
+                        <div class="relative flex-1">
+                          <input name="subFileName" [(ngModel)]="assignmentSubmitForm.fileName" readonly placeholder="ยังไม่ได้เลือกไฟล์สำหรับแนบรายงาน..." 
+                                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-500 pr-10">
+                        </div>
+                        <label class="px-5 py-4 bg-slate-900 hover:bg-brand-accent text-white text-xs font-black uppercase tracking-widest rounded-2xl cursor-pointer transition-all hover:scale-105 shadow-sm flex items-center justify-center shrink-0">
+                          <span>📁 อัปโหลดไฟล์</span>
+                          <input type="file" (change)="triggerWorkFileUpload($event)" class="hidden">
+                        </label>
+                      </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-slate-950 hover:bg-brand-accent text-white rounded-2xl font-black text-sm transition-all shadow-md active:scale-95 cursor-pointer">
+                      {{ getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0) ? 'ส่งงานใหม่อีกครั้ง (Resubmit)' : 'ส่งงานมอบหมาย (Turn In)' }}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- ADVISOR & COMPANY SUBMISSION MANAGER PANEL -->
+              <div *ngIf="currentUser?.role === 'advisor' || currentUser?.role === 'company' || currentUser?.role === 'admin'" class="pt-6 border-t border-slate-100">
+                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">รายงานความก้าวหน้าและการส่งงานของนักศึกษา</h4>
+                
+                <div class="divide-y divide-slate-100">
+                  
+                  <div *ngFor="let s of pendingStudents" class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-sm font-black text-slate-900">{{ s.name }}</span>
+                        <span *ngIf="!getStudentSubmission(selectedAssignmentIdForDetails, s.id)" class="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-200">
+                          ยังไม่ส่ง (Missing)
+                        </span>
+                        <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'submitted'" class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-blue-100">
+                          ส่งแล้ว
+                        </span>
+                        <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'late'" class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-100">
+                          ส่งช้า
+                        </span>
+                        <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'graded'" class="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-emerald-100">
+                          ✓ ตรวจแล้ว
+                        </span>
+                      </div>
+                      
+                      <!-- Submission Details if turned in -->
+                      <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)" class="mt-2 text-xs bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
+                        <div class="font-bold text-slate-700 leading-relaxed" *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.content">
+                          "{{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.content }}"
+                        </div>
+                        <div class="flex items-center justify-between" *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.fileName">
+                          <a [href]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.filePath" target="_blank" class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-bold bg-blue-50 border border-blue-100 px-3 py-1 rounded-xl shadow-sm transition-all hover:scale-105">
+                            📄 {{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.fileName }}
+                          </a>
+                          <span class="text-[9px] text-slate-400 font-medium">ส่งเมื่อ: {{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.submittedAt | date:'dd MMM HH:mm' }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Grading Trigger Actions -->
+                    <div class="shrink-0 flex items-center gap-2 self-end md:self-center" *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)">
+                      <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'graded'" class="text-right">
+                        <span class="text-xs font-black text-slate-400 block">คะแนนตรวจ</span>
+                        <strong class="text-lg font-black text-emerald-600">{{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.score }} / {{ assignments[selectedAssignmentIdForDetails-1]?.points }}</strong>
+                      </div>
+                      <button *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status !== 'graded'" 
+                              type="button" 
+                              (click)="openGradingModal(getStudentSubmission(selectedAssignmentIdForDetails, s.id)!)" 
+                              class="px-4 py-2.5 bg-brand-accent hover:bg-brand-accent/90 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md">
+                        ตรวจงาน (Grade)
+                      </button>
+                    </div>
+                  </div>
+
+                  <div *ngIf="pendingStudents.length === 0" class="py-8 text-center text-slate-400 font-bold text-sm">
+                    ไม่พบนิสิตหรือนักศึกษาฝึกงานสำหรับงานชิ้นนี้
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- GRADING DIALOG MODAL PANEL -->
+            <div *ngIf="selectedSubmissionForGrading" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-fade-in">
+              <article class="bg-white rounded-[2.5rem] p-10 max-w-lg w-full border border-slate-200 shadow-2xl relative animate-slide-up space-y-6">
+                <div>
+                  <h3 class="text-2xl font-black text-slate-900 tracking-tight">ตรวจและบันทึกคะแนนงาน</h3>
+                  <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
+                    นักศึกษา: {{ userName(selectedSubmissionForGrading.studentId) }} | ชิ้นงาน: {{ assignments[selectedSubmissionForGrading.assignmentId-1]?.title }}
+                  </p>
+                </div>
+
+                <!-- Rubrics Sliders -->
+                <div class="space-y-4 bg-slate-50 border border-slate-100 rounded-3xl p-6">
+                  <h4 class="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-200/50 pb-2">เกณฑ์การประเมินรูบริกส์ (เกณฑ์ละ 25 คะแนน)</h4>
+                  
+                  <div class="space-y-1">
+                    <div class="flex justify-between items-center text-xs font-bold">
+                      <span class="text-slate-600">1. ความตรงต่อเวลา (Punctuality)</span>
+                      <strong class="text-brand-accent">{{ rubricPunctuality }} / 25</strong>
+                    </div>
+                    <input name="rub1" type="range" min="0" max="25" [(ngModel)]="rubricPunctuality" (ngModelChange)="updateGradingScore()" class="w-full accent-indigo-600">
+                  </div>
+
+                  <div class="space-y-1">
+                    <div class="flex justify-between items-center text-xs font-bold">
+                      <span class="text-slate-600">2. ทักษะทางเทคนิค (Technical Skill)</span>
+                      <strong class="text-brand-accent">{{ rubricTechnical }} / 25</strong>
+                    </div>
+                    <input name="rub2" type="range" min="0" max="25" [(ngModel)]="rubricTechnical" (ngModelChange)="updateGradingScore()" class="w-full accent-indigo-600">
+                  </div>
+
+                  <div class="space-y-1">
+                    <div class="flex justify-between items-center text-xs font-bold">
+                      <span class="text-slate-600">3. ความตั้งใจ/ทัศนคติ (Attitude)</span>
+                      <strong class="text-brand-accent">{{ rubricAttitude }} / 25</strong>
+                    </div>
+                    <input name="rub3" type="range" min="0" max="25" [(ngModel)]="rubricAttitude" (ngModelChange)="updateGradingScore()" class="w-full accent-indigo-600">
+                  </div>
+
+                  <div class="space-y-1">
+                    <div class="flex justify-between items-center text-xs font-bold">
+                      <span class="text-slate-600">4. การบันทึกและเอกสาร (Documentation)</span>
+                      <strong class="text-brand-accent">{{ rubricDocumentation }} / 25</strong>
+                    </div>
+                    <input name="rub4" type="range" min="0" max="25" [(ngModel)]="rubricDocumentation" (ngModelChange)="updateGradingScore()" class="w-full accent-indigo-600">
+                  </div>
+
+                  <div class="pt-3 border-t border-slate-200 flex justify-between items-center text-sm font-black">
+                    <span class="text-slate-800">คะแนนสุทธิรวม:</span>
+                    <strong class="text-2xl text-slate-900">{{ gradeForm.score }} / 100 คะแนน</strong>
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">ข้อเสนอแนะเพิ่มเติม (Feedback)</label>
+                  <textarea name="gradeFeedback" [(ngModel)]="gradeForm.feedback" placeholder="เขียนข้อแนะนำเพิ่มเติม ทักษะที่ควรแก้ไข หรือชมเชย..." rows="2"
+                            class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold text-slate-900 transition-all"></textarea>
+                </div>
+
+                <div class="flex gap-4 pt-2">
+                  <button type="button" (click)="selectedSubmissionForGrading = null" class="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all">
+                    ยกเลิก
+                  </button>
+                  <button type="button" (click)="gradeSubmission()" class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-100">
+                    ยืนยันการตรวจและส่งคืน
+                  </button>
+                </div>
+              </article>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
       <!-- EDIT PROFILE -->
       <section *ngIf="activeView === 'edit'" class="space-y-12">
         <article class="glass-card p-12 relative overflow-hidden rounded-[2.5rem]">
@@ -2233,6 +2622,20 @@
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Resume / Portfolio URL</label>
                   <input name="profileResume" [(ngModel)]="profileDraft.resumeUrl" placeholder="https://drive.google.com/..." 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                </div>
+              </div>
+
+              <!-- Planned Internship Dates for Students -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="currentUser?.role === 'student'">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">วันที่เริ่มฝึกงานที่ต้องการ</label>
+                  <input name="profileStartDate" type="date" [(ngModel)]="profileDraft.internStartDate" 
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">วันที่สิ้นสุดฝึกงานที่ต้องการ</label>
+                  <input name="profileEndDate" type="date" [(ngModel)]="profileDraft.internEndDate" 
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
               </div>

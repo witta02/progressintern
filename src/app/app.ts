@@ -21,7 +21,10 @@ import {
   RegisterRole,
   Role,
   User,
-  LeaveRequest
+  LeaveRequest,
+  Assignment,
+  Submission,
+  SubmissionStatus
 } from './internship.models';
 
 @Component({
@@ -152,6 +155,8 @@ export class App {
   protected detectedRoleName = '';
   protected codeValidationError = '';
   protected validatingCode = false;
+  protected currentLatitude: number | null = null;
+  protected currentLongitude: number | null = null;
 
   protected newStudent = {
     name: '',
@@ -166,7 +171,9 @@ export class App {
     school: '',
     resumeUrl: '',
     intro: '',
-    field: ''
+    field: '',
+    internStartDate: '',
+    internEndDate: ''
   };
 
   protected leaveForm = {
@@ -250,6 +257,37 @@ export class App {
   protected tableSchemaInfo: any = null;
   protected queryDuration = 0;
 
+  // ----------- Classroom Assignment System & UX Improvements -----------
+  protected newAssignment = {
+    title: '',
+    description: '',
+    dueDate: '',
+    points: 100
+  };
+  protected assignmentSubmitForm = {
+    content: '',
+    fileName: '',
+    filePath: ''
+  };
+  protected selectedAssignmentIdForDetails: number | null = null;
+  protected selectedSubmissionForGrading: Submission | null = null;
+  protected gradeForm = {
+    score: 100,
+    feedback: ''
+  };
+  protected rubricPunctuality = 25;
+  protected rubricTechnical = 25;
+  protected rubricAttitude = 25;
+  protected rubricDocumentation = 25;
+
+  protected uploadingResume = false;
+  protected resumeUploadSuccess = false;
+
+  // Track checked boxes for batch actions
+  protected selectedStudentIds: Record<number, boolean> = {};
+  protected selectedAttendanceIds: Record<number, boolean> = {};
+  protected selectedLogbookIds: Record<number, boolean> = {};
+
   // ----------- Student Detail Panel -----------
   protected selectedInternshipId: number | null = null;
   protected internshipDetailOpen = false;
@@ -274,9 +312,18 @@ export class App {
     logbooks: 'บันทึก',
     leaves: 'การลา',
     evaluations: 'ประเมินผล',
+    classwork: 'ระบบงาน',
     edit: 'แก้ไขข้อมูล',
     schema: 'ฐานข้อมูล'
   };
+
+  protected get assignments(): Assignment[] {
+    return this.data.assignments;
+  }
+
+  protected get submissions(): Submission[] {
+    return this.data.submissions;
+  }
 
   protected get users(): User[] {
     return this.data.users;
@@ -336,10 +383,10 @@ export class App {
 
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
-      admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
-      advisor: ['dashboard', 'students', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
-      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit'],
-      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'edit']
+      admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'edit'],
+      advisor: ['dashboard', 'students', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'edit'],
+      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'edit'],
+      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'edit']
     };
 
     if (!this.currentUser) return [];
@@ -988,8 +1035,14 @@ export class App {
         school: user.school ?? '',
         resumeUrl: user.resumeUrl ?? '',
         intro: user.intro ?? '',
-        field: user.field ?? ''
+        field: user.field ?? '',
+        internStartDate: user.internStartDate ?? '',
+        internEndDate: user.internEndDate ?? ''
       };
+    }
+
+    if (this.activeView === 'attendance' && user?.role === 'student') {
+      this.fetchCurrentLocationForDistance();
     }
 
     if (this.activeView === 'schema') {
@@ -1026,6 +1079,14 @@ export class App {
 
   protected studentField(userId: number): string {
     return this.users.find((user) => user.id === userId)?.field ?? '-';
+  }
+
+  protected studentStartDate(userId: number): string {
+    return this.users.find((user) => user.id === userId)?.internStartDate ?? '';
+  }
+
+  protected studentEndDate(userId: number): string {
+    return this.users.find((user) => user.id === userId)?.internEndDate ?? '';
   }
 
   protected studentIntro(userId: number): string {
@@ -1276,8 +1337,10 @@ export class App {
         email: this.profileDraft.email,
         phone: this.profileDraft.phone,
         school: this.profileDraft.school,
-        resumeUrl: this.profileDraft.resumeUrl
-      });
+        resumeUrl: this.profileDraft.resumeUrl,
+        internStartDate: this.profileDraft.internStartDate || null,
+        internEndDate: this.profileDraft.internEndDate || null
+      } as any);
       this.notifications.success('บันทึกข้อมูลส่วนตัวแล้ว', 'โปรไฟล์');
       window.location.reload();
     } catch (err: any) {
@@ -1611,6 +1674,300 @@ export class App {
     });
   }
 
+  // ----------- Classroom Actions & Helpers -----------
+  protected get studentCompany(): Company | undefined {
+    const active = this.activeInternship;
+    if (!active) return undefined;
+    return this.companies.find((c) => c.id === active.companyId);
+  }
+
+  protected getCompanyDistance(): number | null {
+    const company = this.studentCompany;
+    if (!company || company.latitude === undefined || company.longitude === undefined || company.latitude === null || company.longitude === null) {
+      return null;
+    }
+    if (!this.currentLatitude || !this.currentLongitude) {
+      return null;
+    }
+    return this.calculateDistance(this.currentLatitude, this.currentLongitude, company.latitude, company.longitude);
+  }
+
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3; // metres
+    const phi1 = lat1 * Math.PI/180;
+    const phi2 = lat2 * Math.PI/180;
+    const deltaPhi = (lat2-lat1) * Math.PI/180;
+    const deltaLambda = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+              Math.cos(phi1) * Math.cos(phi2) *
+              Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // in metres
+  }
+
+  private fetchCurrentLocationForDistance(): void {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.currentLatitude = position.coords.latitude;
+          this.currentLongitude = position.coords.longitude;
+        },
+        (error) => {
+          console.error('[App] Error getting location for check-in preview', error);
+          this.getIpLocation().then(coords => {
+            if (coords) {
+              this.currentLatitude = coords.lat;
+              this.currentLongitude = coords.lon;
+            }
+          });
+        }
+      );
+    }
+  }
+
+  protected async addAssignment(): Promise<void> {
+    const user = this.currentUser;
+    if (!user) return;
+    if (!this.newAssignment.title.trim() || !this.newAssignment.description.trim()) {
+      this.notifications.warning('กรุณากรอกหัวข้อและคำอธิบายงาน', 'มอบหมายงาน');
+      return;
+    }
+
+    let schoolId: number | undefined = undefined;
+    let companyId: number | undefined = undefined;
+
+    if (user.role === 'advisor') {
+      const dbSchool = this.data.schools.find(s => s.name === user.school);
+      schoolId = dbSchool ? dbSchool.id : 1;
+    } else if (user.role === 'company') {
+      companyId = this.currentCompanyId;
+    }
+
+    const payload = {
+      title: this.newAssignment.title.trim(),
+      description: this.newAssignment.description.trim(),
+      dueDate: this.newAssignment.dueDate ? new Date(this.newAssignment.dueDate).toISOString() : undefined,
+      points: this.newAssignment.points,
+      creatorId: user.id,
+      creatorRole: user.role,
+      schoolId,
+      companyId
+    };
+
+    try {
+      await this.data.addAssignment(payload);
+      this.newAssignment = { title: '', description: '', dueDate: '', points: 100 };
+      this.notifications.success('สร้างงานมอบหมายเรียบร้อยแล้ว', 'สำเร็จ');
+    } catch (err: any) {
+      this.notifications.error('สร้างงานล้มเหลว: ' + err.message, 'ผิดพลาด');
+    }
+  }
+
+  protected async submitAssignment(assignmentId: number): Promise<void> {
+    const user = this.currentUser;
+    if (!user) return;
+
+    if (!this.assignmentSubmitForm.content.trim() && !this.assignmentSubmitForm.fileName) {
+      this.notifications.warning('กรุณากรอกรายละเอียดหรืออัปโหลดไฟล์ส่งงาน', 'ส่งงาน');
+      return;
+    }
+
+    const payload = {
+      assignmentId,
+      studentId: user.id,
+      content: this.assignmentSubmitForm.content,
+      fileName: this.assignmentSubmitForm.fileName,
+      filePath: this.assignmentSubmitForm.filePath
+    };
+
+    try {
+      await this.data.addSubmission(payload);
+      this.assignmentSubmitForm = { content: '', fileName: '', filePath: '' };
+      this.selectedAssignmentIdForDetails = null;
+      this.notifications.success('ส่งงานสำเร็จเรียบร้อย', 'สำเร็จ');
+    } catch (err: any) {
+      this.notifications.error('ส่งงานล้มเหลว: ' + err.message, 'ผิดพลาด');
+    }
+  }
+
+  protected selectAssignmentForDetails(id: number): void {
+    this.selectedAssignmentIdForDetails = id;
+    const existing = this.submissions.find(s => s.assignmentId === id && s.studentId === this.currentUserId);
+    if (existing) {
+      this.assignmentSubmitForm = {
+        content: existing.content ?? '',
+        fileName: existing.fileName ?? '',
+        filePath: existing.filePath ?? ''
+      };
+    } else {
+      this.assignmentSubmitForm = { content: '', fileName: '', filePath: '' };
+    }
+  }
+
+  protected openGradingModal(sub: Submission): void {
+    this.selectedSubmissionForGrading = sub;
+    this.gradeForm = {
+      score: sub.score !== undefined ? sub.score : 100,
+      feedback: sub.feedback ?? ''
+    };
+    this.rubricPunctuality = 25;
+    this.rubricTechnical = 25;
+    this.rubricAttitude = 25;
+    this.rubricDocumentation = 25;
+  }
+
+  protected updateGradingScore(): void {
+    this.gradeForm.score = this.rubricPunctuality + this.rubricTechnical + this.rubricAttitude + this.rubricDocumentation;
+  }
+
+  protected async gradeSubmission(): Promise<void> {
+    if (!this.selectedSubmissionForGrading) return;
+    try {
+      await this.data.gradeSubmission(
+        this.selectedSubmissionForGrading.id,
+        this.gradeForm.score,
+        this.gradeForm.feedback
+      );
+      this.notifications.success('ให้คะแนนและส่งคืนเรียบร้อย', 'สำเร็จ');
+      this.selectedSubmissionForGrading = null;
+    } catch (err: any) {
+      this.notifications.error('บันทึกผลการตรวจล้มเหลว: ' + err.message, 'ผิดพลาด');
+    }
+  }
+
+  protected getSubmissionsForAssignment(assignmentId: number): Submission[] {
+    return this.submissions.filter(s => s.assignmentId === assignmentId);
+  }
+
+  protected getStudentSubmission(assignmentId: number, studentId: number): Submission | undefined {
+    return this.submissions.find(s => s.assignmentId === assignmentId && s.studentId === studentId);
+  }
+
+  // --- Resume Uploader Simulation ---
+  protected triggerResumeUpload(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    this.uploadingResume = true;
+    this.resumeUploadSuccess = false;
+
+    setTimeout(() => {
+      this.uploadingResume = false;
+      this.resumeUploadSuccess = true;
+      const mockUrl = 'https://drive.google.com/file/d/mock_' + file.name.replace(/\s+/g, '_') + '/view';
+      this.profileDraft.resumeUrl = mockUrl;
+      this.notifications.success('อัปโหลดไฟล์เรซูเมสำเร็จ', 'สำเร็จ');
+    }, 1500);
+  }
+
+  // --- Pending Advisor Contacts ---
+  protected getSchoolAdvisors(): User[] {
+    const user = this.currentUser;
+    if (!user || !user.school) return [];
+    return this.users.filter(u => u.role === 'advisor' && u.school === user.school && u.status === 'active');
+  }
+
+  // --- Checkbox Batch Actions ---
+  protected toggleSelectAllStudents(event: any): void {
+    const checked = event.target.checked;
+    this.pendingStudents.forEach(s => {
+      this.selectedStudentIds[s.id] = checked;
+    });
+  }
+
+  protected get isAllStudentsSelected(): boolean {
+    if (this.pendingStudents.length === 0) return false;
+    return this.pendingStudents.every(s => this.selectedStudentIds[s.id]);
+  }
+
+  protected async bulkApproveStudents(): Promise<void> {
+    const selectedIds = Object.keys(this.selectedStudentIds)
+      .map(Number)
+      .filter(id => this.selectedStudentIds[id]);
+
+    if (selectedIds.length === 0) {
+      this.notifications.warning('กรุณาเลือกนักศึกษาอย่างน้อย 1 คน', 'เลือกรายการ');
+      return;
+    }
+
+    Swal.fire({
+      title: 'ยืนยันการอนุมัติทั้งหมด?',
+      text: `คุณกำลังจะอนุมัติบัญชีผู้ใช้จำนวน ${selectedIds.length} รายการ`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'ใช่, อนุมัติทั้งหมด',
+      cancelButtonText: 'ยกเลิก'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        let count = 0;
+        for (const id of selectedIds) {
+          const u = this.users.find(user => user.id === id);
+          if (u) {
+            await this.data.updateUser(u.id, { ...u, status: 'active' });
+            count++;
+          }
+        }
+        this.selectedStudentIds = {};
+        this.notifications.success(`อนุมัติผู้ใช้ทั้งหมด ${count} คนสำเร็จ`, 'สำเร็จ');
+      }
+    });
+  }
+
+  protected toggleSelectAllAttendances(event: any): void {
+    const checked = event.target.checked;
+    this.pendingAttendances.forEach(a => {
+      this.selectedAttendanceIds[a.id] = checked;
+    });
+  }
+
+  protected get isAllAttendancesSelected(): boolean {
+    if (this.pendingAttendances.length === 0) return false;
+    return this.pendingAttendances.every(a => this.selectedAttendanceIds[a.id]);
+  }
+
+  protected async bulkApproveAttendances(): Promise<void> {
+    const selectedIds = Object.keys(this.selectedAttendanceIds)
+      .map(Number)
+      .filter(id => this.selectedAttendanceIds[id]);
+
+    if (selectedIds.length === 0) {
+      this.notifications.warning('กรุณาเลือกรายการลงเวลาอย่างน้อย 1 รายการ', 'เลือกรายการ');
+      return;
+    }
+
+    Swal.fire({
+      title: 'ยืนยันการอนุมัติเวลาเข้างาน?',
+      text: `คุณกำลังจะอนุมัติเวลาของนักศึกษาจำนวน ${selectedIds.length} รายการ`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'ใช่, อนุมัติทั้งหมด',
+      cancelButtonText: 'ยกเลิก'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        let count = 0;
+        for (const id of selectedIds) {
+          const a = this.attendances.find(att => att.id === id);
+          if (a) {
+            await this.data.setAttendanceStatus(a, 'present');
+            count++;
+          }
+        }
+        this.selectedAttendanceIds = {};
+        this.notifications.success(`อนุมัติเวลางานสำเร็จ ${count} รายการ`, 'สำเร็จ');
+      }
+    });
+  }
+
+  protected triggerWorkFileUpload(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+    this.assignmentSubmitForm.fileName = file.name;
+    this.assignmentSubmitForm.filePath = 'https://drive.google.com/file/d/mock_work_' + file.name.replace(/\s+/g, '_') + '/view';
+    this.notifications.success('เลือกไฟล์ส่งงานแล้ว: ' + file.name, 'สำเร็จ');
+  }
+
   protected async addLogbook(): Promise<void> {
     if (!this.activeInternship) {
       this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'บันทึก');
@@ -1892,7 +2249,9 @@ export class App {
       school: user.school ?? '',
       resumeUrl: user.resumeUrl ?? '',
       intro: user.intro ?? '',
-      field: user.field ?? ''
+      field: user.field ?? '',
+      internStartDate: user.internStartDate ?? '',
+      internEndDate: user.internEndDate ?? ''
     };
     this.evaluationType = user.role === 'advisor' ? 'advisor' : 'mentor';
 

@@ -48,6 +48,8 @@ export interface User {
   resumeUrl?: string;
   createdAt?: string;
   updatedAt?: string;
+  internStartDate?: string;
+  internEndDate?: string;
   /** Mock-only: link student → advisor until backend adds this relation */
   advisorId?: number;
 }
@@ -60,6 +62,8 @@ export interface Company {
   address?: string;
   website?: string;
   contactEmail?: string;
+  latitude?: number;
+  longitude?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -189,4 +193,34 @@ export interface EnrollmentCode {
   expiresAt?: string;
   isActive: boolean;
   createdAt?: string;
+}
+
+export interface Assignment {
+  id: number;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  points: number;
+  creatorId: number;
+  creatorRole: string; // 'advisor' | 'company'
+  schoolId?: number;
+  companyId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type SubmissionStatus = 'submitted' | 'late' | 'graded';
+
+export interface Submission {
+  id: number;
+  assignmentId: number;
+  studentId: number;
+  content?: string;
+  fileName?: string;
+  filePath?: string;
+  status: SubmissionStatus;
+  score?: number;
+  feedback?: string;
+  submittedAt: string;
+  gradedAt?: string;
 }

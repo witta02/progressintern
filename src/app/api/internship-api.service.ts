@@ -12,6 +12,8 @@ import {
   ApiLogbook,
   ApiUser,
   ApiLeaveRequest,
+  ApiAssignment,
+  ApiSubmission,
   mapApplication,
   mapAttendance,
   mapCompany,
@@ -21,8 +23,12 @@ import {
   mapLogbook,
   mapUser,
   mapLeaveRequest,
+  mapAssignment,
+  mapSubmission,
   toApiApplication,
-  toApiInternship
+  toApiInternship,
+  toApiAssignment,
+  toApiSubmission
 } from './api.mapper';
 import {
   Application,
@@ -37,7 +43,9 @@ import {
   User,
   LeaveRequest,
   School,
-  EnrollmentCode
+  EnrollmentCode,
+  Assignment,
+  Submission
 } from '../internship.models';
 
 export type InternshipDbSnapshot = {
@@ -50,6 +58,8 @@ export type InternshipDbSnapshot = {
   logbooks: Logbook[];
   evaluations: Evaluation[];
   leaves: LeaveRequest[];
+  assignments: Assignment[];
+  submissions: Submission[];
 };
 
 type LoginResponse = {
@@ -87,7 +97,9 @@ export class InternshipApiService {
       attendances: this.getList<ApiAttendance, Attendance>('attendance', mapAttendance),
       logbooks: this.getList<ApiLogbook, Logbook>('logbooks', mapLogbook),
       evaluations: this.getList<ApiEvaluation, Evaluation>('evaluations', mapEvaluation),
-      leaves: this.getList<ApiLeaveRequest, LeaveRequest>('leaves', mapLeaveRequest)
+      leaves: this.getList<ApiLeaveRequest, LeaveRequest>('leaves', mapLeaveRequest),
+      assignments: this.getList<ApiAssignment, Assignment>('assignments', mapAssignment),
+      submissions: this.getList<ApiSubmission, Submission>('submissions', mapSubmission)
     }).pipe(
       catchError((err) => {
         console.error('[InternshipApi] Failed to load data', err);
@@ -180,7 +192,9 @@ export class InternshipApiService {
       school: body.school ?? null,
       status: body.status,
       resume_url: body.resumeUrl ?? null,
-      advisor_id: body.advisorId !== undefined ? body.advisorId : undefined
+      advisor_id: body.advisorId !== undefined ? body.advisorId : undefined,
+      intern_start_date: body.internStartDate !== undefined ? body.internStartDate : undefined,
+      intern_end_date: body.internEndDate !== undefined ? body.internEndDate : undefined
     } as any, mapUser);
   }
 
@@ -337,6 +351,18 @@ export class InternshipApiService {
 
   deleteLeave(id: number): Observable<any> {
     return this.http.delete<any>(`${this.base}/leaves/${id}`, this.authOptions());
+  }
+
+  createAssignment(body: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt'>): Observable<Assignment | null> {
+    return this.postOne<ApiAssignment, Assignment>('assignments', toApiAssignment(body), mapAssignment);
+  }
+
+  createSubmission(body: Omit<Submission, 'id' | 'submittedAt' | 'gradedAt' | 'score' | 'feedback' | 'status'>): Observable<Submission | null> {
+    return this.postOne<ApiSubmission, Submission>('submissions', toApiSubmission(body), mapSubmission);
+  }
+
+  gradeSubmission(id: number, score: number, feedback: string): Observable<Submission | null> {
+    return this.putOne<ApiSubmission, Submission>(`submissions/${id}/grade`, { score, feedback }, mapSubmission);
   }
 
   private getList<D, M>(path: string, mapper: (dto: D) => M): Observable<M[]> {

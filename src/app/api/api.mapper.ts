@@ -7,7 +7,9 @@ import {
   JobPosting,
   Logbook,
   User,
-  LeaveRequest
+  LeaveRequest,
+  Assignment,
+  Submission
 } from '../internship.models';
 
 /** API payloads use snake_case (MySQL / typical Node backends). */
@@ -24,6 +26,8 @@ export type ApiUser = {
   profile_image?: string | null;
   resume_url?: string | null;
   advisor_id?: number | null;
+  intern_start_date?: string | null;
+  intern_end_date?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -36,6 +40,8 @@ export type ApiCompany = {
   address?: string | null;
   website?: string | null;
   contact_email?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -148,6 +154,8 @@ export function mapUser(dto: ApiUser): User {
     profileImage: dto.profile_image ?? undefined,
     resumeUrl: dto.resume_url ?? undefined,
     advisorId: dto.advisor_id ?? undefined,
+    internStartDate: dto.intern_start_date ?? undefined,
+    internEndDate: dto.intern_end_date ?? undefined,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };
@@ -162,6 +170,8 @@ export function mapCompany(dto: ApiCompany): Company {
     address: dto.address ?? undefined,
     website: dto.website ?? undefined,
     contactEmail: dto.contact_email ?? undefined,
+    latitude: dto.latitude ?? undefined,
+    longitude: dto.longitude ?? undefined,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };
@@ -293,5 +303,89 @@ export function toApiInternship(body: Omit<Internship, 'id' | 'createdAt' | 'upd
     start_date: body.startDate,
     end_date: body.endDate,
     status: body.status
+  };
+}
+
+export type ApiAssignment = {
+  id: number;
+  title: string;
+  description?: string | null;
+  due_date?: string | null;
+  points: number;
+  creator_id: number;
+  creator_role: string;
+  school_id?: number | null;
+  company_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ApiSubmission = {
+  id: number;
+  assignment_id: number;
+  student_id: number;
+  content?: string | null;
+  file_name?: string | null;
+  file_path?: string | null;
+  status: Submission['status'];
+  score?: number | null;
+  feedback?: string | null;
+  submitted_at: string;
+  graded_at?: string | null;
+};
+
+export function mapAssignment(dto: ApiAssignment): Assignment {
+  return {
+    id: dto.id,
+    title: dto.title,
+    description: dto.description ?? undefined,
+    dueDate: dto.due_date ?? undefined,
+    points: dto.points,
+    creatorId: dto.creator_id,
+    creatorRole: dto.creator_role,
+    schoolId: dto.school_id ?? undefined,
+    companyId: dto.company_id ?? undefined,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at
+  };
+}
+
+export function mapSubmission(dto: ApiSubmission): Submission {
+  return {
+    id: dto.id,
+    assignmentId: dto.assignment_id,
+    studentId: dto.student_id,
+    content: dto.content ?? undefined,
+    fileName: dto.file_name ?? undefined,
+    filePath: dto.file_path ?? undefined,
+    status: dto.status,
+    score: dto.score ?? undefined,
+    feedback: dto.feedback ?? undefined,
+    submittedAt: dto.submitted_at,
+    gradedAt: dto.graded_at ?? undefined
+  };
+}
+
+export function toApiAssignment(body: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt'>): Omit<ApiAssignment, 'id'> {
+  return {
+    title: body.title,
+    description: body.description ?? null,
+    due_date: body.dueDate ?? null,
+    points: body.points,
+    creator_id: body.creatorId,
+    creator_role: body.creatorRole,
+    school_id: body.schoolId ?? null,
+    company_id: body.companyId ?? null
+  };
+}
+
+export function toApiSubmission(body: Omit<Submission, 'id' | 'submittedAt' | 'gradedAt' | 'score' | 'feedback' | 'status'>): Omit<ApiSubmission, 'id' | 'submitted_at'> {
+  return {
+    assignment_id: body.assignmentId,
+    student_id: body.studentId,
+    content: body.content ?? null,
+    file_name: body.fileName ?? null,
+    file_path: body.filePath ?? null,
+    status: 'submitted'
   };
 }

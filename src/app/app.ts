@@ -491,16 +491,20 @@ export class App {
     }
 
     if (this.currentUser?.role === 'student') {
-      const metrics = [
+      if (this.activeInternship) {
+        return [
+          { label: 'สถานะฝึกงานของฉัน', value: this.visibleInternships.length, helper: 'internship ที่ active', view: 'internships' },
+          { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'รายการลงเวลาของตัวเอง', view: 'attendance' },
+          { label: 'งานที่ได้รับมอบหมาย', value: this.assignments.length, helper: 'งานจากอาจารย์และพี่เลี้ยง', view: 'classwork' },
+          { label: 'บันทึกฝึกงานของฉัน', value: this.visibleLogbooks.length, helper: 'บันทึกประจำวันที่ส่งแล้ว', view: 'logbooks' }
+        ];
+      }
+      return [
         { label: 'งานที่เปิดรับ', value: this.visibleJobs.length, helper: 'ตำแหน่งที่สามารถสมัครได้', view: 'jobs' },
         { label: 'ใบสมัครของฉัน', value: this.visibleApplications.length, helper: 'ประวัติสมัครงาน', view: 'applications' },
         { label: 'สถานะฝึกงานของฉัน', value: this.visibleInternships.length, helper: 'internship ที่ active', view: 'internships' },
         { label: 'ยังไม่ check out', value: this.openAttendanceCount, helper: 'รายการลงเวลาของตัวเอง', view: 'attendance' }
       ];
-      if (this.activeInternship) {
-        return metrics.filter(m => m.view !== 'jobs' && m.view !== 'applications');
-      }
-      return metrics;
     }
 
     return [];

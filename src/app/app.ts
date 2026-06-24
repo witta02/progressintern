@@ -339,7 +339,13 @@ export class App {
 
       if (user.role === 'company') {
         const company = this.currentCompany;
-        return ass.creatorId === user.id || (ass.companyId !== undefined && ass.companyId === company?.id);
+        if (!company) return false;
+        return ass.creatorId === user.id || 
+               (ass.companyId !== undefined && ass.companyId === company.id) ||
+               this.internships.some(i => i.companyId === company.id && i.status === 'active' && (
+                 ass.studentId === i.studentId || 
+                 ass.jobPostingId === i.jobPostingId
+               ));
       }
 
       if (user.role === 'student') {
@@ -368,6 +374,16 @@ export class App {
 
       return false;
     });
+  }
+
+  protected get selectedAssignment(): Assignment | undefined {
+    const id = this.selectedAssignmentIdForDetails;
+    if (!id) return undefined;
+    return this.data.assignments.find(a => a.id === id);
+  }
+
+  protected getAssignmentById(id: number): Assignment | undefined {
+    return this.data.assignments.find(a => a.id === id);
   }
 
   protected get submissions(): Submission[] {

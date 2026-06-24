@@ -2407,12 +2407,12 @@
               <div class="border-b border-slate-100 pb-6 flex justify-between items-start gap-4">
                 <div>
                   <h3 class="text-2xl font-black text-slate-900">
-                    {{ assignments[selectedAssignmentIdForDetails-1]?.title }}
+                    {{ selectedAssignment?.title }}
                   </h3>
                   <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mt-2">
-                    สั่งโดย: {{ assignments[selectedAssignmentIdForDetails-1]?.creatorRole === 'advisor' ? 'อาจารย์ที่ปรึกษา' : 'พี่เลี้ยงสถานประกอบการ' }}
-                    | คะแนนเต็ม: {{ assignments[selectedAssignmentIdForDetails-1]?.points }}
-                    | สำหรับ: {{ getAssignmentTargetLabel(assignments[selectedAssignmentIdForDetails-1]) }}
+                    สั่งโดย: {{ selectedAssignment?.creatorRole === 'advisor' ? 'อาจารย์ที่ปรึกษา' : 'พี่เลี้ยงสถานประกอบการ' }}
+                    | คะแนนเต็ม: {{ selectedAssignment?.points }}
+                    | สำหรับ: {{ getAssignmentTargetLabel(selectedAssignment) }}
                   </p>
                 </div>
                 <button type="button" (click)="selectedAssignmentIdForDetails = null" class="text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest bg-slate-50 px-3.5 py-2 rounded-xl transition-all">
@@ -2424,7 +2424,7 @@
               <div>
                 <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">รายละเอียดและข้อกำหนด</h4>
                 <p class="text-slate-700 font-medium text-sm whitespace-pre-line leading-relaxed">
-                  {{ assignments[selectedAssignmentIdForDetails-1]?.description }}
+                  {{ selectedAssignment?.description }}
                 </p>
               </div>
 
@@ -2437,7 +2437,7 @@
                   <div class="flex items-center justify-between">
                     <span class="px-3.5 py-1.5 bg-emerald-500 text-white rounded-full text-[9px] font-black uppercase tracking-wider">ตรวจแล้ว (Graded)</span>
                     <strong class="text-2xl font-black text-emerald-700">
-                      {{ getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.score }} / {{ assignments[selectedAssignmentIdForDetails-1]?.points }} คะแนน
+                      {{ getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.score }} / {{ selectedAssignment?.points }} คะแนน
                     </strong>
                   </div>
                   <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, currentUser?.id || 0)?.feedback" class="text-xs text-emerald-800 font-bold bg-white/50 border border-emerald-100 rounded-xl p-3.5 mt-2">
@@ -2526,7 +2526,7 @@
                     <div class="shrink-0 flex items-center gap-2 self-end md:self-center" *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)">
                       <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'graded'" class="text-right">
                         <span class="text-xs font-black text-slate-400 block">คะแนนตรวจ</span>
-                        <strong class="text-lg font-black text-emerald-600">{{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.score }} / {{ assignments[selectedAssignmentIdForDetails-1]?.points }}</strong>
+                        <strong class="text-lg font-black text-emerald-600">{{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.score }} / {{ selectedAssignment?.points }}</strong>
                       </div>
                       <button *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status !== 'graded'" 
                               type="button" 
@@ -2550,7 +2550,7 @@
                 <div>
                   <h3 class="text-2xl font-black text-slate-900 tracking-tight">ตรวจและบันทึกคะแนนงาน</h3>
                   <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
-                    นักศึกษา: {{ userName(selectedSubmissionForGrading.studentId) }} | ชิ้นงาน: {{ assignments[selectedSubmissionForGrading.assignmentId-1]?.title }}
+                    นักศึกษา: {{ userName(selectedSubmissionForGrading.studentId) }} | ชิ้นงาน: {{ getAssignmentById(selectedSubmissionForGrading.assignmentId)?.title }}
                   </p>
                 </div>
 

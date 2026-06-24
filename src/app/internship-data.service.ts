@@ -947,7 +947,10 @@ export class InternshipDataService {
         fileName: submission['fileName'],
         filePath: submission['filePath'],
         status,
-        submittedAt: nowStr
+        submittedAt: nowStr,
+        score: undefined,
+        feedback: undefined,
+        gradedAt: undefined
       } : s);
     } else {
       const newSub: Submission = {

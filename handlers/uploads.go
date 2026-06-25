@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UploadFileHandler handles uploads by forwarding the file to catbox.moe for cloud storage
+// UploadFileHandler handles uploads by forwarding the file to gofile.io for cloud storage
 func UploadFileHandler(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -35,15 +36,12 @@ func UploadFileHandler(c *gin.Context) {
 	}
 	defer src.Close()
 
-	// Forward file to catbox.moe
+	// Forward file to gofile.io
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 
-	// Add reqtype=fileupload
-	_ = bodyWriter.WriteField("reqtype", "fileupload")
-
-	// Add fileToUpload
-	fileWriter, err := bodyWriter.CreateFormFile("fileToUpload", file.Filename)
+	// Add file parameter
+	fileWriter, err := bodyWriter.CreateFormFile("file", file.Filename)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Status:  http.StatusInternalServerError,
@@ -64,7 +62,7 @@ func UploadFileHandler(c *gin.Context) {
 	}
 	bodyWriter.Close()
 
-	req, err := http.NewRequest("POST", "https://catbox.moe/user/api.php", bodyBuf)
+	req, err := http.NewRequest("POST", "https://upload.gofile.io/uploadFile", bodyBuf)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Status:  http.StatusInternalServerError,
@@ -75,7 +73,7 @@ func UploadFileHandler(c *gin.Context) {
 	}
 	req.Header.Set("Content-Type", bodyWriter.FormDataContentType())
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 45 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
@@ -97,14 +95,29 @@ func UploadFileHandler(c *gin.Context) {
 		return
 	}
 
-	// catbox.moe returns the plain-text URL of the uploaded file directly
-	fileUrl := string(respBody)
+	var gfResp struct {
+		Status string `json:"status"`
+		Data   struct {
+			DownloadPage string `json:"downloadPage"`
+			Name         string `json:"name"`
+			ID           string `json:"id"`
+		} `json:"data"`
+	}
+
+	if err := json.Unmarshal(respBody, &gfResp); err != nil || gfResp.Status != "ok" {
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "ไม่สามารถอัปโหลดไฟล์ได้ (ผลลัพธ์จัดเก็บล้มเหลว)",
+			Error:   string(respBody),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, models.APIResponse{
 		Status:  http.StatusOK,
 		Message: "อัปโหลดไฟล์สำเร็จ (Cloud)",
 		Data: gin.H{
-			"file_path": fileUrl,
+			"file_path": gfResp.Data.DownloadPage,
 			"file_name": file.Filename,
 		},
 	})

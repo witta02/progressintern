@@ -296,6 +296,7 @@ export class App {
 
   protected uploadingResume = false;
   protected resumeUploadSuccess = false;
+  protected uploadingWorkFile = false;
 
   // Track checked boxes for batch actions
   protected selectedStudentIds: Record<number, boolean> = {};
@@ -2213,11 +2214,13 @@ export class App {
       const formData = new FormData();
       formData.append('file', file);
 
+      this.uploadingWorkFile = true;
       // Show temporary uploading notification
       this.notifications.success('กำลังอัปโหลดไฟล์ส่งงาน: ' + file.name, 'อัปโหลด');
 
       this.apiService.post<any>('/upload', formData).subscribe({
         next: (res) => {
+          this.uploadingWorkFile = false;
           if (res && res.status === 200 && res.data) {
             this.assignmentSubmitForm.filePath = res.data.file_path;
             this.notifications.success('อัปโหลดไฟล์ส่งงานสำเร็จ: ' + file.name, 'สำเร็จ');
@@ -2227,6 +2230,7 @@ export class App {
           this.cdr.markForCheck();
         },
         error: (err) => {
+          this.uploadingWorkFile = false;
           this.notifications.error(this.extractErrorMessage(err) || 'อัปโหลดไฟล์ส่งงานล้มเหลว', 'ผิดพลาด');
           this.cdr.markForCheck();
         }

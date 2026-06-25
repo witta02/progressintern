@@ -155,6 +155,12 @@ func SetupRoutes(router *gin.Engine) {
 	}
 
 	// ========================================================
+	// 📁 File Upload and Static Files Serving Routes
+	// ========================================================
+	router.POST("/api/upload", middleware.AuthMiddleware(), handlers.UploadFileHandler)
+	router.Static("/api/uploads", handlers.GetUploadsDir())
+
+	// ========================================================
 	// 👑 Admin Management Routes
 	// ========================================================
 	adminGroup := router.Group("/api/admin")

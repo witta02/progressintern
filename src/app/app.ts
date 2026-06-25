@@ -3231,13 +3231,7 @@ export class App {
     const isMock = filePath.includes('drive.google.com/file/d/mock_') || filePath.startsWith('mock_');
     if (isMock) {
       const filename = this.getFileNameFromUrl(filePath);
-      const ext = filename.split('.').pop()?.toLowerCase() || '';
-      const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext);
-      
-      if (isImage) {
-        return '/api/uploads/sample_work.png';
-      }
-      return '/api/uploads/sample_document.pdf';
+      return `/api/uploads/${filename}`;
     }
     return filePath;
   }

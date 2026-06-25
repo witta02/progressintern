@@ -976,7 +976,7 @@
                   <td class="px-10 py-6 font-black text-blue-600 text-lg">
                     {{ jobName(app.jobPostingId) }}
                     <div *ngIf="studentResume(app.studentId)" class="mt-2">
-                      <a [href]="studentResume(app.studentId)" target="_blank" class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm transition-all hover:scale-105">
+                      <a [href]="getClickableFilePath(studentResume(app.studentId))" target="_blank" class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm transition-all hover:scale-105">
                         📄 ดูเรซูเม
                       </a>
                     </div>
@@ -1321,7 +1321,7 @@
                       "{{ detailStudent?.intro }}"
                     </div>
                     <div *ngIf="detailStudent?.resumeUrl" class="mt-4">
-                      <a [href]="detailStudent?.resumeUrl" target="_blank"
+                      <a [href]="getClickableFilePath(detailStudent?.resumeUrl)" target="_blank"
                          class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all border border-white/30">
                         📄 Resume / Portfolio
                       </a>
@@ -2676,7 +2676,7 @@
                           "{{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.content }}"
                         </p>
                         <a *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.fileName"
-                           [href]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.filePath" target="_blank"
+                           [href]="getClickableFilePath(getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.filePath)" target="_blank"
                            class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-bold text-xs bg-white border border-blue-100 px-3 py-1.5 rounded-xl hover:shadow-sm transition-all">
                           📄 {{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.fileName }}
                         </a>
@@ -3459,5 +3459,7 @@
   [panelOpen]="notificationPanelOpen"
   (panelClosed)="closeNotificationPanel()"
 ></app-notification-host>
+
+
 
 

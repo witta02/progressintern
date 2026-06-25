@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
 import Swal from 'sweetalert2';
 import { environment } from '../environments/environment';
 import { InternshipDataService } from './internship-data.service';
 import { NotificationHostComponent } from './notification-host.component';
 import { NotificationService } from './notification.service';
+import { ApiService } from './core/services/api.service';
 import {
   Application,
   ApplicationStatus,
@@ -37,8 +39,12 @@ export class App {
   protected readonly data = inject(InternshipDataService);
   protected readonly notifications = inject(NotificationService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly apiService = inject(ApiService);
   protected readonly useMockData = environment.useMockData;
   protected readonly schemaTables = DB_SCHEMA_TABLES;
+
+
 
   private readonly sessionKey = 'intern-manager-session-v1';
 
@@ -2062,13 +2068,42 @@ export class App {
     this.uploadingResume = true;
     this.resumeUploadSuccess = false;
 
-    setTimeout(() => {
-      this.uploadingResume = false;
-      this.resumeUploadSuccess = true;
-      const mockUrl = 'https://drive.google.com/file/d/mock_' + file.name.replace(/\s+/g, '_') + '/view';
-      this.profileDraft.resumeUrl = mockUrl;
-      this.notifications.success('อัปโหลดไฟล์เรซูเมสำเร็จ', 'สำเร็จ');
-    }, 1500);
+    if (this.data.api.apiEnabled()) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      this.apiService.post<any>('/upload', formData).subscribe({
+        next: (res) => {
+          this.uploadingResume = false;
+          if (res && res.status === 200 && res.data) {
+            this.resumeUploadSuccess = true;
+            this.profileDraft.resumeUrl = res.data.file_path;
+            this.notifications.success('อัปโหลดไฟล์เรซูเมสำเร็จ', 'สำเร็จ');
+          } else {
+            this.notifications.error(res.error || 'อัปโหลดไฟล์เรซูเมล้มเหลว', 'ผิดพลาด');
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.uploadingResume = false;
+          this.notifications.error(this.extractErrorMessage(err) || 'อัปโหลดไฟล์เรซูเมล้มเหลว', 'ผิดพลาด');
+          this.cdr.markForCheck();
+        }
+      });
+    } else {
+      setTimeout(() => {
+        this.uploadingResume = false;
+        this.resumeUploadSuccess = true;
+        try {
+          const objectUrl = URL.createObjectURL(file);
+          this.profileDraft.resumeUrl = objectUrl;
+        } catch (e) {
+          console.error('Error creating object URL for resume:', e);
+        }
+        this.notifications.success('อัปโหลดไฟล์เรซูเมสำเร็จ (จำลอง)', 'สำเร็จ');
+        this.cdr.markForCheck();
+      }, 1500);
+    }
   }
 
   // --- Pending Advisor Contacts ---
@@ -2173,8 +2208,39 @@ export class App {
     const file = event.target.files[0];
     if (!file) return;
     this.assignmentSubmitForm.fileName = file.name;
-    this.assignmentSubmitForm.filePath = 'https://drive.google.com/file/d/mock_work_' + file.name.replace(/\s+/g, '_') + '/view';
-    this.notifications.success('เลือกไฟล์ส่งงานแล้ว: ' + file.name, 'สำเร็จ');
+
+    if (this.data.api.apiEnabled()) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Show temporary uploading notification
+      this.notifications.success('กำลังอัปโหลดไฟล์ส่งงาน: ' + file.name, 'อัปโหลด');
+
+      this.apiService.post<any>('/upload', formData).subscribe({
+        next: (res) => {
+          if (res && res.status === 200 && res.data) {
+            this.assignmentSubmitForm.filePath = res.data.file_path;
+            this.notifications.success('อัปโหลดไฟล์ส่งงานสำเร็จ: ' + file.name, 'สำเร็จ');
+          } else {
+            this.notifications.error(res.error || 'อัปโหลดไฟล์ส่งงานล้มเหลว', 'ผิดพลาด');
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.notifications.error(this.extractErrorMessage(err) || 'อัปโหลดไฟล์ส่งงานล้มเหลว', 'ผิดพลาด');
+          this.cdr.markForCheck();
+        }
+      });
+    } else {
+      try {
+        const objectUrl = URL.createObjectURL(file);
+        this.assignmentSubmitForm.filePath = objectUrl;
+      } catch (e) {
+        console.error('Error creating object URL for work file:', e);
+      }
+      
+      this.notifications.success('เลือกไฟล์ส่งงานแล้ว: ' + file.name + ' (จำลอง)', 'สำเร็จ');
+    }
   }
 
   protected async addLogbook(): Promise<void> {
@@ -3004,7 +3070,7 @@ export class App {
       } else {
         delete student.advisorId;
         this.data.persist();
-        this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว (Mock)`, "สำเร็จ");
+        this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว`, "สำเร็จ");
       }
     }
   }
@@ -3133,5 +3199,46 @@ export class App {
       return err.error.error || err.error.message || err.message || String(err);
     }
     return err.message || String(err);
+  }
+
+  protected getFileNameFromUrl(url: string, defaultName = 'document.pdf'): string {
+    if (!url) return defaultName;
+    try {
+      if (url.startsWith('/api/uploads/')) {
+        const basename = url.replace('/api/uploads/', '');
+        const underscoreIndex = basename.indexOf('_');
+        if (underscoreIndex !== -1) {
+          return decodeURIComponent(basename.substring(underscoreIndex + 1));
+        }
+        return decodeURIComponent(basename);
+      }
+      if (url.includes('mock_work_') || url.includes('mock_')) {
+        const parts = url.split('/d/');
+        if (parts.length > 1) {
+          const id = parts[1].split('/')[0];
+          let clean = id.replace(/^mock_work_/, '').replace(/^mock_/, '');
+          clean = clean.replace(/_/g, ' ');
+          if (clean) return clean;
+        }
+      }
+    } catch (e) {}
+    return defaultName;
+  }
+
+  protected getClickableFilePath(filePath: string | undefined): string {
+    if (!filePath) return 'javascript:void(0)';
+    
+    const isMock = filePath.includes('drive.google.com/file/d/mock_') || filePath.startsWith('mock_');
+    if (isMock) {
+      const filename = this.getFileNameFromUrl(filePath);
+      const ext = filename.split('.').pop()?.toLowerCase() || '';
+      const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext);
+      
+      if (isImage) {
+        return '/api/uploads/sample_work.png';
+      }
+      return '/api/uploads/sample_document.pdf';
+    }
+    return filePath;
   }
 }

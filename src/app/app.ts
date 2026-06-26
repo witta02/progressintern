@@ -58,9 +58,6 @@ export class App {
     console.log('App Initialized v2.0 - Leaves & SweetAlert2');
     this.applyRoleTheme(undefined);
     this.initSession();
-    setTimeout(() => {
-      this.notifications.success('ยินดีต้อนรับสู่ระบบจัดการฝึกงาน', 'ยินดีต้อนรับ');
-    }, 2000);
   }
 
   private async initSession(): Promise<void> {

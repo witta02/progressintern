@@ -71,6 +71,7 @@ export class NotificationService {
       toast: true,
       position: 'top-end',
       showConfirmButton: false,
+      showCloseButton: true,
       timer: durationMs,
       timerProgressBar: true,
       didOpen: (toast) => {

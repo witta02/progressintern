@@ -3483,6 +3483,158 @@
   (panelClosed)="closeNotificationPanel()"
 ></app-notification-host>
 
+<!-- PRINT ONLY TABLE-BASED LAYOUT -->
+<div *ngIf="initialized && isAuthenticated && selectedInternshipDetail" class="student-report-print-layout">
+  <div class="print-header">
+    <h2>ระบบจัดการการฝึกงาน (InternManager)</h2>
+    <h3>รายงานสรุปผลการปฏิบัติงานของนักศึกษาฝึกงาน</h3>
+    <p class="print-date">วันที่ออกรายงาน: {{ formatTermDate(today()) }}</p>
+  </div>
+
+  <!-- A. ข้อมูลนักศึกษา -->
+  <div class="print-section-title">1. ข้อมูลนักศึกษา (Student Profile)</div>
+  <table class="print-table">
+    <tr>
+      <th style="width: 25%;">ชื่อ-นามสกุล</th>
+      <td style="width: 75%;">{{ detailStudent?.name }}</td>
+    </tr>
+    <tr>
+      <th>อีเมล</th>
+      <td>{{ detailStudent?.email }}</td>
+    </tr>
+    <tr>
+      <th>เบอร์โทรศัพท์</th>
+      <td>{{ detailStudent?.phone || '-' }}</td>
+    </tr>
+    <tr>
+      <th>สถานศึกษา</th>
+      <td>{{ detailStudent?.school || '-' }}</td>
+    </tr>
+    <tr>
+      <th>สาขาวิชา</th>
+      <td>{{ detailStudent?.field || '-' }}</td>
+    </tr>
+    <tr *ngIf="getStudentAdvisor(detailStudent?.advisorId) as adv">
+      <th>อาจารย์ที่ปรึกษา</th>
+      <td>{{ adv.name }} <span *ngIf="adv.phone">(โทร: {{ adv.phone }})</span></td>
+    </tr>
+  </table>
+
+  <!-- B. ข้อมูลการฝึกงาน -->
+  <div class="print-section-title">2. ข้อมูลการฝึกงาน (Internship Info)</div>
+  <table class="print-table">
+    <tr>
+      <th style="width: 25%;">สถานประกอบการ</th>
+      <td style="width: 75%;">{{ detailCompany?.companyName }}</td>
+    </tr>
+    <tr>
+      <th>ที่อยู่บริษัท</th>
+      <td>{{ detailCompany?.address || '-' }}</td>
+    </tr>
+    <tr>
+      <th>ตำแหน่งงาน</th>
+      <td>{{ detailJob?.title }}</td>
+    </tr>
+    <tr>
+      <th>ระยะเวลาฝึกงาน</th>
+      <td>
+        {{ formatTermDate(selectedInternshipDetail.startDate) }} ถึง {{ formatTermDate(selectedInternshipDetail.endDate) }}
+        ({{ getInternshipProgress(selectedInternshipDetail).label }})
+      </td>
+    </tr>
+    <tr>
+      <th>สถานะสัญญา</th>
+      <td>{{ internshipStatusLabel(selectedInternshipDetail.status) }}</td>
+    </tr>
+  </table>
+
+  <!-- C. สรุปผลการเข้าปฏิบัติงาน -->
+  <div class="print-section-title">3. สรุปผลการปฏิบัติงานและการเข้างาน (Performance Summary)</div>
+  <table class="print-table-stats">
+    <thead>
+      <tr>
+        <th style="width: 35%;">หัวข้อการประเมิน</th>
+        <th style="text-align: center; width: 15%;">จำนวน</th>
+        <th style="text-align: center; width: 10%;">หน่วย</th>
+        <th>หมายเหตุ / รายละเอียดเพิ่มเติม</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngIf="getStudentAttendanceSummary(selectedInternshipDetail.studentId, selectedInternshipDetail.id) as att">
+        <td>การลงเวลาปฏิบัติงานทั้งหมด</td>
+        <td style="text-align: center; font-weight: bold;">{{ att.total }}</td>
+        <td style="text-align: center;">วัน</td>
+        <td>สาย: {{ att.late }} ครั้ง, ขาด: {{ att.absent }} ครั้ง, กลับก่อน: {{ att.earlyLeave }} ครั้ง</td>
+      </tr>
+      <tr *ngIf="getStudentLogbookSummary(selectedInternshipDetail.id) as lb">
+        <td>การส่งบันทึกประจำวัน (Logbooks)</td>
+        <td style="text-align: center; font-weight: bold;">{{ lb.total }}</td>
+        <td style="text-align: center;">รายการ</td>
+        <td>อนุมัติแล้ว: {{ lb.approved }} รายการ, รอการอนุมัติ: {{ lb.pending }} รายการ</td>
+      </tr>
+      <tr *ngIf="getStudentLeaveSummary(selectedInternshipDetail.id) as lv">
+        <td>การลางานทั้งหมด (Leave Requests)</td>
+        <td style="text-align: center; font-weight: bold;">{{ lv.total }}</td>
+        <td style="text-align: center;">ครั้ง</td>
+        <td>ลาป่วย: {{ lv.sick }} ครั้ง, ลากิจ: {{ lv.personal }} ครั้ง (อนุมัติแล้ว: {{ lv.approved }} ครั้ง)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- D. ผลการประเมินการฝึกงาน -->
+  <div class="print-section-title">4. ผลการประเมินผลการฝึกงาน (Evaluation Scores)</div>
+  <table class="print-table-stats" *ngIf="getStudentEvaluation(selectedInternshipDetail.id) as ev">
+    <thead>
+      <tr>
+        <th style="width: 50%;">หัวข้อประเมิน</th>
+        <th style="text-align: center; width: 25%;">คะแนนที่ได้</th>
+        <th style="text-align: center; width: 25%;">คะแนนเต็ม</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>คะแนนประเมินจากพี่เลี้ยงสถานประกอบการ (Mentor Score)</td>
+        <td style="text-align: center; font-weight: bold; color: #1e3a8a;">
+          {{ ev.mentorScore !== null ? ev.mentorScore : '—' }}
+        </td>
+        <td style="text-align: center;">100</td>
+      </tr>
+      <tr>
+        <td>คะแนนประเมินจากอาจารย์ที่ปรึกษา (Advisor Score)</td>
+        <td style="text-align: center; font-weight: bold; color: #1e3a8a;">
+          {{ ev.advisorScore !== null ? ev.advisorScore : '—' }}
+        </td>
+        <td style="text-align: center;">100</td>
+      </tr>
+      <tr style="background-color: #f8fafc; font-weight: bold;">
+        <td>คะแนนเฉลี่ยสะสม (Average Score)</td>
+        <td style="text-align: center; font-weight: 800; color: #2563eb; font-size: 13pt;">
+          {{ ev.average !== null ? ev.average : '—' }}
+        </td>
+        <td style="text-align: center;">100</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- E. ส่วนลงนามผู้เกี่ยวข้อง -->
+  <div class="print-sign-area">
+    <table style="width: 100%; border: none;">
+      <tr style="border: none;">
+        <td style="width: 50%; border: none; text-align: center; padding-top: 30px;">
+          <p>ลงชื่อ............................................................</p>
+          <p style="margin-top: 8px;">(............................................................)</p>
+          <p style="margin-top: 4px; font-size: 9.5pt; color: #666;">ผู้ดูแลสถานประกอบการ / พี่เลี้ยง</p>
+        </td>
+        <td style="width: 50%; border: none; text-align: center; padding-top: 30px;">
+          <p>ลงชื่อ............................................................</p>
+          <p style="margin-top: 8px;">(............................................................)</p>
+          <p style="margin-top: 4px; font-size: 9.5pt; color: #666;">อาจารย์ที่ปรึกษาการฝึกงาน</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
+
 
 
 

@@ -178,9 +178,30 @@
   /* Show print-only header */
   .print-only { display: block !important; }
 
-  /* Make the detail panel full-width and static */
+  /* Break the layout flex columns for print to resolve infinite rendering loops */
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    color: #0f172a !important;
+    font-size: 10.5pt !important;
+    line-height: 1.5 !important;
+  }
+
+  main {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    flex: none !important;
+  }
+
+  /* Make the detail panel full-width, static block layout */
   .student-detail-panel,
   #student-report-content {
+    display: block !important;
     position: static !important;
     width: 100% !important;
     height: auto !important;
@@ -192,6 +213,7 @@
     background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
+    flex: none !important;
   }
 
   /* Page setup */
@@ -200,21 +222,15 @@
     margin: 18mm 15mm;
   }
 
-  body {
-    background: white !important;
-    color: #0f172a !important;
-    font-size: 10.5pt !important;
-    line-height: 1.5 !important;
-  }
-
-  /* Avoid breaking sections across pages */
+  /* Allow sections to break across pages cleanly (avoids layout looping on tall sections) */
   .print-section {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    display: block !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
     margin-bottom: 25px !important;
   }
 
-  /* Make section headers clean & professional (e.g. A. ข้อมูลนักศึกษา) */
+  /* Make section headers clean & professional */
   .print-section h3 {
     border-bottom: 2px solid #2563eb !important;
     padding-bottom: 5px !important;
@@ -222,6 +238,8 @@
     font-size: 11pt !important;
     font-weight: 800 !important;
     margin-bottom: 12px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
   .print-section h3 span {
     display: none !important;
@@ -235,6 +253,8 @@
     border-radius: 12px !important;
     box-shadow: none !important;
     padding: 20px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
   .student-detail-panel div[class*="bg-gradient-to-br from-blue-600 to-indigo-800"] * {
     color: #334155 !important;
@@ -260,29 +280,37 @@
     color: #334155 !important;
   }
 
-  /* Simplify all secondary white/slate cards to basic border boxes */
+  /* Simplify all secondary white/slate cards to basic border boxes and avoid splitting them */
   .print-section div[class*="bg-white border"],
   .print-section div[class*="bg-slate-50 border"],
-  .print-section div[class*="bg-indigo-50 border"] {
+  .print-section div[class*="bg-indigo-50 border"],
+  .print-section div[class*="bg-white border"] + div {
     border: 1px solid #cbd5e1 !important;
     background: white !important;
     border-radius: 8px !important;
     box-shadow: none !important;
     padding: 16px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   /* Simplify grid layouts (like stats counts) */
   .print-section div[class*="grid-cols-3"],
   .print-section div[class*="grid-cols-4"] {
     gap: 8px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
   }
   .print-section div[class*="grid-cols-3"] > div,
   .print-section div[class*="grid-cols-4"] > div {
+    flex: 1 1 20% !important;
     border: 1px solid #cbd5e1 !important;
     background: #f8fafc !important;
     border-radius: 8px !important;
     padding: 12px !important;
     box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
   .print-section div[class*="grid-cols-3"] > div *,
   .print-section div[class*="grid-cols-4"] > div * {
@@ -303,6 +331,8 @@
     color: #1e3a8a !important;
     border-radius: 8px !important;
     box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
   .print-section div[class*="bg-gradient-to-br from-blue-600 to-indigo-700"] * {
     color: #1e3a8a !important;
@@ -346,6 +376,7 @@
   }
   tr {
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   /* Simple clean progress bar for print */

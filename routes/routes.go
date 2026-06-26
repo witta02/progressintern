@@ -55,6 +55,17 @@ func SetupRoutes(router *gin.Engine) {
 	companyGroup := router.Group("/api/companies")
 	{
 		companyGroup.GET("", handlers.GetAllCompaniesHandler)
+		companyGroup.POST("", middleware.AuthMiddleware(), handlers.CreateCompanyHandler)
+	}
+
+	// ========================================================
+	// 🏫 School Routes
+	// ========================================================
+	schoolGroup := router.Group("/api/schools")
+	schoolGroup.Use(middleware.AuthMiddleware())
+	{
+		schoolGroup.GET("", handlers.GetAllSchoolsHandler)
+		schoolGroup.POST("", handlers.CreateSchoolHandler)
 	}
 
 	// ========================================================
@@ -161,13 +172,24 @@ func SetupRoutes(router *gin.Engine) {
 	router.Static("/api/uploads", handlers.GetUploadsDir())
 
 	// ========================================================
+	// 🎫 Support Ticket Routes
+	// ========================================================
+	ticketGroup := router.Group("/api/tickets")
+	ticketGroup.Use(middleware.AuthMiddleware())
+	{
+		ticketGroup.POST("", handlers.CreateTicketHandler)
+		ticketGroup.GET("", handlers.GetAllTicketsHandler)
+		ticketGroup.GET("/:id", handlers.GetTicketByIDHandler)
+		ticketGroup.POST("/:id/replies", handlers.ReplyTicketHandler)
+		ticketGroup.PUT("/:id/status", handlers.UpdateTicketStatusHandler)
+	}
+
+	// ========================================================
 	// 👑 Admin Management Routes
 	// ========================================================
 	adminGroup := router.Group("/api/admin")
 	adminGroup.Use(middleware.AuthMiddleware(), middleware.RequireRole("admin"))
 	{
-		adminGroup.GET("/schools", handlers.GetAllSchoolsHandler)
-		adminGroup.POST("/schools", handlers.CreateSchoolHandler)
 		adminGroup.GET("/codes", handlers.GetAllCodesHandler)
 		adminGroup.POST("/codes", handlers.CreateCodeHandler)
 		adminGroup.PUT("/codes/:id", handlers.UpdateCodeHandler)

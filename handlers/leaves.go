@@ -110,15 +110,29 @@ func GetAllLeavesHandler(c *gin.Context) {
 			school,
 		)
 	} else if roleStr == "company" {
-		rows, err = config.DB.Query(
-			`SELECT l.id, l.internship_id, l.student_id, l.leave_type, l.start_date, l.end_date, l.reason, l.status, l.mentor_id, l.comment, l.created_at, l.updated_at, l.approved_at 
-			 FROM leave_requests l
-			 LEFT JOIN internships i ON l.internship_id = i.id
-			 LEFT JOIN companies c ON i.company_id = c.id
-			 WHERE c.user_id = ?
-			 ORDER BY l.created_at DESC`,
-			userIDInt,
-		)
+		var userCompanyID sql.NullInt64
+		_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+		
+		if userCompanyID.Valid {
+			rows, err = config.DB.Query(
+				`SELECT l.id, l.internship_id, l.student_id, l.leave_type, l.start_date, l.end_date, l.reason, l.status, l.mentor_id, l.comment, l.created_at, l.updated_at, l.approved_at 
+				 FROM leave_requests l
+				 LEFT JOIN internships i ON l.internship_id = i.id
+				 WHERE i.company_id = ?
+				 ORDER BY l.created_at DESC`,
+				userCompanyID.Int64,
+			)
+		} else {
+			rows, err = config.DB.Query(
+				`SELECT l.id, l.internship_id, l.student_id, l.leave_type, l.start_date, l.end_date, l.reason, l.status, l.mentor_id, l.comment, l.created_at, l.updated_at, l.approved_at 
+				 FROM leave_requests l
+				 LEFT JOIN internships i ON l.internship_id = i.id
+				 LEFT JOIN companies c ON i.company_id = c.id
+				 WHERE c.user_id = ?
+				 ORDER BY l.created_at DESC`,
+				userIDInt,
+			)
+		}
 	} else { // student
 		rows, err = config.DB.Query(
 			`SELECT id, internship_id, student_id, leave_type, start_date, end_date, reason, status, mentor_id, comment, created_at, updated_at, approved_at 
@@ -192,15 +206,21 @@ func UpdateLeaveStatusHandler(c *gin.Context) {
 	if roleStr == "admin" {
 		isAuthorized = true
 	} else if roleStr == "company" {
-		var dbUserID int
-		err := config.DB.QueryRow(
-			`SELECT c.user_id FROM internships i
-			 JOIN companies c ON i.company_id = c.id
-			 WHERE i.id = ?`,
-			iID,
-		).Scan(&dbUserID)
-		if err == nil && dbUserID == userIDInt {
-			isAuthorized = true
+		var iCompanyID int
+		err := config.DB.QueryRow("SELECT company_id FROM internships WHERE id = ?", iID).Scan(&iCompanyID)
+		if err == nil {
+			var userCompanyID sql.NullInt64
+			_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+			
+			if userCompanyID.Valid && int(userCompanyID.Int64) == iCompanyID {
+				isAuthorized = true
+			} else {
+				var dbUserID int
+				_ = config.DB.QueryRow("SELECT user_id FROM companies WHERE id = ?", iCompanyID).Scan(&dbUserID)
+				if dbUserID == userIDInt {
+					isAuthorized = true
+				}
+			}
 		}
 	} else if roleStr == "advisor" {
 		var advisorSchool, studentSchool string

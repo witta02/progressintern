@@ -68,8 +68,7 @@ func CreateAssignmentHandler(c *gin.Context) {
 			schoolID = &sID
 		}
 	} else if roleStr == "company" {
-		var cID int
-		err := config.DB.QueryRow("SELECT id FROM companies WHERE user_id = ?", userIDInt).Scan(&cID)
+		cID, err := getUserCompanyID(userIDInt)
 		if err == nil && cID > 0 {
 			companyID = &cID
 		}
@@ -130,8 +129,7 @@ func GetAllAssignmentsHandler(c *gin.Context) {
 		         WHERE creator_id = ? OR school_id = ?`
 		args = append(args, userIDInt, sID)
 	} else if roleStr == "company" {
-		var cID int
-		_ = config.DB.QueryRow("SELECT id FROM companies WHERE user_id = ?", userIDInt).Scan(&cID)
+		cID, _ := getUserCompanyID(userIDInt)
 
 		query = `SELECT id, title, description, due_date, points, creator_id, creator_role, school_id, company_id, student_id, job_posting_id, created_at, updated_at 
 		         FROM assignments 
@@ -375,8 +373,7 @@ func GetAllSubmissionsHandler(c *gin.Context) {
 		         WHERE a.school_id = ?`
 		args = append(args, sID)
 	} else if roleStr == "company" {
-		var cID int
-		_ = config.DB.QueryRow("SELECT id FROM companies WHERE user_id = ?", userIDInt).Scan(&cID)
+		cID, _ := getUserCompanyID(userIDInt)
 
 		query = `SELECT s.id, s.assignment_id, s.student_id, COALESCE(s.content,''), COALESCE(s.file_name,''), COALESCE(s.file_path,''), s.status, s.score, COALESCE(s.feedback,''), s.submitted_at, s.graded_at 
 		         FROM submissions s

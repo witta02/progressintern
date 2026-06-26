@@ -102,15 +102,21 @@ func ApproveLogbookHandler(c *gin.Context) {
 	if roleStr == "admin" {
 		isAuthorized = true
 	} else if roleStr == "company" {
-		var dbUserID int
-		err := config.DB.QueryRow(
-			`SELECT c.user_id FROM internships i
-			 JOIN companies c ON i.company_id = c.id
-			 WHERE i.id = ?`,
-			iID,
-		).Scan(&dbUserID)
-		if err == nil && dbUserID == userIDInt {
-			isAuthorized = true
+		var iCompanyID int
+		err := config.DB.QueryRow("SELECT company_id FROM internships WHERE id = ?", iID).Scan(&iCompanyID)
+		if err == nil {
+			var userCompanyID sql.NullInt64
+			_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+			
+			if userCompanyID.Valid && int(userCompanyID.Int64) == iCompanyID {
+				isAuthorized = true
+			} else {
+				var dbUserID int
+				_ = config.DB.QueryRow("SELECT user_id FROM companies WHERE id = ?", iCompanyID).Scan(&dbUserID)
+				if dbUserID == userIDInt {
+					isAuthorized = true
+				}
+			}
 		}
 	} else if roleStr == "advisor" {
 		var advisorSchool, studentSchool string

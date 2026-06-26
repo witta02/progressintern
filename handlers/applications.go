@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"internship-backend/config"
 	"internship-backend/models"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -120,9 +121,13 @@ func GetCompanyAppsHandler(c *gin.Context) {
 			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์เข้าถึงข้อมูลใบสมัครของบริษัทนี้"})
 			return
 		}
-		var dbUserID int
-		err := config.DB.QueryRow("SELECT user_id FROM companies WHERE id = ?", companyID).Scan(&dbUserID)
-		if err != nil || dbUserID != userIDInt {
+		userCompanyID, userCompErr := getUserCompanyID(userIDInt)
+		companyIDInt, parseErr := strconv.Atoi(companyID)
+		if parseErr != nil {
+			c.JSON(400, gin.H{"status": 400, "error": "รหัสบริษัทไม่ถูกต้อง"})
+			return
+		}
+		if userCompErr != nil || userCompanyID != companyIDInt {
 			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์เข้าถึงข้อมูลใบสมัครของบริษัทนี้"})
 			return
 		}

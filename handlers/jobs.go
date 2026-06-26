@@ -34,10 +34,7 @@ func CreateJobHandler(c *gin.Context) {
 	}
 
 	// Look up companies.id from the user_id (FK relationship)
-	var companyID int
-	err := config.DB.QueryRow(
-		"SELECT id FROM companies WHERE user_id = ?", userIDRaw,
-	).Scan(&companyID)
+	companyID, err := getUserCompanyID(userIDRaw.(int))
 
 	if err != nil {
 		// No company profile found — auto-create one
@@ -53,6 +50,9 @@ func CreateJobHandler(c *gin.Context) {
 		}
 		id, _ := result.LastInsertId()
 		companyID = int(id)
+		
+		// Update users.company_id
+		_, _ = config.DB.Exec("UPDATE users SET company_id = ? WHERE id = ?", companyID, userIDRaw)
 	}
 
 	_, err = config.DB.Exec(
@@ -137,21 +137,19 @@ func CloseJobHandler(c *gin.Context) {
 	roleStr := reqRole.(string)
 	userIDInt := reqUserID.(int)
 
-	var ownerUserID int
-	err := config.DB.QueryRow(
-		`SELECT c.user_id FROM job_postings j
-		 JOIN companies c ON j.company_id = c.id
-		 WHERE j.id = ?`,
-		jobID,
-	).Scan(&ownerUserID)
+	var jobCompanyID int
+	err := config.DB.QueryRow("SELECT company_id FROM job_postings WHERE id = ?", jobID).Scan(&jobCompanyID)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบประกาศงานที่ระบุ"})
 		return
 	}
 
-	if roleStr != "admin" && userIDInt != ownerUserID {
-		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการปิดประกาศงานนี้"})
-		return
+	if roleStr != "admin" {
+		userCompanyID, userCompErr := getUserCompanyID(userIDInt)
+		if userCompErr != nil || userCompanyID != jobCompanyID {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการปิดประกาศงานนี้"})
+			return
+		}
 	}
 
 	var input struct {
@@ -192,11 +190,8 @@ func DeleteJobHandler(c *gin.Context) {
 		return
 	}
 
-	var verifyCompanyUserID int
-	err = config.DB.QueryRow(
-		"SELECT user_id FROM companies WHERE id = ?", companyID,
-	).Scan(&verifyCompanyUserID)
-	if err != nil || verifyCompanyUserID != userIDRaw.(int) {
+	userCompanyID, userCompErr := getUserCompanyID(userIDRaw.(int))
+	if userCompErr != nil || userCompanyID != companyID {
 		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการลบประกาศรับสมัครงานนี้"})
 		return
 	}
@@ -222,21 +217,19 @@ func UpdateJobHandler(c *gin.Context) {
 	roleStr := reqRole.(string)
 	userIDInt := reqUserID.(int)
 
-	var ownerUserID int
-	err := config.DB.QueryRow(
-		`SELECT c.user_id FROM job_postings j
-		 JOIN companies c ON j.company_id = c.id
-		 WHERE j.id = ?`,
-		jobID,
-	).Scan(&ownerUserID)
+	var jobCompanyID int
+	err := config.DB.QueryRow("SELECT company_id FROM job_postings WHERE id = ?", jobID).Scan(&jobCompanyID)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบประกาศงานที่ระบุ"})
 		return
 	}
 
-	if roleStr != "admin" && userIDInt != ownerUserID {
-		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการแก้ไขประกาศงานนี้"})
-		return
+	if roleStr != "admin" {
+		userCompanyID, userCompErr := getUserCompanyID(userIDInt)
+		if userCompErr != nil || userCompanyID != jobCompanyID {
+			c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ในการแก้ไขประกาศงานนี้"})
+			return
+		}
 	}
 
 	var input struct {

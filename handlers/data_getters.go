@@ -40,23 +40,32 @@ func GetAllUsersHandler(c *gin.Context) {
 			userIDInt, school,
 		)
 	} else if roleStr == "company" {
+		var userCompanyID sql.NullInt64
+		_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+		
+		cID := 0
+		if userCompanyID.Valid {
+			cID = int(userCompanyID.Int64)
+		} else {
+			_ = config.DB.QueryRow("SELECT id FROM companies WHERE user_id = ?", userIDInt).Scan(&cID)
+		}
+
 		rows, err = config.DB.Query(
 			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
 			 FROM users u
-			 LEFT JOIN companies c ON c.user_id = ?
-			 LEFT JOIN job_postings j ON j.company_id = c.id
+			 LEFT JOIN job_postings j ON j.company_id = ?
 			 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = u.id
-			 LEFT JOIN internships i ON i.company_id = c.id AND i.student_id = u.id
+			 LEFT JOIN internships i ON i.company_id = ? AND i.student_id = u.id
 			 WHERE u.id = ? 
 			    OR u.role = 'admin'
 			    OR (u.role = 'student' AND (a.id IS NOT NULL OR i.id IS NOT NULL))
 			    OR (u.role = 'advisor' AND u.school IN (
 			         SELECT DISTINCT school FROM users s 
 			         LEFT JOIN applications sa ON sa.student_id = s.id AND sa.job_posting_id = j.id
-			         LEFT JOIN internships si ON si.student_id = s.id AND si.company_id = c.id
+			         LEFT JOIN internships si ON si.student_id = s.id AND si.company_id = ?
 			         WHERE s.role = 'student' AND (sa.id IS NOT NULL OR si.id IS NOT NULL)
 			    ))`,
-			userIDInt, userIDInt,
+			cID, cID, userIDInt, cID,
 		)
 	} else { // student
 		var school string
@@ -65,7 +74,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		rows, err = config.DB.Query(
 			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
 			 FROM users u
-			 LEFT JOIN companies c ON c.user_id = u.id
+			 LEFT JOIN companies c ON c.id = u.company_id
 			 LEFT JOIN job_postings j ON j.company_id = c.id
 			 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = ?
 			 LEFT JOIN internships i ON i.company_id = c.id AND i.student_id = ?
@@ -148,15 +157,24 @@ func GetUserByIDHandler(c *gin.Context) {
 		if targetRole == "admin" {
 			isAuthorized = true
 		} else {
+			var userCompanyID sql.NullInt64
+			_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+			
+			cID := 0
+			if userCompanyID.Valid {
+				cID = int(userCompanyID.Int64)
+			} else {
+				_ = config.DB.QueryRow("SELECT id FROM companies WHERE user_id = ?", userIDInt).Scan(&cID)
+			}
+
 			var hasRelation int
 			config.DB.QueryRow(
 				`SELECT COUNT(*) FROM users u
-				 LEFT JOIN companies c ON c.user_id = ?
-				 LEFT JOIN job_postings j ON j.company_id = c.id
+				 LEFT JOIN job_postings j ON j.company_id = ?
 				 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = u.id
-				 LEFT JOIN internships i ON i.company_id = c.id AND i.student_id = u.id
+				 LEFT JOIN internships i ON i.company_id = ? AND i.student_id = u.id
 				 WHERE u.id = ? AND (a.id IS NOT NULL OR i.id IS NOT NULL)`,
-				userIDInt, targetUserIDInt,
+				cID, cID, targetUserIDInt,
 			).Scan(&hasRelation)
 			if hasRelation > 0 {
 				isAuthorized = true
@@ -533,18 +551,35 @@ func GetAllAttendancesHandler(c *gin.Context) {
 			school,
 		)
 	} else if roleStr == "company" {
-		rows, err = config.DB.Query(
-			`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
-			        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), 
-			        COALESCE(a.checkout_latitude, 0), COALESCE(checkout_longitude, 0),
-			        a.status, a.created_at, a.verification_status 
-			 FROM attendances a
-			 LEFT JOIN internships i ON a.internship_id = i.id
-			 LEFT JOIN companies c ON i.company_id = c.id
-			 WHERE c.user_id = ?
-			 ORDER BY a.created_at DESC`,
-			userIDInt,
-		)
+		var userCompanyID sql.NullInt64
+		_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+		
+		if userCompanyID.Valid {
+			rows, err = config.DB.Query(
+				`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
+				        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), 
+				        COALESCE(a.checkout_latitude, 0), COALESCE(a.checkout_longitude, 0),
+				        a.status, a.created_at, a.verification_status 
+				 FROM attendances a
+				 LEFT JOIN internships i ON a.internship_id = i.id
+				 WHERE i.company_id = ?
+				 ORDER BY a.created_at DESC`,
+				userCompanyID.Int64,
+			)
+		} else {
+			rows, err = config.DB.Query(
+				`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
+				        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), 
+				        COALESCE(a.checkout_latitude, 0), COALESCE(a.checkout_longitude, 0),
+				        a.status, a.created_at, a.verification_status 
+				 FROM attendances a
+				 LEFT JOIN internships i ON a.internship_id = i.id
+				 LEFT JOIN companies c ON i.company_id = c.id
+				 WHERE c.user_id = ?
+				 ORDER BY a.created_at DESC`,
+				userIDInt,
+			)
+		}
 	} else { // student
 		rows, err = config.DB.Query(
 			`SELECT id, internship_id, student_id, check_in_time, check_out_time, 
@@ -627,17 +662,33 @@ func GetAllLogbooksHandler(c *gin.Context) {
 			school,
 		)
 	} else if roleStr == "company" {
-		rows, err = config.DB.Query(
-			`SELECT l.id, l.internship_id, l.title, l.content, 
-			        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
-			        l.created_at, l.updated_at
-			 FROM logbooks l
-			 LEFT JOIN internships i ON l.internship_id = i.id
-			 LEFT JOIN companies c ON i.company_id = c.id
-			 WHERE c.user_id = ?
-			 ORDER BY l.created_at DESC`,
-			userIDInt,
-		)
+		var userCompanyID sql.NullInt64
+		_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+		
+		if userCompanyID.Valid {
+			rows, err = config.DB.Query(
+				`SELECT l.id, l.internship_id, l.title, l.content, 
+				        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
+				        l.created_at, l.updated_at
+				 FROM logbooks l
+				 LEFT JOIN internships i ON l.internship_id = i.id
+				 WHERE i.company_id = ?
+				 ORDER BY l.created_at DESC`,
+				userCompanyID.Int64,
+			)
+		} else {
+			rows, err = config.DB.Query(
+				`SELECT l.id, l.internship_id, l.title, l.content, 
+				        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
+				        l.created_at, l.updated_at
+				 FROM logbooks l
+				 LEFT JOIN internships i ON l.internship_id = i.id
+				 LEFT JOIN companies c ON i.company_id = c.id
+				 WHERE c.user_id = ?
+				 ORDER BY l.created_at DESC`,
+				userIDInt,
+			)
+		}
 	} else { // student
 		rows, err = config.DB.Query(
 			`SELECT l.id, l.internship_id, l.title, l.content, 
@@ -733,18 +784,35 @@ func GetAllEvaluationsHandler(c *gin.Context) {
 			school,
 		)
 	} else if roleStr == "company" {
-		rows, err = config.DB.Query(
-			`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
-			        e.evaluation_type, e.created_at,
-			        COALESCE(u.name, '') as evaluator_name
-			 FROM evaluations e
-			 LEFT JOIN users u ON e.evaluator_id = u.id
-			 LEFT JOIN internships i ON e.internship_id = i.id
-			 LEFT JOIN companies c ON i.company_id = c.id
-			 WHERE c.user_id = ?
-			 ORDER BY e.created_at DESC`,
-			userIDInt,
-		)
+		var userCompanyID sql.NullInt64
+		_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+		
+		if userCompanyID.Valid {
+			rows, err = config.DB.Query(
+				`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
+				        e.evaluation_type, e.created_at,
+				        COALESCE(u.name, '') as evaluator_name
+				 FROM evaluations e
+				 LEFT JOIN users u ON e.evaluator_id = u.id
+				 LEFT JOIN internships i ON e.internship_id = i.id
+				 WHERE i.company_id = ?
+				 ORDER BY e.created_at DESC`,
+				userCompanyID.Int64,
+			)
+		} else {
+			rows, err = config.DB.Query(
+				`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
+				        e.evaluation_type, e.created_at,
+				        COALESCE(u.name, '') as evaluator_name
+				 FROM evaluations e
+				 LEFT JOIN users u ON e.evaluator_id = u.id
+				 LEFT JOIN internships i ON e.internship_id = i.id
+				 LEFT JOIN companies c ON i.company_id = c.id
+				 WHERE c.user_id = ?
+				 ORDER BY e.created_at DESC`,
+				userIDInt,
+			)
+		}
 	} else { // student
 		rows, err = config.DB.Query(
 			`SELECT e.id, e.internship_id, e.evaluator_id, e.score, COALESCE(e.feedback, ''),
@@ -952,16 +1020,32 @@ func UpdateUserHandler(c *gin.Context) {
 		)
 
 		if err == nil && targetRole == "company" {
-			_, _ = config.DB.Exec(
-				`UPDATE companies 
-				 SET company_name = COALESCE(NULLIF(?,''), company_name), 
-				     description = ?, 
-				     address = ?,
-				     latitude = ?,
-				     longitude = ?
-				 WHERE user_id = ?`,
-				input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, userIDInt,
-			)
+			var compID sql.NullInt64
+			_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&compID)
+			
+			if compID.Valid {
+				_, _ = config.DB.Exec(
+					`UPDATE companies 
+					 SET company_name = COALESCE(NULLIF(?,''), company_name), 
+					     description = ?, 
+					     address = ?,
+					     latitude = ?,
+					     longitude = ?
+					 WHERE id = ?`,
+					input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, compID.Int64,
+				)
+			} else {
+				_, _ = config.DB.Exec(
+					`UPDATE companies 
+					 SET company_name = COALESCE(NULLIF(?,''), company_name), 
+					     description = ?, 
+					     address = ?,
+					     latitude = ?,
+					     longitude = ?
+					 WHERE user_id = ?`,
+					input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, userIDInt,
+				)
+			}
 		}
 	} else {
 		var query string
@@ -1004,16 +1088,32 @@ func UpdateUserHandler(c *gin.Context) {
 		_, err = config.DB.Exec(query, args...)
 
 		if err == nil && targetRole == "company" {
-			_, _ = config.DB.Exec(
-				`UPDATE companies 
-				 SET company_name = COALESCE(NULLIF(?,''), company_name), 
-				     description = ?, 
-				     address = ?,
-				     latitude = ?,
-				     longitude = ?
-				 WHERE user_id = ?`,
-				input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, targetUserIDInt,
-			)
+			var compID sql.NullInt64
+			_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", targetUserIDInt).Scan(&compID)
+			
+			if compID.Valid {
+				_, _ = config.DB.Exec(
+					`UPDATE companies 
+					 SET company_name = COALESCE(NULLIF(?,''), company_name), 
+					     description = ?, 
+					     address = ?,
+					     latitude = ?,
+					     longitude = ?
+					 WHERE id = ?`,
+					input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, compID.Int64,
+				)
+			} else {
+				_, _ = config.DB.Exec(
+					`UPDATE companies 
+					 SET company_name = COALESCE(NULLIF(?,''), company_name), 
+					     description = ?, 
+					     address = ?,
+					     latitude = ?,
+					     longitude = ?
+					 WHERE user_id = ?`,
+					input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, targetUserIDInt,
+				)
+			}
 		}
 
 		// Sync supervisor_id in internships table for active internship

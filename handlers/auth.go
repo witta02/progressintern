@@ -124,13 +124,14 @@ func RegisterHandler(c *gin.Context) {
 	var usedCount int
 	var expiresAt *time.Time
 	var isActive bool
+	var codeCompanyID sql.NullInt64
 
 	err = tx.QueryRow(`
-		SELECT ec.id, ec.role, ec.school_id, s.name, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active 
+		SELECT ec.id, ec.role, ec.school_id, s.name, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active, ec.company_id 
 		FROM enrollment_codes ec
 		LEFT JOIN schools s ON ec.school_id = s.id
 		WHERE ec.code = ? FOR UPDATE
-	`, input.Code).Scan(&codeID, &role, &schoolID, &schoolName, &maxUses, &usedCount, &expiresAt, &isActive)
+	`, input.Code).Scan(&codeID, &role, &schoolID, &schoolName, &maxUses, &usedCount, &expiresAt, &isActive, &codeCompanyID)
 
 	if err == sql.ErrNoRows {
 		c.JSON(400, gin.H{"status": 400, "error": "รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง"})
@@ -199,21 +200,39 @@ func RegisterHandler(c *gin.Context) {
 	userID, _ := result.LastInsertId()
 
 	if resolvedRole == "company" {
-		companyName := input.CompanyName
-		if companyName == "" {
-			companyName = input.Name
-		}
-		contactEmail := input.ContactEmail
-		if contactEmail == "" {
-			contactEmail = input.Email
-		}
-		
-		_, compErr := tx.Exec(
-			"INSERT INTO companies (user_id, company_name, description, address, contact_email) VALUES (?, ?, ?, ?, ?)",
-			userID, companyName, input.Description, input.Address, contactEmail,
-		)
-		if compErr != nil {
-			fmt.Printf("⚠️ Could not create company profile: %v\n", compErr)
+		if codeCompanyID.Valid {
+			// A company has already registered with this code. Link the user to it.
+			companyID := codeCompanyID.Int64
+			_, compErr := tx.Exec("UPDATE users SET company_id = ? WHERE id = ?", companyID, userID)
+			if compErr != nil {
+				fmt.Printf("⚠️ Could not associate user with existing company: %v\n", compErr)
+			}
+		} else {
+			// First user for this company. Create company profile.
+			companyName := input.CompanyName
+			if companyName == "" {
+				companyName = input.Name
+			}
+			contactEmail := input.ContactEmail
+			if contactEmail == "" {
+				contactEmail = input.Email
+			}
+			
+			compRes, compErr := tx.Exec(
+				"INSERT INTO companies (user_id, company_name, description, address, contact_email) VALUES (?, ?, ?, ?, ?)",
+				userID, companyName, input.Description, input.Address, contactEmail,
+			)
+			if compErr != nil {
+				fmt.Printf("⚠️ Could not create company profile: %v\n", compErr)
+			} else {
+				companyID, _ := compRes.LastInsertId()
+				
+				// Associate this code with the company so future registers share it
+				_, _ = tx.Exec("UPDATE enrollment_codes SET company_id = ? WHERE id = ?", companyID, codeID)
+				
+				// Link user to company
+				_, _ = tx.Exec("UPDATE users SET company_id = ? WHERE id = ?", companyID, userID)
+			}
 		}
 	}
 

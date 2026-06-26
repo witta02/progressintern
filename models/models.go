@@ -467,3 +467,37 @@ type GradeSubmissionInput struct {
 	Score    float64 `json:"score" binding:"required,min=0"`
 	Feedback string  `json:"feedback"`
 }
+
+// ==================== Ticket System ====================
+
+type Ticket struct {
+	ID          int       `json:"id" db:"id"`
+	UserID      int       `json:"user_id" db:"user_id"`
+	UserName    string    `json:"user_name,omitempty" db:"user_name"`
+	UserRole    string    `json:"user_role,omitempty" db:"user_role"`
+	Title       string    `json:"title" db:"title"`
+	Description string    `json:"description" db:"description"`
+	Status      string    `json:"status" db:"status"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type TicketReply struct {
+	ID        int       `json:"id" db:"id"`
+	TicketID  int       `json:"ticket_id" db:"ticket_id"`
+	UserID    int       `json:"user_id" db:"user_id"`
+	UserName  string    `json:"user_name,omitempty" db:"user_name"`
+	UserRole  string    `json:"user_role,omitempty" db:"user_role"`
+	Message   string    `json:"message" db:"message"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+}
+
+type CreateTicketInput struct {
+	Title       string `json:"title" binding:"required,min=3,max=255"`
+	Description string `json:"description" binding:"required,min=5"`
+}
+
+type CreateTicketReplyInput struct {
+	Message string `json:"message" binding:"required,min=1"`
+}
+

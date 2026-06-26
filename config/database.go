@@ -116,6 +116,36 @@ func migrateDatabase(db *sql.DB) {
 	_, _ = db.Exec("ALTER TABLE companies ADD COLUMN longitude DECIMAL(11, 8) NULL")
 	_, _ = db.Exec("ALTER TABLE assignments ADD COLUMN student_id INT NULL")
 	_, _ = db.Exec("ALTER TABLE assignments ADD COLUMN job_posting_id INT NULL")
+
+	// --- TICKET SYSTEM & MULTI-USER COMPANY PRIVILEGES ---
+	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS tickets (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		description TEXT NOT NULL,
+		status VARCHAR(50) DEFAULT 'open',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+
+	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS ticket_replies (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		ticket_id INT NOT NULL,
+		user_id INT NOT NULL,
+		message TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN company_id INT NULL")
+	_, _ = db.Exec("ALTER TABLE users ADD CONSTRAINT fk_users_company_id FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE SET NULL")
+	_, _ = db.Exec("ALTER TABLE enrollment_codes ADD COLUMN company_id INT NULL")
+	_, _ = db.Exec("ALTER TABLE enrollment_codes ADD CONSTRAINT fk_enrollment_codes_company_id FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE SET NULL")
+	
+	// Migrate existing company users to link their company_id column to their companies record
+	_, _ = db.Exec("UPDATE users u JOIN companies c ON c.user_id = u.id SET u.company_id = c.id WHERE u.company_id IS NULL")
 }
 
 

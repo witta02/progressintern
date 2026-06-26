@@ -2933,7 +2933,7 @@
 
                 <div class="pt-2">
                   <button type="button" (click)="pinProfileCoordinates()" 
-                          class="w-full py-4.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-200 hover:scale-[1.01] cursor-pointer flex items-center justify-center gap-2">
+                          class="w-full h-[38px] -mt-px py-4.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-[11px] font-black text-sm transition-all shadow-lg shadow-blue-200 hover:scale-[1.01] cursor-pointer flex items-center justify-center gap-2">
                     📍 ปักหมุดตำแหน่งปัจจุบันของบริษัท (Pin Current Geolocation)
                   </button>
                 </div>
@@ -3672,7 +3672,7 @@
                           class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
               </div>
               <button type="submit" [disabled]="isSubmittingTicket || !newTicketTitle.trim() || !newTicketDesc.trim()"
-                      class="w-full py-4.5 bg-brand-accent hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-brand-accent/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                      class="w-full h-[34px] flex items-center justify-center bg-brand-accent hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-brand-accent/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                 {{ isSubmittingTicket ? 'กำลังส่งคำร้อง...' : 'ส่งเรื่องขอความช่วยเหลือ' }}
               </button>
             </form>

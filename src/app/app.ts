@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
+import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { environment } from '../environments/environment';
 import { InternshipDataService } from './internship-data.service';
@@ -55,7 +56,7 @@ export class App {
   protected apiRetrying = false;
 
   constructor() {
-    console.log('App Initialized v2.0 - Leaves & SweetAlert2');
+    console.log('โปรเจคส่งที่ฝึกงานฮัฟ ส่องไรเอ่ยย');
     this.applyRoleTheme(undefined);
     this.initSession();
   }
@@ -310,6 +311,25 @@ export class App {
   protected addStudentModalTab: 'pick' | 'create' = 'pick';
   protected pickStudentSearchQuery = '';
 
+  // Company & School management view variables
+  protected newSchoolName = '';
+  protected newCompanyName = '';
+  protected newCompanyDesc = '';
+  protected newCompanyAddr = '';
+  protected compSchoolTab: 'schools' | 'companies' = 'schools';
+  protected compSchoolSearch = '';
+
+  // Support Tickets view variables
+  protected newTicketTitle = '';
+  protected newTicketDesc = '';
+  protected ticketSearchQuery = '';
+  protected ticketStatusFilter: 'all' | 'open' | 'resolved' | 'closed' = 'all';
+  protected selectedTicket: any = null;
+  protected selectedTicketReplies: any[] = [];
+  protected newReplyMessage = '';
+  protected isSubmittingTicket = false;
+  protected isSubmittingReply = false;
+  protected ticketDetailLoading = false;
 
   protected readonly viewLabels: Record<string, string> = {
     dashboard: 'ภาพรวม',
@@ -326,7 +346,9 @@ export class App {
     evaluations: 'ประเมินผล',
     classwork: 'งาน',
     edit: 'แก้ไขข้อมูล',
-    schema: 'ฐานข้อมูล'
+    schema: 'ฐานข้อมูล',
+    company_school: 'บริษัท & โรงเรียน',
+    tickets: 'แจ้งปัญหา'
   };
 
   protected get assignments(): Assignment[] {
@@ -452,10 +474,10 @@ export class App {
 
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
-      admin: ['dashboard', 'admin_users', 'admin_schools', 'admin_codes', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'edit'],
-      advisor: ['dashboard', 'students', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'edit'],
-      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'edit'],
-      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'edit']
+      admin: ['dashboard', 'admin_users', 'admin_codes', 'company_school', 'tickets', 'edit'],
+      advisor: ['dashboard', 'students', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'company_school', 'tickets', 'edit'],
+      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'company_school', 'tickets', 'edit'],
+      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'company_school', 'tickets', 'edit']
     };
 
     if (!this.currentUser) return [];
@@ -3246,5 +3268,169 @@ export class App {
       return `/api/uploads/${filename}`;
     }
     return filePath;
+  }
+
+  // Company & School management methods
+  protected async addSchoolFromView(): Promise<void> {
+    if (!this.newSchoolName.trim()) {
+      this.notifications.warning('กรุณาระบุชื่อสถานศึกษา', 'ข้อมูลไม่ครบถ้วน');
+      return;
+    }
+    const res = await this.data.addAdminSchool(this.newSchoolName);
+    if (res && res.error) {
+      this.notifications.error(res.error, 'เพิ่มสถานศึกษาล้มเหลว');
+    } else {
+      this.notifications.success('เพิ่มสถานศึกษาเรียบร้อยแล้ว', 'สำเร็จ');
+      this.newSchoolName = '';
+    }
+  }
+
+  protected async addCompanyFromView(): Promise<void> {
+    if (!this.newCompanyName.trim()) {
+      this.notifications.warning('กรุณาระบุชื่อสถานประกอบการ', 'ข้อมูลไม่ครบถ้วน');
+      return;
+    }
+    const res = await this.data.addCompany(this.newCompanyName, this.newCompanyDesc, this.newCompanyAddr);
+    if (res && res.error) {
+      this.notifications.error(res.error, 'เพิ่มบริษัทล้มเหลว');
+    } else {
+      this.notifications.success('เพิ่มบริษัทเรียบร้อยแล้ว', 'สำเร็จ');
+      this.newCompanyName = '';
+      this.newCompanyDesc = '';
+      this.newCompanyAddr = '';
+    }
+  }
+
+  protected getFilteredSchools(): any[] {
+    const q = this.compSchoolSearch.toLowerCase().trim();
+    if (!q) return this.data.schools;
+    return this.data.schools.filter(s => s.name.toLowerCase().includes(q));
+  }
+
+  protected getFilteredCompanies(): any[] {
+    const q = this.compSchoolSearch.toLowerCase().trim();
+    if (!q) return this.data.companies;
+    return this.data.companies.filter(c => c.companyName.toLowerCase().includes(q));
+  }
+
+  // Ticket system methods
+  protected getFilteredTickets(): any[] {
+    const q = this.ticketSearchQuery.toLowerCase().trim();
+    const filter = this.ticketStatusFilter;
+    
+    return this.data.tickets.filter(t => {
+      const matchQuery = !q || 
+        t.title.toLowerCase().includes(q) || 
+        t.description.toLowerCase().includes(q) ||
+        (t.user_name && t.user_name.toLowerCase().includes(q));
+      
+      const matchFilter = filter === 'all' || t.status === filter;
+      return matchQuery && matchFilter;
+    });
+  }
+
+  protected async selectTicket(ticket: any): Promise<void> {
+    this.selectedTicket = ticket;
+    this.selectedTicketReplies = [];
+    this.newReplyMessage = '';
+    this.ticketDetailLoading = true;
+    
+    if (this.data.api.apiEnabled()) {
+      try {
+        const res = await firstValueFrom(this.data.api.getTicketById(ticket.id));
+        if (res) {
+          this.selectedTicket = res.ticket;
+          this.selectedTicketReplies = res.replies || [];
+        }
+      } catch (err) {
+        this.notifications.error('ดึงข้อมูลคำตอบของตั๋วช่วยเหลือล้มเหลว', 'เกิดข้อผิดพลาด');
+      } finally {
+        this.ticketDetailLoading = false;
+      }
+    } else {
+      // Mock replies
+      this.selectedTicketReplies = [
+        {
+          id: 1,
+          ticket_id: ticket.id,
+          user_id: 9999,
+          user_name: 'ฝ่ายดูแลระบบ (Support)',
+          user_role: 'admin',
+          message: 'สวัสดีค่ะ ได้รับเรื่องแล้วนะคะ ทางทีมงานกำลังเร่งตรวจสอบให้ค่ะ',
+          created_at: new Date(new Date(ticket.created_at).getTime() + 30 * 60 * 1000).toISOString()
+        }
+      ];
+      this.ticketDetailLoading = false;
+    }
+  }
+
+  protected async createSupportTicket(): Promise<void> {
+    if (!this.newTicketTitle.trim() || !this.newTicketDesc.trim()) {
+      this.notifications.warning('กรุณาระบุหัวข้อและรายละเอียดปัญหา', 'ข้อมูลไม่ครบถ้วน');
+      return;
+    }
+    
+    this.isSubmittingTicket = true;
+    const res = await this.data.addTicket(this.newTicketTitle, this.newTicketDesc, this.currentUser);
+    this.isSubmittingTicket = false;
+    
+    if (res && res.error) {
+      this.notifications.error(res.error, 'สร้างตั๋วช่วยเหลือล้มเหลว');
+    } else {
+      this.notifications.success('ส่งเรื่องแจ้งปัญหาเรียบร้อยแล้ว', 'ส่งสำเร็จ');
+      this.newTicketTitle = '';
+      this.newTicketDesc = '';
+    }
+  }
+
+  protected async sendTicketReply(): Promise<void> {
+    if (!this.newReplyMessage.trim() || !this.selectedTicket) {
+      return;
+    }
+    
+    this.isSubmittingReply = true;
+    const res = await this.data.replyToTicket(this.selectedTicket.id, this.newReplyMessage, this.currentUser);
+    this.isSubmittingReply = false;
+    
+    if (res && res.error) {
+      this.notifications.error(res.error, 'ส่งคำตอบล้มเหลว');
+    } else {
+      // Add local mock reply for instant feedback
+      const newReply = {
+        id: Date.now(),
+        ticket_id: this.selectedTicket.id,
+        user_id: this.currentUser?.id || 1001,
+        user_name: this.currentUser?.name || 'User',
+        user_role: this.currentUser?.role || 'student',
+        message: this.newReplyMessage.trim(),
+        created_at: new Date().toISOString()
+      };
+      this.selectedTicketReplies = [...this.selectedTicketReplies, newReply];
+      
+      // Update local ticket status in mock mode if user is not admin and ticket was resolved
+      if (this.currentUser?.role !== 'admin' && this.selectedTicket.status === 'resolved') {
+        this.selectedTicket.status = 'open';
+      }
+      
+      this.newReplyMessage = '';
+      this.notifications.success('ส่งคำตอบเรียบร้อย', 'สำเร็จ');
+      
+      // Reload from api
+      if (this.data.api.apiEnabled()) {
+        void this.selectTicket(this.selectedTicket);
+      }
+    }
+  }
+
+  protected async changeTicketStatus(status: 'open' | 'resolved' | 'closed'): Promise<void> {
+    if (!this.selectedTicket) return;
+    
+    const res = await this.data.updateTicketStatus(this.selectedTicket.id, status);
+    if (res && res.error) {
+      this.notifications.error(res.error, 'ปรับปรุงสถานะตั๋วช่วยเหลือล้มเหลว');
+    } else {
+      this.selectedTicket.status = status;
+      this.notifications.success(`อัปเดตสถานะเป็น: ${status === 'resolved' ? 'แก้ไขแล้ว' : status === 'closed' ? 'ปิดแล้ว' : 'เปิดใหม่'} เรียบร้อยแล้ว`, 'ปรับปรุงสำเร็จ');
+    }
   }
 }

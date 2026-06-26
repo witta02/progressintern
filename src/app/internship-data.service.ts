@@ -24,7 +24,9 @@ import {
   EnrollmentCode,
   Assignment,
   Submission,
-  SubmissionStatus
+  SubmissionStatus,
+  Ticket,
+  TicketReply
 } from './internship.models';
 
 @Injectable({ providedIn: 'root' })
@@ -50,6 +52,7 @@ export class InternshipDataService {
 
   schools: School[] = [];
   enrollmentCodes: EnrollmentCode[] = [];
+  tickets: Ticket[] = [];
 
   constructor() {
     if (environment.useMockData) {
@@ -91,15 +94,23 @@ export class InternshipDataService {
         const parts = token.split('.');
         if (parts.length === 3 && typeof atob !== 'undefined') {
           const payload = JSON.parse(atob(parts[1]));
-          if (payload && payload.role === 'admin') {
+          if (payload) {
+            // Load schools for all logged-in roles
             const schools = await firstValueFrom(this.api.getAdminSchools());
             this.schools = schools || [];
-            const codes = await firstValueFrom(this.api.getAdminCodes());
-            this.enrollmentCodes = codes || [];
+
+            // Load tickets for all logged-in roles
+            const tickets = await firstValueFrom(this.api.getTickets());
+            this.tickets = tickets || [];
+
+            if (payload.role === 'admin') {
+              const codes = await firstValueFrom(this.api.getAdminCodes());
+              this.enrollmentCodes = codes || [];
+            }
           }
         }
       } catch (e) {
-        // Safe fail if user is not admin or parsing failed
+        // Safe fail
       }
     }
   }
@@ -667,6 +678,30 @@ export class InternshipDataService {
       { id: 4, schoolId: 2, schoolName: 'Chulalongkorn University', role: 'advisor', code: 'CU-ADV-2026', maxUses: 5, usedCount: 0, isActive: true },
       { id: 5, role: 'company', code: 'COMP-INV-2026', maxUses: 10, usedCount: 0, isActive: true }
     ];
+    this.tickets = [
+      {
+        id: 1,
+        user_id: 1001,
+        user_name: 'สมชาย รักเรียน',
+        user_role: 'student',
+        title: 'ปัญหาระบบระบุพิกัด GPS',
+        description: 'กดปุ่มปักหมุดพิกัดแล้วเข็มหมุดไม่เลื่อนตามตำแหน่งปัจจุบันครับ',
+        status: 'open',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 2,
+        user_id: 2001,
+        user_name: 'บริษัท เทคโซลูชั่นส์',
+        user_role: 'company',
+        title: 'แก้ไขข้อมูลที่อยู่บริษัทไม่ได้',
+        description: 'พยายามแก้ไขข้อมูลที่อยู่แล้วระบบไม่ยอมเซฟครับ รบกวนตรวจสอบให้หน่อยค่ะ',
+        status: 'resolved',
+        created_at: new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ];
   }
 
   async addAdminSchool(name: string): Promise<any> {
@@ -871,7 +906,8 @@ export class InternshipDataService {
         schools: this.schools,
         enrollmentCodes: this.enrollmentCodes,
         assignments: this.assignments,
-        submissions: this.submissions
+        submissions: this.submissions,
+        tickets: this.tickets
       })
     );
   }
@@ -901,9 +937,91 @@ export class InternshipDataService {
       this.enrollmentCodes = Array.isArray(state.enrollmentCodes) ? state.enrollmentCodes : this.enrollmentCodes;
       this.assignments = Array.isArray(state.assignments) ? state.assignments : this.assignments;
       this.submissions = Array.isArray(state.submissions) ? state.submissions : this.submissions;
+      this.tickets = Array.isArray(state.tickets) ? state.tickets : this.tickets;
     } catch {
       localStorage.removeItem(this.storageKey);
     }
+  }
+
+  async addCompany(name: string, description?: string, address?: string): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        const res = await firstValueFrom(this.api.createCompany({ company_name: name, description, address }));
+        await this.refreshFromApi();
+        return res;
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'เพิ่มบริษัทล้มเหลว' };
+      }
+    }
+
+    const company: Company = {
+      id: this.nextId(this.companies),
+      userId: 9999 + this.companies.length,
+      companyName: name.trim(),
+      description: description || '',
+      address: address || '',
+      website: ''
+    };
+    this.companies = [...this.companies, company];
+    this.persist();
+    return company;
+  }
+
+  async addTicket(title: string, description: string, currentUser?: any): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        const res = await firstValueFrom(this.api.createTicket({ title, description }));
+        await this.refreshFromApi();
+        return res;
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'สร้างคำขอความช่วยเหลือล้มเหลว' };
+      }
+    }
+
+    const ticket: Ticket = {
+      id: this.nextId(this.tickets),
+      user_id: currentUser?.id || 1001,
+      user_name: currentUser?.name || 'User',
+      user_role: currentUser?.role || 'student',
+      title: title.trim(),
+      description: description.trim(),
+      status: 'open',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    this.tickets = [ticket, ...this.tickets];
+    this.persist();
+    return ticket;
+  }
+
+  async replyToTicket(ticketId: number, message: string, currentUser?: any): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        const res = await firstValueFrom(this.api.replyTicket(ticketId, message));
+        await this.refreshFromApi();
+        return res;
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'ตอบกลับล้มเหลว' };
+      }
+    }
+
+    return { status: 200, message: 'ตอบกลับเรียบร้อย (Mock)' };
+  }
+
+  async updateTicketStatus(ticketId: number, status: 'open' | 'resolved' | 'closed'): Promise<any> {
+    if (this.api.apiEnabled()) {
+      try {
+        const res = await firstValueFrom(this.api.updateTicketStatus(ticketId, status));
+        await this.refreshFromApi();
+        return res;
+      } catch (err: any) {
+        return { error: err?.error?.error || err?.message || 'ปรับปรุงสถานะล้มเหลว' };
+      }
+    }
+
+    this.tickets = this.tickets.map(t => t.id === ticketId ? { ...t, status, updated_at: new Date().toISOString() } : t);
+    this.persist();
+    return { status: 200, message: 'ปรับปรุงสถานะเรียบร้อย' };
   }
 
   async addAssignment(assignment: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {

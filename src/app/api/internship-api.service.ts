@@ -449,15 +449,61 @@ export class InternshipApiService {
   }
 
   getAdminSchools(): Observable<School[]> {
-    return this.http.get<any>(`${this.base}/admin/schools`, this.authOptions()).pipe(
+    return this.http.get<any>(`${this.base}/schools`, this.authOptions()).pipe(
       map((res) => res?.data || []),
       catchError(() => of([]))
     );
   }
 
   createAdminSchool(name: string): Observable<any> {
-    return this.http.post<any>(`${this.base}/admin/schools`, { name }, this.authOptions()).pipe(
+    return this.http.post<any>(`${this.base}/schools`, { name }, this.authOptions()).pipe(
       catchError((err) => {
+        throw err;
+      })
+    );
+  }
+
+  createCompany(body: { company_name: string; description?: string; address?: string }): Observable<any> {
+    return this.http.post<any>(`${this.base}/companies`, body, this.authOptions()).pipe(
+      catchError((err) => {
+        throw err;
+      })
+    );
+  }
+
+  getTickets(): Observable<any[]> {
+    return this.http.get<any>(`${this.base}/tickets`, this.authOptions()).pipe(
+      map(res => res?.data || []),
+      catchError(() => of([]))
+    );
+  }
+
+  getTicketById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/tickets/${id}`, this.authOptions()).pipe(
+      map(res => res?.data || null),
+      catchError(() => of(null))
+    );
+  }
+
+  createTicket(body: { title: string; description: string }): Observable<any> {
+    return this.http.post<any>(`${this.base}/tickets`, body, this.authOptions()).pipe(
+      catchError(err => {
+        throw err;
+      })
+    );
+  }
+
+  replyTicket(id: number, message: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/tickets/${id}/replies`, { message }, this.authOptions()).pipe(
+      catchError(err => {
+        throw err;
+      })
+    );
+  }
+
+  updateTicketStatus(id: number, status: 'open' | 'resolved' | 'closed'): Observable<any> {
+    return this.http.put<any>(`${this.base}/tickets/${id}/status`, { status }, this.authOptions()).pipe(
+      catchError(err => {
         throw err;
       })
     );

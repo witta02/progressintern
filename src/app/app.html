@@ -216,6 +216,8 @@
             <svg *ngSwitchCase="'classwork'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
             <svg *ngSwitchCase="'edit'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <svg *ngSwitchCase="'schema'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
+            <svg *ngSwitchCase="'company_school'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><rect x="4" y="14" width="6" height="8" rx="1"></rect><rect x="14" y="14" width="6" height="8" rx="1"></rect></svg>
+            <svg *ngSwitchCase="'tickets'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14h-2v-2h2zm0-4h-2V7h2z"></path></svg>
           </ng-container>
           <span class="text-[10px] font-black uppercase tracking-[0.1em] group-hover:text-brand-accent">{{ viewLabels[view] }}</span>
           <div class="absolute bottom-0 left-4 right-4 h-1 bg-brand-accent shadow-glow-indigo rounded-t-full transition-all" [class.opacity-100]="activeView === view" [class.opacity-0]="activeView !== view"></div>
@@ -2934,9 +2936,6 @@
                           class="w-full py-4.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-200 hover:scale-[1.01] cursor-pointer flex items-center justify-center gap-2">
                     📍 ปักหมุดตำแหน่งปัจจุบันของบริษัท (Pin Current Geolocation)
                   </button>
-                  <p class="text-[10px] text-slate-400 font-bold text-center mt-2">
-                    * พิกัดนี้จะใช้ตรวจจับขอบเขต Geofencing ในระยะห่างไม่เกิน 200 เมตร เมื่อนักศึกษาลงเวลาทำงาน
-                  </p>
                 </div>
               </div>
 
@@ -3432,6 +3431,307 @@
             </div>
           </div>
         </article>
+      </section>
+
+      <!-- COMPANY SCHOOL VIEW (EVERYROLE) -->
+      <section *ngIf="activeView === 'company_school'" class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <!-- Forms Panel -->
+        <div class="space-y-10 lg:col-span-1">
+          <!-- Add School Form -->
+          <article class="glass-card p-10 rounded-[2.5rem] space-y-6">
+            <div class="border-b border-slate-100 pb-4">
+              <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">🏫 เพิ่มสถานศึกษา</h3>
+              <p class="text-slate-400 font-bold text-xs mt-1">เพิ่มมหาวิทยาลัยหรือโรงเรียนใหม่เข้าสู่ระบบ</p>
+            </div>
+            <form (ngSubmit)="addSchoolFromView()" class="space-y-6">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อสถานศึกษา</label>
+                <input name="newSchoolName" type="text" [(ngModel)]="newSchoolName" placeholder="เช่น มหาวิทยาลัยธรรมศาสตร์" required
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+              </div>
+              <button type="submit" class="w-full py-4 bg-brand-accent hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-md shadow-brand-accent/20 cursor-pointer">
+                บันทึกสถานศึกษา
+              </button>
+            </form>
+          </article>
+
+          <!-- Add Company Form -->
+          <article class="glass-card p-10 rounded-[2.5rem] space-y-6">
+            <div class="border-b border-slate-100 pb-4">
+              <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">🏢 เพิ่มบริษัท / หน่วยงาน</h3>
+              <p class="text-slate-400 font-bold text-xs mt-1">เพิ่มหน่วยงานหรือสถานประกอบการที่รับฝึกงาน</p>
+            </div>
+            <form (ngSubmit)="addCompanyFromView()" class="space-y-6">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อบริษัท/หน่วยงาน</label>
+                <input name="newCompanyName" type="text" [(ngModel)]="newCompanyName" placeholder="เช่น บริษัท กขค จำกัด" required
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ที่ตั้งสำนักงาน</label>
+                <textarea name="newCompanyAddr" [(ngModel)]="newCompanyAddr" placeholder="ที่อยู่ในการติดต่อ..." rows="2"
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียด</label>
+                <textarea name="newCompanyDesc" [(ngModel)]="newCompanyDesc" placeholder="อธิบายประเภทธุรกิจหรือธุรกิจหลัก..." rows="3"
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+              </div>
+              <button type="submit" class="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-sm transition-all shadow-md shadow-slate-200 cursor-pointer">
+                บันทึกข้อมูลบริษัท
+              </button>
+            </form>
+          </article>
+        </div>
+
+        <!-- Directories Panel -->
+        <article class="glass-card rounded-[2.5rem] overflow-hidden lg:col-span-2 flex flex-col min-h-[500px]">
+          <!-- Directory Tabs -->
+          <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+              <button (click)="compSchoolTab = 'schools'" 
+                      class="px-5 py-3 rounded-2xl font-black text-sm transition-all cursor-pointer"
+                      [class.bg-white]="compSchoolTab === 'schools'" [class.shadow-md]="compSchoolTab === 'schools'" [class.text-brand-accent]="compSchoolTab === 'schools'"
+                      [class.text-slate-500]="compSchoolTab !== 'schools'">🏫 รายชื่อสถานศึกษา ({{ data.schools.length }})</button>
+              <button (click)="compSchoolTab = 'companies'" 
+                      class="px-5 py-3 rounded-2xl font-black text-sm transition-all cursor-pointer"
+                      [class.bg-white]="compSchoolTab === 'companies'" [class.shadow-md]="compSchoolTab === 'companies'" [class.text-brand-accent]="compSchoolTab === 'companies'"
+                      [class.text-slate-500]="compSchoolTab !== 'companies'">🏢 รายชื่อบริษัท ({{ data.companies.length }})</button>
+            </div>
+            <div class="relative w-full sm:w-64">
+              <input type="text" [(ngModel)]="compSchoolSearch" placeholder="ค้นหาข้อมูล..."
+                     class="w-full pl-5 pr-10 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-xs font-bold text-slate-800 placeholder:text-slate-300">
+            </div>
+          </div>
+
+          <!-- Directory List -->
+          <div class="flex-1 overflow-y-auto max-h-[550px]">
+            <!-- Schools List -->
+            <table *ngIf="compSchoolTab === 'schools'" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/50 border-b border-slate-100">
+                  <th class="px-10 py-4 font-black uppercase text-slate-400 text-[10px] tracking-wider">รหัสสถานศึกษา</th>
+                  <th class="px-10 py-4 font-black uppercase text-slate-400 text-[10px] tracking-wider">ชื่อสถานศึกษา</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                <tr *ngFor="let s of getFilteredSchools()" class="hover:bg-slate-50/40 transition-colors">
+                  <td class="px-10 py-5 font-mono text-xs text-slate-400">#{{ s.id }}</td>
+                  <td class="px-10 py-5 font-bold text-slate-800 text-sm">{{ s.name }}</td>
+                </tr>
+                <tr *ngIf="getFilteredSchools().length === 0">
+                  <td colspan="2" class="px-10 py-12 text-center text-slate-400 font-bold text-sm">ไม่พบข้อมูลสถานศึกษาที่ค้นหา</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Companies List -->
+            <table *ngIf="compSchoolTab === 'companies'" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/50 border-b border-slate-100">
+                  <th class="px-10 py-4 font-black uppercase text-slate-400 text-[10px] tracking-wider">ชื่อบริษัท/หน่วยงาน</th>
+                  <th class="px-10 py-4 font-black uppercase text-slate-400 text-[10px] tracking-wider">ที่ตั้งสำนักงาน</th>
+                  <th class="px-10 py-4 font-black uppercase text-slate-400 text-[10px] tracking-wider">รายละเอียด</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                <tr *ngFor="let c of getFilteredCompanies()" class="hover:bg-slate-50/40 transition-colors">
+                  <td class="px-10 py-5 font-bold text-slate-800 text-sm">{{ c.companyName }}</td>
+                  <td class="px-10 py-5 text-slate-500 text-xs font-bold max-w-xs truncate">{{ c.address || '-' }}</td>
+                  <td class="px-10 py-5 text-slate-400 text-xs font-bold max-w-xs truncate">{{ c.description || '-' }}</td>
+                </tr>
+                <tr *ngIf="getFilteredCompanies().length === 0">
+                  <td colspan="3" class="px-10 py-12 text-center text-slate-400 font-bold text-sm">ไม่พบข้อมูลบริษัทที่ค้นหา</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- TICKETS VIEW (SUPPORT SYSTEM) -->
+      <section *ngIf="activeView === 'tickets'" class="space-y-10 animate-in fade-in duration-200">
+        <!-- Selected Ticket Detail View -->
+        <article *ngIf="selectedTicket" class="glass-card rounded-[2.5rem] overflow-hidden">
+          <div class="p-8 sm:p-10 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+              <button (click)="selectedTicket = null" class="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer text-slate-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 12H5m7 7l-7-7 7-7"/></svg>
+              </button>
+              <div>
+                <span class="inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest mb-1.5"
+                      [class.bg-blue-100]="selectedTicket.status === 'open'" [class.text-blue-800]="selectedTicket.status === 'open'"
+                      [class.bg-emerald-100]="selectedTicket.status === 'resolved'" [class.text-emerald-800]="selectedTicket.status === 'resolved'"
+                      [class.bg-slate-200]="selectedTicket.status === 'closed'" [class.text-slate-800]="selectedTicket.status === 'closed'">
+                  {{ selectedTicket.status === 'open' ? 'กำลังดำเนินการ' : selectedTicket.status === 'resolved' ? 'แก้ไขแล้ว' : 'ปิดแล้ว' }}
+                </span>
+                <h3 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{{ selectedTicket.title }}</h3>
+              </div>
+            </div>
+            
+            <!-- Admin status controls / owner close control -->
+            <div class="flex items-center gap-2">
+              <button *ngIf="selectedTicket.status !== 'closed' && (currentUser?.role === 'admin' || currentUser?.id === selectedTicket.user_id)" 
+                      (click)="changeTicketStatus('closed')"
+                      class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-black transition-colors cursor-pointer">
+                🔒 ปิดงานสนับสนุน (Close)
+              </button>
+              <button *ngIf="selectedTicket.status === 'open' && currentUser?.role === 'admin'" 
+                      (click)="changeTicketStatus('resolved')"
+                      class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors cursor-pointer shadow-md shadow-emerald-200">
+                ✓ ทำเครื่องหมายว่าแก้ไขแล้ว (Resolve)
+              </button>
+              <button *ngIf="selectedTicket.status !== 'open' && currentUser?.role === 'admin'" 
+                      (click)="changeTicketStatus('open')"
+                      class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-colors cursor-pointer shadow-md shadow-blue-200">
+                🗂️ เปิดงานสนับสนุนใหม่ (Reopen)
+              </button>
+            </div>
+          </div>
+
+          <!-- Main ticket content & replies thread -->
+          <div class="p-8 sm:p-10 space-y-8 bg-slate-50/20 max-h-[500px] overflow-y-auto">
+            <!-- Ticket Originator Message -->
+            <div class="flex gap-4 items-start">
+              <div class="w-10 h-10 rounded-full bg-brand-accent/15 flex items-center justify-center text-brand-accent font-black text-sm shrink-0 uppercase">
+                {{ selectedTicket.user_name?.substring(0,2) || 'US' }}
+              </div>
+              <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-2 flex-1">
+                <div class="flex justify-between items-center">
+                  <strong class="text-sm font-black text-slate-800">{{ selectedTicket.user_name }}</strong>
+                  <small class="text-[10px] text-slate-400 font-bold">{{ selectedTicket.created_at | date:'d MMMM yyyy, HH:mm':'':'th' }}</small>
+                </div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{{ selectedTicket.user_role === 'student' ? 'นักศึกษา' : selectedTicket.user_role === 'company' ? 'บริษัท' : selectedTicket.user_role === 'advisor' ? 'อาจารย์' : 'ผู้ดูแลระบบ' }}</div>
+                <p class="text-slate-600 text-sm font-bold leading-relaxed whitespace-pre-wrap">{{ selectedTicket.description }}</p>
+              </div>
+            </div>
+
+            <!-- Replies list -->
+            <div class="space-y-6">
+              <div *ngFor="let rep of selectedTicketReplies" class="flex gap-4 items-start" [class.flex-row-reverse]="rep.user_role === 'admin'">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 uppercase"
+                     [class.bg-blue-600]="rep.user_role === 'admin'" [class.text-white]="rep.user_role === 'admin'"
+                     [class.bg-slate-100]="rep.user_role !== 'admin'" [class.text-slate-600]="rep.user_role !== 'admin'">
+                  {{ rep.user_name?.substring(0,2) || 'SU' }}
+                </div>
+                <div class="p-6 rounded-3xl border shadow-sm space-y-2 max-w-[85%] flex-1"
+                     [class.bg-blue-50/40]="rep.user_role === 'admin'" [class.border-blue-100]="rep.user_role === 'admin'"
+                     [class.bg-white]="rep.user_role !== 'admin'" [class.border-slate-100]="rep.user_role !== 'admin'">
+                  <div class="flex justify-between items-center">
+                    <strong class="text-sm font-black text-slate-800">{{ rep.user_name }}</strong>
+                    <small class="text-[10px] text-slate-400 font-bold">{{ rep.created_at | date:'d MMMM yyyy, HH:mm':'':'th' }}</small>
+                  </div>
+                  <div class="text-[10px] font-black uppercase tracking-widest" [class.text-blue-600]="rep.user_role === 'admin'" [class.text-slate-400]="rep.user_role !== 'admin'">
+                    {{ rep.user_role === 'admin' ? 'ฝ่ายบริการลูกค้า' : rep.user_role === 'student' ? 'นักศึกษา' : rep.user_role === 'company' ? 'บริษัท' : 'อาจารย์' }}
+                  </div>
+                  <p class="text-slate-600 text-sm font-bold leading-relaxed whitespace-pre-wrap mt-2">{{ rep.message }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="selectedTicketReplies.length === 0 && !ticketDetailLoading" class="text-center py-6 text-slate-400 font-bold text-xs">
+              ยังไม่มีการตอบกลับในตั๋วช่วยเหลือนี้
+            </div>
+          </div>
+
+          <!-- Quick reply area -->
+          <div class="p-8 sm:p-10 border-t border-slate-100 bg-white" *ngIf="selectedTicket.status !== 'closed'">
+            <form (ngSubmit)="sendTicketReply()" class="space-y-4">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">พิมพ์ข้อความตอบกลับ</label>
+                <textarea name="replyMsg" [(ngModel)]="newReplyMessage" placeholder="ระบุข้อความเพื่อสนทนากับผู้เกี่ยวข้อง..." rows="3" required
+                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+              </div>
+              <div class="flex justify-end">
+                <button type="submit" [disabled]="isSubmittingReply || !newReplyMessage.trim()"
+                        class="px-8 py-4.5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-sm transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                  {{ isSubmittingReply ? 'กำลังส่ง...' : 'ส่งคำตอบ' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </article>
+
+        <!-- Main ticket dashboard -->
+        <div *ngIf="!selectedTicket" class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <!-- Left side: Create Ticket (Not for admin role, admins only respond to tickets) -->
+          <article class="glass-card p-10 rounded-[2.5rem] self-start space-y-6" *ngIf="currentUser?.role !== 'admin'">
+            <div class="border-b border-slate-100 pb-4">
+              <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">🎫 ส่งเรื่องแจ้งปัญหา</h3>
+              <p class="text-slate-400 font-bold text-xs mt-1">ส่งหัวข้อร้องเรียนหรือปัญหาเพื่อให้ผู้ดูแลระบบช่วยเหลือ</p>
+            </div>
+            <form (ngSubmit)="createSupportTicket()" class="space-y-6">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อปัญหา</label>
+                <input name="ticketTitle" type="text" [(ngModel)]="newTicketTitle" placeholder="ระบุหัวข้อสั้นๆ เช่น ไม่สามารถเข้าใช้งานระบบได้" required
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดปัญหา</label>
+                <textarea name="ticketDesc" [(ngModel)]="newTicketDesc" placeholder="อธิบายรายละเอียดการแก้ไขปัญหา พฤติกรรมที่พบ หรือข้อความความผิดพลาด..." rows="5" required
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+              </div>
+              <button type="submit" [disabled]="isSubmittingTicket || !newTicketTitle.trim() || !newTicketDesc.trim()"
+                      class="w-full py-4.5 bg-brand-accent hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-brand-accent/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                {{ isSubmittingTicket ? 'กำลังส่งคำร้อง...' : 'ส่งเรื่องขอความช่วยเหลือ' }}
+              </button>
+            </form>
+          </article>
+
+          <!-- Right side: Ticket list -->
+          <article class="glass-card rounded-[2.5rem] overflow-hidden" [class.lg:col-span-2]="currentUser?.role !== 'admin'" [class.lg:col-span-3]="currentUser?.role === 'admin'">
+            <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <h3 class="text-xl font-black text-slate-800">{{ currentUser?.role === 'admin' ? 'ตั๋วคำขอรับบริการช่วยเหลือทั้งหมด' : 'ประวัติการขอรับบริการของฉัน' }}</h3>
+                <p class="text-slate-400 font-bold text-xs mt-1">คัดกรอง ค้นหา และตอบรับการช่วยเหลือ</p>
+              </div>
+              
+              <!-- Filters -->
+              <div class="flex items-center gap-3">
+                <select name="ticketStatus" [(ngModel)]="ticketStatusFilter"
+                        class="px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-xs font-bold text-slate-600">
+                  <option value="all">ทั้งหมด</option>
+                  <option value="open">กำลังดำเนินการ (Open)</option>
+                  <option value="resolved">แก้ไขแล้ว (Resolved)</option>
+                  <option value="closed">ปิดตั๋วแล้ว (Closed)</option>
+                </select>
+                
+                <input type="text" [(ngModel)]="ticketSearchQuery" placeholder="ค้นหาตั๋ว..."
+                       class="pl-4 pr-8 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-xs font-bold text-slate-600 placeholder:text-slate-300 w-44">
+              </div>
+            </div>
+
+            <!-- List body -->
+            <div class="divide-y divide-slate-50 overflow-y-auto max-h-[500px]">
+              <div *ngFor="let t of getFilteredTickets()" (click)="selectTicket(t)"
+                   class="p-8 hover:bg-slate-50/40 transition-colors flex items-center justify-between gap-6 cursor-pointer">
+                <div class="space-y-2 flex-1 min-w-0">
+                  <div class="flex items-center gap-3">
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest"
+                          [class.bg-blue-100]="t.status === 'open'" [class.text-blue-800]="t.status === 'open'"
+                          [class.bg-emerald-100]="t.status === 'resolved'" [class.text-emerald-800]="t.status === 'resolved'"
+                          [class.bg-slate-200]="t.status === 'closed'" [class.text-slate-800]="t.status === 'closed'">
+                      {{ t.status === 'open' ? 'เปิด' : t.status === 'resolved' ? 'แก้แล้ว' : 'ปิด' }}
+                    </span>
+                    <strong class="text-slate-800 text-base font-black truncate block">{{ t.title }}</strong>
+                  </div>
+                  <p class="text-slate-400 text-xs font-bold truncate max-w-xl">{{ t.description }}</p>
+                  <div class="flex items-center gap-4 text-[10px] text-slate-400 font-bold mt-1">
+                    <span *ngIf="currentUser?.role === 'admin'">👤 โดย: {{ t.user_name }} ({{ t.user_role === 'student' ? 'นักศึกษา' : t.user_role === 'company' ? 'บริษัท' : 'อาจารย์' }})</span>
+                    <span>🕒 เมื่อ: {{ t.created_at | date:'d MMM yyyy, HH:mm':'':'th' }}</span>
+                  </div>
+                </div>
+                <div class="shrink-0 text-slate-300 hover:text-slate-600 transition-colors">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+                </div>
+              </div>
+
+              <div *ngIf="getFilteredTickets().length === 0" class="text-center py-20 text-slate-400 font-bold text-sm">
+                ไม่พบตั๋วความช่วยเหลือในประวัติ
+              </div>
+            </div>
+          </article>
+        </div>
       </section>
 
     </div>

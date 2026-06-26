@@ -226,3 +226,25 @@ export interface Submission {
   submittedAt: string;
   gradedAt?: string;
 }
+
+export interface Ticket {
+  id: number;
+  user_id: number;
+  user_name?: string;
+  user_role?: string;
+  title: string;
+  description: string;
+  status: 'open' | 'resolved' | 'closed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TicketReply {
+  id: number;
+  ticket_id: number;
+  user_id: number;
+  user_name?: string;
+  user_role?: string;
+  message: string;
+  created_at: string;
+}

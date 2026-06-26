@@ -2024,14 +2024,21 @@ export class App {
 
   protected openGradingModal(sub: Submission): void {
     this.selectedSubmissionForGrading = sub;
+    const assignment = this.getAssignmentById(sub.assignmentId);
+    const maxPoints = assignment?.points || 100;
+    const initialRubricScore = sub.score !== undefined ? Math.round((sub.score / maxPoints) * 100) : 100;
+
     this.gradeForm = {
-      score: sub.score !== undefined ? sub.score : 100,
+      score: initialRubricScore,
       feedback: sub.feedback ?? ''
     };
-    this.rubricPunctuality = 25;
-    this.rubricTechnical = 25;
-    this.rubricAttitude = 25;
-    this.rubricDocumentation = 25;
+
+    const baseVal = Math.floor(initialRubricScore / 4);
+    const remainder = initialRubricScore % 4;
+    this.rubricPunctuality = baseVal + (remainder > 0 ? 1 : 0);
+    this.rubricTechnical = baseVal + (remainder > 1 ? 1 : 0);
+    this.rubricAttitude = baseVal + (remainder > 2 ? 1 : 0);
+    this.rubricDocumentation = baseVal;
   }
 
   protected updateGradingScore(): void {
@@ -2041,9 +2048,13 @@ export class App {
   protected async gradeSubmission(): Promise<void> {
     if (!this.selectedSubmissionForGrading) return;
     try {
+      const assignment = this.getAssignmentById(this.selectedSubmissionForGrading.assignmentId);
+      const maxPoints = assignment?.points || 100;
+      const scaledScore = parseFloat(((this.gradeForm.score / 100) * maxPoints).toFixed(2));
+
       await this.data.gradeSubmission(
         this.selectedSubmissionForGrading.id,
-        this.gradeForm.score,
+        scaledScore,
         this.gradeForm.feedback
       );
       this.notifications.success('ให้คะแนนและส่งคืนเรียบร้อย', 'สำเร็จ');

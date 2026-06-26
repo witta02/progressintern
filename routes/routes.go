@@ -55,7 +55,7 @@ func SetupRoutes(router *gin.Engine) {
 	companyGroup := router.Group("/api/companies")
 	{
 		companyGroup.GET("", handlers.GetAllCompaniesHandler)
-		companyGroup.POST("", middleware.AuthMiddleware(), handlers.CreateCompanyHandler)
+		companyGroup.POST("", middleware.AuthMiddleware(), middleware.RequireRole("admin"), handlers.CreateCompanyHandler)
 	}
 
 	// ========================================================
@@ -65,7 +65,7 @@ func SetupRoutes(router *gin.Engine) {
 	schoolGroup.Use(middleware.AuthMiddleware())
 	{
 		schoolGroup.GET("", handlers.GetAllSchoolsHandler)
-		schoolGroup.POST("", handlers.CreateSchoolHandler)
+		schoolGroup.POST("", middleware.RequireRole("admin"), handlers.CreateSchoolHandler)
 	}
 
 	// ========================================================

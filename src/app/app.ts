@@ -475,9 +475,9 @@ export class App {
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
       admin: ['dashboard', 'admin_users', 'admin_codes', 'company_school', 'tickets', 'edit'],
-      advisor: ['dashboard', 'students', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'company_school', 'tickets', 'edit'],
-      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'company_school', 'tickets', 'edit'],
-      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'company_school', 'tickets', 'edit']
+      advisor: ['dashboard', 'students', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets', 'edit'],
+      student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets', 'edit'],
+      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets', 'edit']
     };
 
     if (!this.currentUser) return [];

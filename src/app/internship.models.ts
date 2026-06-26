@@ -195,6 +195,10 @@ export interface EnrollmentCode {
   usedCount: number;
   expiresAt?: string;
   isActive: boolean;
+  companyId?: number;
+  companyName?: string;
+  companyAddress?: string;
+  companyDescription?: string;
   createdAt?: string;
 }
 

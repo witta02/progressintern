@@ -126,6 +126,10 @@
         </div>
       </div>
 
+      <p *ngIf="skipCompanyFields && presetCompanyName" class="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-3 rounded-xl border border-blue-100">
+        ข้อมูลบริษัทถูกกำหนดไว้แล้ว: {{ presetCompanyName }} — ไม่ต้องกรอกข้อมูลบริษัทเพิ่มเติม
+      </p>
+
       <div *ngIf="isRegisterCompany" class="pt-6 space-y-5 border-t border-slate-100 mt-6">
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อบริษัท</label>
@@ -3112,6 +3116,26 @@
               </select>
             </div>
 
+            <!-- Company preset (if company role) -->
+            <div *ngIf="adminCodeForm.role === 'company'" class="space-y-5 pt-2 border-t border-slate-100">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อสถานประกอบการ (Company Name) *</label>
+                <input name="adminCompanyName" type="text" [(ngModel)]="adminCodeForm.companyName" placeholder="เช่น บริษัท ABC จำกัด" required
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ที่อยู่บริษัท (Address)</label>
+                <textarea name="adminCompanyAddress" [(ngModel)]="adminCodeForm.companyAddress" placeholder="ที่ตั้งของสำนักงาน..." rows="2"
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คำอธิบายบริษัท (Description)</label>
+                <textarea name="adminCompanyDescription" [(ngModel)]="adminCodeForm.companyDescription" placeholder="รายละเอียดของบริษัทและธุรกิจ..." rows="2"
+                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+              </div>
+              <p class="text-[11px] font-bold text-slate-400">ผู้ใช้ที่สมัครด้วยรหัสนี้จะไม่ต้องกรอกข้อมูลบริษัทเอง</p>
+            </div>
+
             <!-- Max Uses -->
             <div class="space-y-2">
               <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">จำนวนที่ใช้ได้สูงสุด (Max Uses - ว่างได้หากไม่จำกัด)</label>
@@ -3200,10 +3224,11 @@
                   <td class="px-6 py-4 font-black text-slate-900 text-lg">{{ c.code }}</td>
                   <td class="px-6 py-4">
                     <div class="font-black text-blue-600 text-xs uppercase tracking-wider">{{ roleName(c.role) }}</div>
-                    <div class="text-xs text-slate-400 mt-0.5">{{ c.schoolName || '-' }}</div>
+                    <div class="text-xs text-slate-400 mt-0.5">{{ c.schoolName || c.school_name || '-' }}</div>
+                    <div *ngIf="c.companyName || c.company_name" class="text-xs text-amber-600 font-bold mt-0.5">{{ c.companyName || c.company_name }}</div>
                   </td>
                   <td class="px-6 py-4 font-bold text-slate-500">
-                    <span class="text-slate-800">{{ c.usedCount }}</span> / {{ c.maxUses || 'ไม่จำกัด' }}
+                    <span class="text-slate-800">{{ c.usedCount ?? c.used_count }}</span> / {{ c.maxUses ?? c.max_uses || 'ไม่จำกัด' }}
                   </td>
                   <td class="px-6 py-4 font-bold text-slate-500">{{ formatTermDate(c.expiresAt) }}</td>
                   <td class="px-6 py-4">

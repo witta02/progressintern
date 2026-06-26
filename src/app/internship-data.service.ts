@@ -734,6 +734,9 @@ export class InternshipDataService {
     code: string;
     maxUses?: number | null;
     expiresAt?: string | null;
+    companyName?: string;
+    companyAddress?: string;
+    companyDescription?: string;
   }): Promise<any> {
     if (this.api.apiEnabled()) {
       try {
@@ -742,7 +745,10 @@ export class InternshipDataService {
           role: body.role,
           code: body.code,
           max_uses: body.maxUses,
-          expires_at: body.expiresAt
+          expires_at: body.expiresAt,
+          company_name: body.companyName?.trim() || undefined,
+          company_address: body.companyAddress?.trim() || undefined,
+          company_description: body.companyDescription?.trim() || undefined
         };
         const res = await firstValueFrom(this.api.createAdminCode(payload));
         await this.refreshFromApi();
@@ -762,7 +768,10 @@ export class InternshipDataService {
       maxUses: body.maxUses || undefined,
       usedCount: 0,
       expiresAt: body.expiresAt || undefined,
-      isActive: true
+      isActive: true,
+      companyName: body.companyName?.trim() || undefined,
+      companyAddress: body.companyAddress?.trim() || undefined,
+      companyDescription: body.companyDescription?.trim() || undefined
     };
 
     this.enrollmentCodes = [...this.enrollmentCodes, code];

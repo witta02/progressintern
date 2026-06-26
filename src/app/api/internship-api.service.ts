@@ -522,6 +522,9 @@ export class InternshipApiService {
     code: string;
     max_uses?: number | null;
     expires_at?: string | null;
+    company_name?: string;
+    company_address?: string;
+    company_description?: string;
   }): Observable<any> {
     return this.http.post<any>(`${this.base}/admin/codes`, body, this.authOptions()).pipe(
       catchError((err) => {

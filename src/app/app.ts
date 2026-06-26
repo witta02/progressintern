@@ -159,6 +159,8 @@ export class App {
   protected detectedRoleName = '';
   protected codeValidationError = '';
   protected validatingCode = false;
+  protected skipCompanyFields = false;
+  protected presetCompanyName = '';
   protected currentLatitude: number | null = null;
   protected currentLongitude: number | null = null;
 
@@ -226,7 +228,10 @@ export class App {
     role: 'student' as 'student' | 'advisor' | 'company',
     code: '',
     maxUses: null as number | null,
-    expiresAt: null as string | null
+    expiresAt: null as string | null,
+    companyName: '',
+    companyAddress: '',
+    companyDescription: ''
   };
 
   protected selectedCodeToEdit: any | null = null;
@@ -948,7 +953,7 @@ export class App {
   }
 
   protected get isRegisterCompany(): boolean {
-    return this.registerForm.role === 'company';
+    return this.registerForm.role === 'company' && !this.skipCompanyFields;
   }
 
   protected async login(): Promise<void> {
@@ -1021,6 +1026,8 @@ export class App {
     this.detectedRoleName = '';
     this.registerForm.role = '';
     this.registerForm.school = '';
+    this.skipCompanyFields = false;
+    this.presetCompanyName = '';
 
     const cleanCode = code.trim();
     if (!cleanCode) {
@@ -1042,18 +1049,30 @@ export class App {
         return;
       }
 
-      const { role, school_name } = res.data;
+      const data = res.data ?? res;
+      const role = data.role;
+      const school_name = data.school_name ?? data.schoolName;
+      const company_name = data.company_name ?? data.companyName;
+      const skip_company_fields = data.skip_company_fields ?? data.skipCompanyFields;
+
       this.registerForm.role = role as RegisterRole;
       if (school_name) {
         this.registerForm.school = school_name;
       }
+
+      this.skipCompanyFields = !!skip_company_fields;
+      this.presetCompanyName = company_name || '';
 
       if (role === 'student') {
         this.detectedRoleName = `นักศึกษา (Student) - ${school_name || ''}`;
       } else if (role === 'advisor') {
         this.detectedRoleName = `อาจารย์ / ผู้ดูแลฝึกงาน (Advisor) - ${school_name || ''}`;
       } else if (role === 'company') {
-        this.detectedRoleName = `สถานประกอบการ (Company) ${school_name ? '- เชิญโดย ' + school_name : ''}`;
+        if (this.skipCompanyFields && company_name) {
+          this.detectedRoleName = `สถานประกอบการ (Company) - ${company_name}`;
+        } else {
+          this.detectedRoleName = `สถานประกอบการ (Company) ${school_name ? '- เชิญโดย ' + school_name : ''}`;
+        }
       }
       this.cdr.markForCheck();
     }, 500);
@@ -2539,6 +2558,8 @@ export class App {
     };
     this.detectedRoleName = '';
     this.codeValidationError = '';
+    this.skipCompanyFields = false;
+    this.presetCompanyName = '';
   }
 
   private async finishLogin(user: User, showNotification = true): Promise<void> {
@@ -2772,12 +2793,19 @@ export class App {
       this.notifications.warning('กรุณากรอกรหัสเชิญ', 'จัดการรหัสเชิญ');
       return;
     }
+    if (this.adminCodeForm.role === 'company' && !this.adminCodeForm.companyName.trim()) {
+      this.notifications.warning('กรุณาระบุชื่อสถานประกอบการ', 'จัดการรหัสเชิญ');
+      return;
+    }
     const body = {
       schoolId: this.adminCodeForm.role === 'company' ? null : (this.adminCodeForm.schoolId ? Number(this.adminCodeForm.schoolId) : null),
       role: this.adminCodeForm.role,
       code: this.adminCodeForm.code.trim().toUpperCase(),
       maxUses: this.adminCodeForm.maxUses ? Number(this.adminCodeForm.maxUses) : null,
-      expiresAt: this.adminCodeForm.expiresAt ? new Date(this.adminCodeForm.expiresAt).toISOString() : null
+      expiresAt: this.adminCodeForm.expiresAt ? new Date(this.adminCodeForm.expiresAt).toISOString() : null,
+      companyName: this.adminCodeForm.role === 'company' ? this.adminCodeForm.companyName.trim() : undefined,
+      companyAddress: this.adminCodeForm.role === 'company' ? this.adminCodeForm.companyAddress.trim() || undefined : undefined,
+      companyDescription: this.adminCodeForm.role === 'company' ? this.adminCodeForm.companyDescription.trim() || undefined : undefined
     };
     const res = await this.data.addAdminCode(body);
     if (res && res.error) {
@@ -2787,6 +2815,9 @@ export class App {
       this.adminCodeForm.code = '';
       this.adminCodeForm.maxUses = null;
       this.adminCodeForm.expiresAt = null;
+      this.adminCodeForm.companyName = '';
+      this.adminCodeForm.companyAddress = '';
+      this.adminCodeForm.companyDescription = '';
     }
     window.location.reload();
   }

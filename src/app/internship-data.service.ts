@@ -116,7 +116,11 @@ export class InternshipDataService {
   }
 
   companyForUser(userId: number): Company | undefined {
-    return this.companies.find((c) => c.userId === userId);
+    const user = this.users.find((u) => u.id === userId);
+    if (user && user.companyId) {
+      return this.companies.find((c) => c.id === user.companyId);
+    }
+    return this.companies.find((c) => c.userId === userId || c.id === userId);
   }
 
   companyIdForUser(userId: number): number | undefined {

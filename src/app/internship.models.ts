@@ -50,6 +50,7 @@ export interface User {
   updatedAt?: string;
   internStartDate?: string;
   internEndDate?: string;
+  companyId?: number;
   /** Mock-only: link student → advisor until backend adds this relation */
   advisorId?: number;
 }

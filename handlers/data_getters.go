@@ -25,13 +25,13 @@ func GetAllUsersHandler(c *gin.Context) {
 	userIDInt := reqUserID.(int)
 
 	if roleStr == "admin" {
-		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users")
+		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users")
 	} else if roleStr == "advisor" {
 		var school string
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') 
+			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') 
 			 FROM users 
 			 WHERE id = ? 
 			    OR (school = ? AND school <> '' AND role IN ('student', 'advisor')) 
@@ -51,7 +51,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		}
 
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
 			 FROM users u
 			 LEFT JOIN job_postings j ON j.company_id = ?
 			 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = u.id
@@ -72,7 +72,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
 			 FROM users u
 			 LEFT JOIN companies c ON c.id = u.company_id
 			 LEFT JOIN job_postings j ON j.company_id = c.id
@@ -97,12 +97,17 @@ func GetAllUsersHandler(c *gin.Context) {
 	for rows.Next() {
 		var id int
 		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, internStartDate, internEndDate string
-		var advisorID sql.NullInt64
-		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &internStartDate, &internEndDate)
+		var advisorID, companyID sql.NullInt64
+		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &internStartDate, &internEndDate)
 
 		var advIDVal interface{} = nil
 		if advisorID.Valid {
 			advIDVal = advisorID.Int64
+		}
+
+		var cIDVal interface{} = nil
+		if companyID.Valid {
+			cIDVal = companyID.Int64
 		}
 
 		list = append(list, gin.H{
@@ -118,6 +123,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			"intro":         intro,
 			"field":         field,
 			"advisor_id":    advIDVal,
+			"company_id":    cIDVal,
 			"intern_start_date": internStartDate,
 			"intern_end_date":   internEndDate,
 		})
@@ -215,11 +221,11 @@ func GetUserByIDHandler(c *gin.Context) {
 
 	var id int
 	var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, internStartDate, internEndDate string
-	var advisorID sql.NullInt64
+	var advisorID, companyID sql.NullInt64
 	err := config.DB.QueryRow(
-		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users WHERE id = ?",
+		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users WHERE id = ?",
 		targetUserIDInt,
-	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &internStartDate, &internEndDate)
+	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &internStartDate, &internEndDate)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบผู้ใช้"})
 		return
@@ -230,6 +236,11 @@ func GetUserByIDHandler(c *gin.Context) {
 		advIDVal = advisorID.Int64
 	}
 
+	var cIDVal interface{} = nil
+	if companyID.Valid {
+		cIDVal = companyID.Int64
+	}
+
 	c.JSON(200, gin.H{
 		"status": 200,
 		"data": gin.H{
@@ -237,6 +248,7 @@ func GetUserByIDHandler(c *gin.Context) {
 			"phone": phone, "profile_image": profileImage, "school": school,
 			"status": status, "resume_url": resumeURL, "intro": intro, "field": field,
 			"advisor_id": advIDVal,
+			"company_id": cIDVal,
 			"intern_start_date": internStartDate,
 			"intern_end_date":   internEndDate,
 		},

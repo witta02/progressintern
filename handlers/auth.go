@@ -262,10 +262,11 @@ func LoginHandler(c *gin.Context) {
 
 	var id int
 	var name, email, hashed, role, status string
+	var companyID sql.NullInt64
 	err := config.DB.QueryRow(
-		"SELECT id, name, email, password, role, status FROM users WHERE email = ?",
+		"SELECT id, name, email, password, role, status, company_id FROM users WHERE email = ?",
 		input.Email,
-	).Scan(&id, &name, &email, &hashed, &role, &status)
+	).Scan(&id, &name, &email, &hashed, &role, &status, &companyID)
 
 	if err != nil {
 		c.JSON(401, gin.H{"status": 401, "error": "ไม่พบผู้ใช้งานนี้"})
@@ -291,17 +292,23 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	var cIDVal interface{} = nil
+	if companyID.Valid {
+		cIDVal = companyID.Int64
+	}
+
 	// Return wrapped response matching frontend expectations
 	c.JSON(200, gin.H{
 		"status":  200,
 		"message": "Login successful",
 		"data": gin.H{
-			"id":     id,
-			"name":   name,
-			"email":  email,
-			"role":   role,
-			"status": status,
-			"token":  tString,
+			"id":         id,
+			"name":       name,
+			"email":      email,
+			"role":       role,
+			"status":     status,
+			"company_id": cIDVal,
+			"token":      tString,
 		},
 	})
 }

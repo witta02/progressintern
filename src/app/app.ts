@@ -1067,7 +1067,7 @@ export class App {
 
     const themes: Record<string, ThemeColors> = {
       admin: {
-        accent: '#EF4444', // Red
+        accent: '#EF4444', 
         accentTeal: '#DC2626',
         tealDim: 'rgba(220, 38, 38, 0.1)',
         indigoDim: 'rgba(239, 68, 68, 0.1)',
@@ -1075,7 +1075,7 @@ export class App {
         glowIndigo: '0 0 20px rgba(239, 68, 68, 0.15)'
       },
       company: {
-        accent: '#F59E0B', // Amber/Yellow
+        accent: '#F59E0B', 
         accentTeal: '#D97706',
         tealDim: 'rgba(217, 119, 6, 0.1)',
         indigoDim: 'rgba(245, 158, 11, 0.1)',
@@ -1083,7 +1083,7 @@ export class App {
         glowIndigo: '0 0 20px rgba(245, 158, 11, 0.15)'
       },
       advisor: {
-        accent: '#22C55E', // Green
+        accent: '#22C55E', 
         accentTeal: '#10B981',
         tealDim: 'rgba(16, 185, 129, 0.1)',
         indigoDim: 'rgba(34, 197, 94, 0.1)',
@@ -1091,7 +1091,7 @@ export class App {
         glowIndigo: '0 0 20px rgba(34, 197, 94, 0.15)'
       },
       student: {
-        accent: '#3B82F6', // Blue
+        accent: '#3B82F6', 
         accentTeal: '#2563EB',
         tealDim: 'rgba(37, 99, 235, 0.1)',
         indigoDim: 'rgba(59, 130, 246, 0.1)',

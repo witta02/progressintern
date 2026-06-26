@@ -169,14 +169,18 @@
   .no-print,
   aside,
   app-notification-host,
-  .fixed.bottom-4          /* debug bar */
+  .fixed.bottom-4,          /* debug bar */
+  .panel-backdrop,
+  [class*="animate-pulse"],
+  [class*="rounded-full mix-blend-multiply"]
   { display: none !important; }
 
   /* Show print-only header */
   .print-only { display: block !important; }
 
   /* Make the detail panel full-width and static */
-  .student-detail-panel {
+  .student-detail-panel,
+  #student-report-content {
     position: static !important;
     width: 100% !important;
     height: auto !important;
@@ -185,10 +189,10 @@
     border: none !important;
     overflow: visible !important;
     border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
-
-  /* Hide the overlay backdrop */
-  .panel-backdrop { display: none !important; }
 
   /* Page setup */
   @page {
@@ -196,13 +200,171 @@
     margin: 18mm 15mm;
   }
 
-  body { background: white !important; font-size: 11pt; }
+  body {
+    background: white !important;
+    color: #0f172a !important;
+    font-size: 10.5pt !important;
+    line-height: 1.5 !important;
+  }
 
   /* Avoid breaking sections across pages */
-  .print-section { page-break-inside: avoid; break-inside: avoid; }
+  .print-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 25px !important;
+  }
 
-  /* Force colour for status badges */
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* Make section headers clean & professional (e.g. A. ข้อมูลนักศึกษา) */
+  .print-section h3 {
+    border-bottom: 2px solid #2563eb !important;
+    padding-bottom: 5px !important;
+    color: #1e3a8a !important;
+    font-size: 11pt !important;
+    font-weight: 800 !important;
+    margin-bottom: 12px !important;
+  }
+  .print-section h3 span {
+    display: none !important;
+  }
+
+  /* Convert the blue student card header to clean paper style */
+  .student-detail-panel div[class*="bg-gradient-to-br from-blue-600 to-indigo-800"] {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+  }
+  .student-detail-panel div[class*="bg-gradient-to-br from-blue-600 to-indigo-800"] * {
+    color: #334155 !important;
+  }
+  .student-detail-panel div[class*="bg-gradient-to-br from-blue-600 to-indigo-800"] .text-2xl {
+    color: #0f172a !important;
+    font-size: 16pt !important;
+  }
+  .student-detail-panel div[class*="bg-gradient-to-br from-blue-600 to-indigo-800"] div[class*="bg-white/20"] {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    border-radius: 8px !important;
+  }
+  .student-detail-panel div[class*="bg-gradient-to-br from-blue-600 to-indigo-800"] div[class*="text-blue-300"] {
+    color: #475569 !important;
+  }
+  .student-detail-panel div[class*="bg-gradient-to-br from-blue-600 to-indigo-800"] div[class*="text-blue-200"] {
+    color: #475569 !important;
+  }
+  .student-detail-panel div[class*="bg-gradient-to-br from-blue-600 to-indigo-800"] div[class*="border-t border-white/20"] {
+    border-top: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+  }
+
+  /* Simplify all secondary white/slate cards to basic border boxes */
+  .print-section div[class*="bg-white border"],
+  .print-section div[class*="bg-slate-50 border"],
+  .print-section div[class*="bg-indigo-50 border"] {
+    border: 1px solid #cbd5e1 !important;
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    padding: 16px !important;
+  }
+
+  /* Simplify grid layouts (like stats counts) */
+  .print-section div[class*="grid-cols-3"],
+  .print-section div[class*="grid-cols-4"] {
+    gap: 8px !important;
+  }
+  .print-section div[class*="grid-cols-3"] > div,
+  .print-section div[class*="grid-cols-4"] > div {
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    box-shadow: none !important;
+  }
+  .print-section div[class*="grid-cols-3"] > div *,
+  .print-section div[class*="grid-cols-4"] > div * {
+    color: #0f172a !important;
+  }
+  .print-section div[class*="grid-cols-3"] > div .text-3xl,
+  .print-section div[class*="grid-cols-4"] > div .text-2xl,
+  .print-section div[class*="grid-cols-3"] > div .text-5xl,
+  .print-section div[class*="grid-cols-4"] > div .text-5xl {
+    font-size: 20pt !important;
+    color: #1e3a8a !important;
+  }
+
+  /* Style Section F (Evaluation scores) nicely */
+  .print-section div[class*="bg-gradient-to-br from-blue-600 to-indigo-700"] {
+    background: #eff6ff !important;
+    border: 1.5px solid #2563eb !important;
+    color: #1e3a8a !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+  .print-section div[class*="bg-gradient-to-br from-blue-600 to-indigo-700"] * {
+    color: #1e3a8a !important;
+  }
+  .print-section div[class*="bg-gradient-to-br from-blue-600 to-indigo-700"] div[class*="text-blue-200"] {
+    color: #1d4ed8 !important;
+    font-weight: 800 !important;
+  }
+  .print-section div[class*="bg-gradient-to-br from-blue-600 to-indigo-700"] .text-5xl {
+    color: #1d4ed8 !important;
+    font-size: 20pt !important;
+  }
+
+  /* Simplify status badges for print */
+  span[class*="rounded-full text-[10px] font-black border"],
+  span[class*="rounded-full text-[9px] font-black border"] {
+    background: transparent !important;
+    border: 1px solid #94a3b8 !important;
+    color: #334155 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    font-size: 8pt !important;
+  }
+
+  /* Style tables cleanly for print */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 10px !important;
+  }
+  th {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    font-size: 8.5pt !important;
+    padding: 6px 12px !important;
+  }
+  td {
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 6px 12px !important;
+  }
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* Simple clean progress bar for print */
+  div[class*="bg-slate-100 rounded-full h-3"] {
+    background: #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    height: 8px !important;
+  }
+  div[class*="bg-gradient-to-r from-blue-500 to-emerald-500 h-3"] {
+    background: #2563eb !important;
+    height: 8px !important;
+  }
+
+  /* Force print background colors and styles correctly in browsers */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 
 /* --- Hide details summary default marker -------------------- */

@@ -2709,10 +2709,10 @@
             <!-- GRADING MODAL -->
             <div *ngIf="selectedSubmissionForGrading"
                  class="fixed inset-0 bg-slate-900/70 backdrop-blur-lg z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-              <article class="bg-white rounded-[2rem] w-full max-w-xl border border-slate-200 shadow-2xl shadow-slate-900/20 relative overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
+              <article class="bg-white rounded-[2rem] w-full max-w-xl border border-slate-200 shadow-2xl shadow-slate-900/20 relative overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
 
                 <!-- Modal Header -->
-                <div class="bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-6">
+                <div class="bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-6 shrink-0">
                   <h3 class="text-xl font-black text-white tracking-tight">ตรวจและบันทึกคะแนนงาน</h3>
                   <p class="text-white/70 text-xs font-medium mt-1">
                     นักศึกษา: <strong class="text-white">{{ userName(selectedSubmissionForGrading.studentId) }}</strong>
@@ -2720,7 +2720,7 @@
                   </p>
                 </div>
 
-                <div class="p-8 space-y-6">
+                <div class="p-8 space-y-6 overflow-y-auto flex-1">
 
                   <!-- Score Display -->
                   <div class="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-2xl px-6 py-4">

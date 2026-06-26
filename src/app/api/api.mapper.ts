@@ -27,6 +27,7 @@ export type ApiUser = {
   resume_url?: string | null;
   advisor_id?: number | null;
   company_id?: number | null;
+  company_role?: string | null;
   intern_start_date?: string | null;
   intern_end_date?: string | null;
   created_at?: string;
@@ -156,6 +157,7 @@ export function mapUser(dto: ApiUser): User {
     resumeUrl: dto.resume_url ?? undefined,
     advisorId: dto.advisor_id ?? undefined,
     companyId: dto.company_id ?? undefined,
+    companyRole: (dto.company_role as 'admin' | 'employee' | undefined) ?? undefined,
     internStartDate: dto.intern_start_date ?? undefined,
     internEndDate: dto.intern_end_date ?? undefined,
     createdAt: dto.created_at,

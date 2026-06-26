@@ -51,6 +51,8 @@ export interface User {
   internStartDate?: string;
   internEndDate?: string;
   companyId?: number;
+  /** 'admin' = first company registrant (full access), 'employee' = subsequent registrant (limited access) */
+  companyRole?: 'admin' | 'employee';
   /** Mock-only: link student → advisor until backend adds this relation */
   advisorId?: number;
 }

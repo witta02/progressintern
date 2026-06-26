@@ -482,9 +482,16 @@ export class App {
 
     if (!this.currentUser) return [];
     let views = viewsByRole[this.currentUser.role] || [];
+
     if (this.currentUser.role === 'student' && this.activeInternship) {
       views = views.filter(v => v !== 'jobs' && v !== 'applications');
     }
+
+    // Company employees only see: applications, internships, and tickets (no job management, no classwork, no edit)
+    if (this.isCompanyEmployee) {
+      views = ['dashboard', 'applications', 'internships', 'tickets'];
+    }
+
     return views;
   }
 
@@ -542,6 +549,16 @@ export class App {
 
   protected get currentCompanyId(): number | undefined {
     return this.currentUser ? this.data.companyIdForUser(this.currentUser.id) : undefined;
+  }
+
+  /** True if this is a company user with admin sub-role (first registrant). Full company permissions. */
+  protected get isCompanyAdmin(): boolean {
+    return this.currentUser?.role === 'company' && this.currentUser?.companyRole === 'admin';
+  }
+
+  /** True if this is a company user with employee sub-role (subsequent registrant). Limited permissions. */
+  protected get isCompanyEmployee(): boolean {
+    return this.currentUser?.role === 'company' && this.currentUser?.companyRole === 'employee';
   }
 
   protected get managedStudents(): User[] {

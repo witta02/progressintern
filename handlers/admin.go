@@ -79,9 +79,11 @@ func CreateSchoolHandler(c *gin.Context) {
 // GetAllCodesHandler returns all generated enrollment/invite codes
 func GetAllCodesHandler(c *gin.Context) {
 	rows, err := config.DB.Query(`
-		SELECT ec.id, ec.school_id, COALESCE(s.name, '-') as school_name, ec.role, ec.code, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active, ec.created_at
+		SELECT ec.id, ec.school_id, COALESCE(s.name, '-') as school_name, ec.role, ec.code, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active,
+		       ec.company_id, COALESCE(c.company_name, ec.company_name, ''), COALESCE(c.address, ec.company_address, ''), COALESCE(c.description, ec.company_description, ''), ec.created_at
 		FROM enrollment_codes ec
 		LEFT JOIN schools s ON ec.school_id = s.id
+		LEFT JOIN companies c ON ec.company_id = c.id
 		ORDER BY ec.created_at DESC
 	`)
 	if err != nil {
@@ -96,9 +98,11 @@ func GetAllCodesHandler(c *gin.Context) {
 		var expiresAt sql.NullTime
 		var maxUses sql.NullInt64
 		var schoolID sql.NullInt64
+		var companyID sql.NullInt64
 
 		err := rows.Scan(
-			&ec.ID, &schoolID, &ec.SchoolName, &ec.Role, &ec.Code, &maxUses, &ec.UsedCount, &expiresAt, &ec.IsActive, &ec.CreatedAt,
+			&ec.ID, &schoolID, &ec.SchoolName, &ec.Role, &ec.Code, &maxUses, &ec.UsedCount, &expiresAt, &ec.IsActive,
+			&companyID, &ec.CompanyName, &ec.CompanyAddress, &ec.CompanyDescription, &ec.CreatedAt,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "การอ่านข้อมูลรหัสเชิญผิดพลาด: " + err.Error()})
@@ -108,6 +112,10 @@ func GetAllCodesHandler(c *gin.Context) {
 		if schoolID.Valid {
 			idVal := int(schoolID.Int64)
 			ec.SchoolID = &idVal
+		}
+		if companyID.Valid {
+			idVal := int(companyID.Int64)
+			ec.CompanyID = &idVal
 		}
 		if maxUses.Valid {
 			maxVal := int(maxUses.Int64)
@@ -162,6 +170,15 @@ func CreateCodeHandler(c *gin.Context) {
 		return
 	}
 
+	companyName := strings.TrimSpace(input.CompanyName)
+	companyAddress := strings.TrimSpace(input.CompanyAddress)
+	companyDescription := strings.TrimSpace(input.CompanyDescription)
+
+	if input.Role == "company" && companyName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "กรุณาระบุชื่อสถานประกอบการสำหรับรหัสเชิญบริษัท"})
+		return
+	}
+
 	// For company, schoolID should be NULL
 	var schoolIDVal interface{}
 	if input.Role != "company" && input.SchoolID != nil {
@@ -171,9 +188,10 @@ func CreateCodeHandler(c *gin.Context) {
 	}
 
 	result, err := config.DB.Exec(`
-		INSERT INTO enrollment_codes (school_id, role, code, max_uses, expires_at) 
-		VALUES (?, ?, ?, ?, ?)`,
+		INSERT INTO enrollment_codes (school_id, role, code, max_uses, expires_at, company_name, company_address, company_description) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		schoolIDVal, input.Role, code, input.MaxUses, input.ExpiresAt,
+		nullIfEmpty(companyName), nullIfEmpty(companyAddress), nullIfEmpty(companyDescription),
 	)
 
 	if err != nil {
@@ -186,13 +204,16 @@ func CreateCodeHandler(c *gin.Context) {
 		"status":  201,
 		"message": "สร้างรหัสเชิญสำเร็จ",
 		"data": gin.H{
-			"id":         id,
-			"code":       code,
-			"role":       input.Role,
-			"school_id":  input.SchoolID,
-			"max_uses":   input.MaxUses,
-			"expires_at": input.ExpiresAt,
-			"is_active":  true,
+			"id":                  id,
+			"code":                code,
+			"role":                input.Role,
+			"school_id":           input.SchoolID,
+			"max_uses":            input.MaxUses,
+			"expires_at":          input.ExpiresAt,
+			"is_active":           true,
+			"company_name":        companyName,
+			"company_address":     companyAddress,
+			"company_description": companyDescription,
 		},
 	})
 }
@@ -373,4 +394,160 @@ func ExecuteQueryHandler(c *gin.Context) {
 			"last_insert_id": lastInsertID,
 		})
 	}
+}
+
+func nullIfEmpty(value string) interface{} {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return strings.TrimSpace(value)
+}
+
+// ========================================================
+// 👔 COMPANY EMPLOYEE CODE MANAGEMENT HANDLERS
+// ========================================================
+
+// CreateEmployeeCodeHandler allows a company admin to create an invite code for employees.
+// The code is automatically linked to the admin's company.
+func CreateEmployeeCodeHandler(c *gin.Context) {
+	// Get the company admin's user ID from JWT claims
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": 401, "error": "ไม่พบข้อมูลผู้ใช้"})
+		return
+	}
+	userID := int(userIDRaw.(float64))
+
+	// Verify the user is a company admin
+	var companyRole sql.NullString
+	var companyID sql.NullInt64
+	err := config.DB.QueryRow(
+		"SELECT company_role, company_id FROM users WHERE id = ? AND role = 'company'",
+		userID,
+	).Scan(&companyRole, &companyID)
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"status": 403, "error": "เฉพาะผู้ใช้ที่มีบทบาท company เท่านั้น"})
+		return
+	}
+	if !companyRole.Valid || companyRole.String != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"status": 403, "error": "เฉพาะ Company Admin เท่านั้นที่สามารถสร้างรหัสเชิญพนักงานได้"})
+		return
+	}
+	if !companyID.Valid {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "ไม่พบข้อมูลบริษัท กรุณาติดต่อผู้ดูแลระบบ"})
+		return
+	}
+
+	var input struct {
+		Code string `json:"code" binding:"required,min=3"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "กรุณาระบุรหัสเชิญที่ถูกต้อง"})
+		return
+	}
+
+	code := strings.TrimSpace(strings.ToUpper(input.Code))
+
+	// Check uniqueness
+	var exists2 bool
+	config.DB.QueryRow("SELECT COUNT(*) FROM enrollment_codes WHERE code = ?", code).Scan(&exists2)
+	if exists2 {
+		c.JSON(http.StatusConflict, gin.H{"status": 409, "error": "รหัสเชิญนี้มีในระบบแล้ว กรุณาเลือกรหัสอื่น"})
+		return
+	}
+
+	// Get company name for the response
+	var companyName string
+	config.DB.QueryRow("SELECT company_name FROM companies WHERE id = ?", companyID.Int64).Scan(&companyName)
+
+	result, err := config.DB.Exec(`
+		INSERT INTO enrollment_codes (role, code, company_id, company_name, is_active)
+		VALUES ('company', ?, ?, ?, 1)`,
+		code, companyID.Int64, companyName,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "สร้างรหัสเชิญล้มเหลว: " + err.Error()})
+		return
+	}
+
+	id, _ := result.LastInsertId()
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  201,
+		"message": "สร้างรหัสเชิญพนักงานสำเร็จ",
+		"data": gin.H{
+			"id":           id,
+			"code":         code,
+			"role":         "company",
+			"company_id":   companyID.Int64,
+			"company_name": companyName,
+			"is_active":    true,
+		},
+	})
+}
+
+// GetCompanyCodesHandler returns all active invite codes for the company admin's company.
+func GetCompanyCodesHandler(c *gin.Context) {
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": 401, "error": "ไม่พบข้อมูลผู้ใช้"})
+		return
+	}
+	userID := int(userIDRaw.(float64))
+
+	var companyID sql.NullInt64
+	err := config.DB.QueryRow("SELECT company_id FROM users WHERE id = ? AND role = 'company' AND company_role = 'admin'", userID).Scan(&companyID)
+	if err != nil || !companyID.Valid {
+		c.JSON(http.StatusForbidden, gin.H{"status": 403, "error": "เฉพาะ Company Admin เท่านั้น"})
+		return
+	}
+
+	rows, err := config.DB.Query(`
+		SELECT ec.id, ec.role, ec.code, ec.used_count, ec.expires_at, ec.is_active,
+		       ec.company_id, COALESCE(c.company_name, ec.company_name, '') as company_name, ec.created_at
+		FROM enrollment_codes ec
+		LEFT JOIN companies c ON ec.company_id = c.id
+		WHERE ec.company_id = ? AND ec.role = 'company' AND ec.is_active = 1
+		ORDER BY ec.created_at DESC
+	`, companyID.Int64)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ดึงข้อมูลรหัสเชิญล้มเหลว"})
+		return
+	}
+	defer rows.Close()
+
+	type CodeRow struct {
+		ID          int64       `json:"id"`
+		Role        string      `json:"role"`
+		Code        string      `json:"code"`
+		UsedCount   int         `json:"used_count"`
+		ExpiresAt   interface{} `json:"expires_at"`
+		IsActive    bool        `json:"is_active"`
+		CompanyID   int64       `json:"company_id"`
+		CompanyName string      `json:"company_name"`
+		CreatedAt   string      `json:"created_at"`
+	}
+
+	var codes []CodeRow
+	for rows.Next() {
+		var row CodeRow
+		var expiresAt sql.NullTime
+		var createdAt sql.NullTime
+		if err := rows.Scan(&row.ID, &row.Role, &row.Code, &row.UsedCount, &expiresAt, &row.IsActive,
+			&row.CompanyID, &row.CompanyName, &createdAt); err != nil {
+			continue
+		}
+		if expiresAt.Valid {
+			row.ExpiresAt = expiresAt.Time
+		}
+		if createdAt.Valid {
+			row.CreatedAt = createdAt.Time.Format(time.RFC3339)
+		}
+		codes = append(codes, row)
+	}
+
+	if codes == nil {
+		codes = []CodeRow{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": 200, "message": "ดึงข้อมูลรหัสเชิญสำเร็จ", "data": codes})
 }

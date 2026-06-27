@@ -25,13 +25,13 @@ func GetAllUsersHandler(c *gin.Context) {
 	userIDInt := reqUserID.(int)
 
 	if roleStr == "admin" {
-		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users")
+		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users")
 	} else if roleStr == "advisor" {
 		var school string
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') 
+			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') 
 			 FROM users 
 			 WHERE id = ? 
 			    OR (school = ? AND school <> '' AND role IN ('student', 'advisor')) 
@@ -51,7 +51,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		}
 
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.company_role,''), COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
 			 FROM users u
 			 LEFT JOIN job_postings j ON j.company_id = ?
 			 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = u.id
@@ -72,7 +72,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.company_role,''), COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,'')
 			 FROM users u
 			 LEFT JOIN companies c ON c.id = u.company_id
 			 LEFT JOIN job_postings j ON j.company_id = c.id
@@ -96,9 +96,9 @@ func GetAllUsersHandler(c *gin.Context) {
 	var list []gin.H
 	for rows.Next() {
 		var id int
-		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, internStartDate, internEndDate string
+		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, companyRole, internStartDate, internEndDate string
 		var advisorID, companyID sql.NullInt64
-		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &internStartDate, &internEndDate)
+		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &companyRole, &internStartDate, &internEndDate)
 
 		var advIDVal interface{} = nil
 		if advisorID.Valid {
@@ -124,6 +124,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			"field":         field,
 			"advisor_id":    advIDVal,
 			"company_id":    cIDVal,
+			"company_role":  companyRole,
 			"intern_start_date": internStartDate,
 			"intern_end_date":   internEndDate,
 		})
@@ -220,12 +221,12 @@ func GetUserByIDHandler(c *gin.Context) {
 	}
 
 	var id int
-	var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, internStartDate, internEndDate string
+	var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, companyRole, internStartDate, internEndDate string
 	var advisorID, companyID sql.NullInt64
 	err := config.DB.QueryRow(
-		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users WHERE id = ?",
+		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users WHERE id = ?",
 		targetUserIDInt,
-	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &internStartDate, &internEndDate)
+	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &companyRole, &internStartDate, &internEndDate)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบผู้ใช้"})
 		return
@@ -247,8 +248,9 @@ func GetUserByIDHandler(c *gin.Context) {
 			"id": id, "name": name, "email": email, "role": role,
 			"phone": phone, "profile_image": profileImage, "school": school,
 			"status": status, "resume_url": resumeURL, "intro": intro, "field": field,
-			"advisor_id": advIDVal,
-			"company_id": cIDVal,
+			"advisor_id":   advIDVal,
+			"company_id":   cIDVal,
+			"company_role": companyRole,
 			"intern_start_date": internStartDate,
 			"intern_end_date":   internEndDate,
 		},
@@ -1032,32 +1034,39 @@ func UpdateUserHandler(c *gin.Context) {
 		)
 
 		if err == nil && targetRole == "company" {
-			var compID sql.NullInt64
-			_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&compID)
-			
-			if compID.Valid {
-				_, _ = config.DB.Exec(
-					`UPDATE companies 
-					 SET company_name = COALESCE(NULLIF(?,''), company_name), 
-					     description = ?, 
-					     address = ?,
-					     latitude = ?,
-					     longitude = ?
-					 WHERE id = ?`,
-					input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, compID.Int64,
-				)
-			} else {
-				_, _ = config.DB.Exec(
-					`UPDATE companies 
-					 SET company_name = COALESCE(NULLIF(?,''), company_name), 
-					     description = ?, 
-					     address = ?,
-					     latitude = ?,
-					     longitude = ?
-					 WHERE user_id = ?`,
-					input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, userIDInt,
-				)
+			// Only company admins can update company profile data
+			var companyRole string
+			_ = config.DB.QueryRow("SELECT COALESCE(company_role,'') FROM users WHERE id = ?", userIDInt).Scan(&companyRole)
+
+			if companyRole == "admin" {
+				var compID sql.NullInt64
+				_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&compID)
+
+				if compID.Valid {
+					_, _ = config.DB.Exec(
+						`UPDATE companies 
+						 SET company_name = COALESCE(NULLIF(?,''), company_name), 
+						     description = ?, 
+						     address = ?,
+						     latitude = ?,
+						     longitude = ?
+						 WHERE id = ?`,
+						input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, compID.Int64,
+					)
+				} else {
+					_, _ = config.DB.Exec(
+						`UPDATE companies 
+						 SET company_name = COALESCE(NULLIF(?,''), company_name), 
+						     description = ?, 
+						     address = ?,
+						     latitude = ?,
+						     longitude = ?
+						 WHERE user_id = ?`,
+						input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, userIDInt,
+					)
+				}
 			}
+			// Employees skip company profile update — personal info (name/phone) was already updated above
 		}
 	} else {
 		var query string

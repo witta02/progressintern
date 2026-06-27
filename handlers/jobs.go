@@ -33,6 +33,17 @@ func CreateJobHandler(c *gin.Context) {
 		return
 	}
 
+	// Block company employees — only company admin can create jobs
+	reqRole, _ := c.Get("role")
+	if reqRole.(string) == "company" {
+		var companyRole string
+		config.DB.QueryRow("SELECT COALESCE(company_role,'') FROM users WHERE id = ?", userIDRaw).Scan(&companyRole)
+		if companyRole == "employee" {
+			c.JSON(403, gin.H{"status": 403, "error": "พนักงานบริษัทไม่มีสิทธิ์สร้างประกาศงาน กรุณาติดต่อผู้ดูแลบริษัท"})
+			return
+		}
+	}
+
 	// Look up companies.id from the user_id (FK relationship)
 	companyID, err := getUserCompanyID(userIDRaw.(int))
 
@@ -50,7 +61,7 @@ func CreateJobHandler(c *gin.Context) {
 		}
 		id, _ := result.LastInsertId()
 		companyID = int(id)
-		
+
 		// Update users.company_id
 		_, _ = config.DB.Exec("UPDATE users SET company_id = ? WHERE id = ?", companyID, userIDRaw)
 	}
@@ -180,6 +191,17 @@ func DeleteJobHandler(c *gin.Context) {
 		return
 	}
 
+	// Block company employees
+	reqRoleD, _ := c.Get("role")
+	if reqRoleD.(string) == "company" {
+		var companyRole string
+		config.DB.QueryRow("SELECT COALESCE(company_role,'') FROM users WHERE id = ?", userIDRaw).Scan(&companyRole)
+		if companyRole == "employee" {
+			c.JSON(403, gin.H{"status": 403, "error": "พนักงานบริษัทไม่มีสิทธิ์ลบประกาศงาน"})
+			return
+		}
+	}
+
 	// Verify that the job posting belongs to the authenticated company user
 	var companyID int
 	err := config.DB.QueryRow(
@@ -216,6 +238,16 @@ func UpdateJobHandler(c *gin.Context) {
 
 	roleStr := reqRole.(string)
 	userIDInt := reqUserID.(int)
+
+	// Block company employees
+	if roleStr == "company" {
+		var companyRole string
+		config.DB.QueryRow("SELECT COALESCE(company_role,'') FROM users WHERE id = ?", userIDInt).Scan(&companyRole)
+		if companyRole == "employee" {
+			c.JSON(403, gin.H{"status": 403, "error": "พนักงานบริษัทไม่มีสิทธิ์แก้ไขประกาศงาน"})
+			return
+		}
+	}
 
 	var jobCompanyID int
 	err := config.DB.QueryRow("SELECT company_id FROM job_postings WHERE id = ?", jobID).Scan(&jobCompanyID)

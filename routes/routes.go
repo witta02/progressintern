@@ -197,5 +197,15 @@ func SetupRoutes(router *gin.Engine) {
 		adminGroup.GET("/tables", handlers.GetTablesHandler)
 		adminGroup.POST("/query", handlers.ExecuteQueryHandler)
 	}
+
+	// ========================================================
+	// 👔 Company Employee Management Routes
+	// ========================================================
+	companyMgmtGroup := router.Group("/api/company")
+	companyMgmtGroup.Use(middleware.AuthMiddleware(), middleware.RequireRole("company"))
+	{
+		companyMgmtGroup.POST("/employees/codes", handlers.CreateEmployeeCodeHandler)
+		companyMgmtGroup.GET("/employees/codes", handlers.GetCompanyCodesHandler)
+	}
 }
 

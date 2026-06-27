@@ -41,13 +41,27 @@ func ValidateCodeHandler(c *gin.Context) {
 	var usedCount int
 	var expiresAt *time.Time
 	var isActive bool
+	var codeCompanyID sql.NullInt64
+	var presetCompanyName sql.NullString
+	var presetCompanyAddress sql.NullString
+	var presetCompanyDescription sql.NullString
+	var linkedCompanyName sql.NullString
+	var linkedCompanyAddress sql.NullString
+	var linkedCompanyDescription sql.NullString
 
 	err := config.DB.QueryRow(`
-		SELECT ec.role, ec.school_id, s.name, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active 
+		SELECT ec.role, ec.school_id, s.name, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active,
+		       ec.company_id, ec.company_name, ec.company_address, ec.company_description,
+		       c.company_name, c.address, c.description
 		FROM enrollment_codes ec
 		LEFT JOIN schools s ON ec.school_id = s.id
+		LEFT JOIN companies c ON ec.company_id = c.id
 		WHERE ec.code = ?
-	`, code).Scan(&role, &schoolID, &schoolName, &maxUses, &usedCount, &expiresAt, &isActive)
+	`, code).Scan(
+		&role, &schoolID, &schoolName, &maxUses, &usedCount, &expiresAt, &isActive,
+		&codeCompanyID, &presetCompanyName, &presetCompanyAddress, &presetCompanyDescription,
+		&linkedCompanyName, &linkedCompanyAddress, &linkedCompanyDescription,
+	)
 
 	if err == sql.ErrNoRows {
 		c.JSON(404, gin.H{"status": 404, "error": "รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง"})
@@ -81,6 +95,23 @@ func ValidateCodeHandler(c *gin.Context) {
 	}
 	if schoolName.Valid {
 		resp.SchoolName = schoolName.String
+	}
+
+	resolvedCompanyName := firstNonEmpty(linkedCompanyName, presetCompanyName)
+	resolvedCompanyAddress := firstNonEmpty(linkedCompanyAddress, presetCompanyAddress)
+	resolvedCompanyDescription := firstNonEmpty(linkedCompanyDescription, presetCompanyDescription)
+
+	if resolvedCompanyName != "" {
+		resp.CompanyName = resolvedCompanyName
+	}
+	if resolvedCompanyAddress != "" {
+		resp.CompanyAddress = resolvedCompanyAddress
+	}
+	if resolvedCompanyDescription != "" {
+		resp.CompanyDescription = resolvedCompanyDescription
+	}
+	if role == "company" && (codeCompanyID.Valid || resolvedCompanyName != "") {
+		resp.SkipCompanyFields = true
 	}
 
 	c.JSON(200, gin.H{
@@ -125,13 +156,20 @@ func RegisterHandler(c *gin.Context) {
 	var expiresAt *time.Time
 	var isActive bool
 	var codeCompanyID sql.NullInt64
+	var presetCompanyName sql.NullString
+	var presetCompanyAddress sql.NullString
+	var presetCompanyDescription sql.NullString
 
 	err = tx.QueryRow(`
-		SELECT ec.id, ec.role, ec.school_id, s.name, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active, ec.company_id 
+		SELECT ec.id, ec.role, ec.school_id, s.name, ec.max_uses, ec.used_count, ec.expires_at, ec.is_active, ec.company_id,
+		       ec.company_name, ec.company_address, ec.company_description
 		FROM enrollment_codes ec
 		LEFT JOIN schools s ON ec.school_id = s.id
 		WHERE ec.code = ? FOR UPDATE
-	`, input.Code).Scan(&codeID, &role, &schoolID, &schoolName, &maxUses, &usedCount, &expiresAt, &isActive, &codeCompanyID)
+	`, input.Code).Scan(
+		&codeID, &role, &schoolID, &schoolName, &maxUses, &usedCount, &expiresAt, &isActive, &codeCompanyID,
+		&presetCompanyName, &presetCompanyAddress, &presetCompanyDescription,
+	)
 
 	if err == sql.ErrNoRows {
 		c.JSON(400, gin.H{"status": 400, "error": "รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง"})
@@ -201,37 +239,51 @@ func RegisterHandler(c *gin.Context) {
 
 	if resolvedRole == "company" {
 		if codeCompanyID.Valid {
-			// A company has already registered with this code. Link the user to it.
+			// Subsequent user — link to existing company as employee
 			companyID := codeCompanyID.Int64
-			_, compErr := tx.Exec("UPDATE users SET company_id = ? WHERE id = ?", companyID, userID)
+			_, compErr := tx.Exec("UPDATE users SET company_id = ?, company_role = 'employee' WHERE id = ?", companyID, userID)
 			if compErr != nil {
 				fmt.Printf("⚠️ Could not associate user with existing company: %v\n", compErr)
 			}
 		} else {
-			// First user for this company. Create company profile.
-			companyName := input.CompanyName
+			// First user for this company — becomes company admin
+			companyName := strings.TrimSpace(input.CompanyName)
+			if companyName == "" && presetCompanyName.Valid {
+				companyName = strings.TrimSpace(presetCompanyName.String)
+			}
 			if companyName == "" {
 				companyName = input.Name
 			}
+
+			description := strings.TrimSpace(input.Description)
+			if description == "" && presetCompanyDescription.Valid {
+				description = strings.TrimSpace(presetCompanyDescription.String)
+			}
+
+			address := strings.TrimSpace(input.Address)
+			if address == "" && presetCompanyAddress.Valid {
+				address = strings.TrimSpace(presetCompanyAddress.String)
+			}
+
 			contactEmail := input.ContactEmail
 			if contactEmail == "" {
 				contactEmail = input.Email
 			}
-			
+
 			compRes, compErr := tx.Exec(
 				"INSERT INTO companies (user_id, company_name, description, address, contact_email) VALUES (?, ?, ?, ?, ?)",
-				userID, companyName, input.Description, input.Address, contactEmail,
+				userID, companyName, description, address, contactEmail,
 			)
 			if compErr != nil {
 				fmt.Printf("⚠️ Could not create company profile: %v\n", compErr)
 			} else {
 				companyID, _ := compRes.LastInsertId()
-				
+
 				// Associate this code with the company so future registers share it
 				_, _ = tx.Exec("UPDATE enrollment_codes SET company_id = ? WHERE id = ?", companyID, codeID)
-				
-				// Link user to company
-				_, _ = tx.Exec("UPDATE users SET company_id = ? WHERE id = ?", companyID, userID)
+
+				// Link user to company as admin
+				_, _ = tx.Exec("UPDATE users SET company_id = ?, company_role = 'admin' WHERE id = ?", companyID, userID)
 			}
 		}
 	}
@@ -263,10 +315,11 @@ func LoginHandler(c *gin.Context) {
 	var id int
 	var name, email, hashed, role, status string
 	var companyID sql.NullInt64
+	var companyRole sql.NullString
 	err := config.DB.QueryRow(
-		"SELECT id, name, email, password, role, status, company_id FROM users WHERE email = ?",
+		"SELECT id, name, email, password, role, status, company_id, company_role FROM users WHERE email = ?",
 		input.Email,
-	).Scan(&id, &name, &email, &hashed, &role, &status, &companyID)
+	).Scan(&id, &name, &email, &hashed, &role, &status, &companyID, &companyRole)
 
 	if err != nil {
 		c.JSON(401, gin.H{"status": 401, "error": "ไม่พบผู้ใช้งานนี้"})
@@ -297,18 +350,24 @@ func LoginHandler(c *gin.Context) {
 		cIDVal = companyID.Int64
 	}
 
+	var cRoleVal interface{} = nil
+	if companyRole.Valid {
+		cRoleVal = companyRole.String
+	}
+
 	// Return wrapped response matching frontend expectations
 	c.JSON(200, gin.H{
 		"status":  200,
 		"message": "Login successful",
 		"data": gin.H{
-			"id":         id,
-			"name":       name,
-			"email":      email,
-			"role":       role,
-			"status":     status,
-			"company_id": cIDVal,
-			"token":      tString,
+			"id":           id,
+			"name":         name,
+			"email":        email,
+			"role":         role,
+			"status":       status,
+			"company_id":   cIDVal,
+			"company_role": cRoleVal,
+			"token":        tString,
 		},
 	})
 }
@@ -331,4 +390,13 @@ func validatePassword(password string) error {
 		return fmt.Errorf("ต้องมีอักขระพิเศษอย่างน้อย 1 ตัว")
 	}
 	return nil
+}
+
+func firstNonEmpty(values ...sql.NullString) string {
+	for _, value := range values {
+		if value.Valid && strings.TrimSpace(value.String) != "" {
+			return strings.TrimSpace(value.String)
+		}
+	}
+	return ""
 }

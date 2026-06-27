@@ -143,9 +143,19 @@ func migrateDatabase(db *sql.DB) {
 	_, _ = db.Exec("ALTER TABLE users ADD CONSTRAINT fk_users_company_id FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE SET NULL")
 	_, _ = db.Exec("ALTER TABLE enrollment_codes ADD COLUMN company_id INT NULL")
 	_, _ = db.Exec("ALTER TABLE enrollment_codes ADD CONSTRAINT fk_enrollment_codes_company_id FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE SET NULL")
-	
+	_, _ = db.Exec("ALTER TABLE enrollment_codes ADD COLUMN company_name VARCHAR(255) NULL")
+	_, _ = db.Exec("ALTER TABLE enrollment_codes ADD COLUMN company_address TEXT NULL")
+	_, _ = db.Exec("ALTER TABLE enrollment_codes ADD COLUMN company_description TEXT NULL")
+
 	// Migrate existing company users to link their company_id column to their companies record
 	_, _ = db.Exec("UPDATE users u JOIN companies c ON c.user_id = u.id SET u.company_id = c.id WHERE u.company_id IS NULL")
+
+	// --- COMPANY ADMIN / EMPLOYEE SUB-ROLES ---
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN company_role VARCHAR(20) NULL")
+	// Existing company users (primary owner in companies table) become admin
+	_, _ = db.Exec("UPDATE users u JOIN companies c ON c.user_id = u.id SET u.company_role = 'admin' WHERE u.role = 'company' AND u.company_role IS NULL")
+	// Other company users linked by company_id but not the primary owner become employee
+	_, _ = db.Exec("UPDATE users SET company_role = 'employee' WHERE role = 'company' AND company_role IS NULL AND company_id IS NOT NULL")
 }
 
 

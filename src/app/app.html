@@ -83,79 +83,115 @@
     </form>
 
     <!-- Register Form -->
-    <form *ngIf="authMode === 'register'" class="space-y-5 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin" (ngSubmit)="register()">
+    <form *ngIf="authMode === 'register'" class="space-y-5 max-h-[540px] overflow-y-auto pr-4 scrollbar-thin" (ngSubmit)="register()">
+
+      <!-- Step 1: Enter Code -->
       <div class="space-y-2">
-        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสลงทะเบียน / รหัสเชิญ</label>
+        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+          ขั้นตอนที่ 1 — รหัสลงทะเบียน / รหัสเชิญ <span class="text-rose-400">*</span>
+        </label>
         <div class="relative">
-          <input name="registerCode" [(ngModel)]="registerForm.code" (ngModelChange)="onCodeChange($event)" placeholder="เช่น BU-STU-2026, COMP-INV-2026"
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
-          <span *ngIf="validatingCode" class="absolute right-4 top-4 text-xs font-bold text-slate-400">กำลังตรวจสอบ...</span>
+          <input name="registerCode" [(ngModel)]="registerForm.code" (ngModelChange)="onCodeChange($event)"
+                 placeholder="เช่น BU-STU-2026, EMP-ABCD1234"
+                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300 pr-36">
+          <span *ngIf="validatingCode" class="absolute right-4 top-4 text-[10px] font-bold text-slate-400 animate-pulse">กำลังตรวจสอบ...</span>
+          <span *ngIf="!validatingCode && !detectedRoleName && !codeValidationError && !registerForm.code"
+                class="absolute right-4 top-4 text-[10px] font-bold text-slate-400">รหัสจากผู้ดูแล</span>
         </div>
-        <p *ngIf="detectedRoleName" class="text-xs font-black text-emerald-600 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100 flex items-center gap-2">
-          <span>✓</span> {{ detectedRoleName }}
-        </p>
+
+        <!-- Role detected badge -->
+        <div *ngIf="detectedRoleName" class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+               [class.bg-blue-100]="registerForm.role === 'student'"
+               [class.bg-violet-100]="registerForm.role === 'advisor'"
+               [class.bg-amber-100]="registerForm.role === 'company'">
+            <span *ngIf="registerForm.role === 'student'">🎓</span>
+            <span *ngIf="registerForm.role === 'advisor'">🏫</span>
+            <span *ngIf="registerForm.role === 'company'">🏢</span>
+          </div>
+          <div>
+            <p class="text-xs font-black text-emerald-700">✓ รหัสถูกต้อง — บทบาทของคุณ:</p>
+            <p class="text-sm font-black text-slate-900">{{ detectedRoleName }}</p>
+          </div>
+        </div>
+
         <p *ngIf="codeValidationError" class="text-xs font-black text-rose-500 bg-rose-50 px-4 py-3 rounded-xl border border-rose-100">
           {{ codeValidationError }}
         </p>
-      </div>
-      <div class="space-y-2">
-        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
-        <input name="registerName" [(ngModel)]="registerForm.name" placeholder="Full Name"
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
-      </div>
-      <div class="space-y-2">
-        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
-        <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com"
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
-      </div>
-      <div class="space-y-2">
-        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เบอร์โทรศัพท์</label>
-        <input name="registerPhone" type="text" [(ngModel)]="registerForm.phone" placeholder="เช่น 0812345678"
-               class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสผ่าน</label>
-          <input name="registerPassword" type="password" [(ngModel)]="registerForm.password" placeholder="••••••"
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
-        </div>
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ยืนยันรหัสผ่าน</label>
-          <input name="registerConfirm" type="password" [(ngModel)]="registerForm.confirmPassword" placeholder="••••••"
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
-        </div>
+
+        <!-- Helper text when no code yet -->
+        <p *ngIf="!registerForm.code && !detectedRoleName" class="text-[11px] text-slate-400 font-medium ml-1">
+          💡 รหัสจะกำหนดบทบาทของคุณ (นักศึกษา / อาจารย์ / พนักงานบริษัท) — ขอรหัสจากผู้ดูแลระบบหรือ HR ของบริษัท
+        </p>
       </div>
 
-      <p *ngIf="skipCompanyFields && presetCompanyName" class="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-3 rounded-xl border border-blue-100">
-        ข้อมูลบริษัทถูกกำหนดไว้แล้ว: {{ presetCompanyName }} — ไม่ต้องกรอกข้อมูลบริษัทเพิ่มเติม
-      </p>
+      <!-- Step 2: Rest of form — shown after valid code -->
+      <ng-container *ngIf="detectedRoleName">
+        <div class="border-t border-slate-100 pt-5 space-y-5">
+          <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">ขั้นตอนที่ 2 — ข้อมูลส่วนตัว</p>
 
-      <div *ngIf="isRegisterCompany" class="pt-6 space-y-5 border-t border-slate-100 mt-6">
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อบริษัท</label>
-          <input name="companyName" [(ngModel)]="registerForm.companyName" placeholder="Company Name"
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+          <div class="space-y-2">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
+            <input name="registerName" [(ngModel)]="registerForm.name" placeholder="Full Name"
+                   class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
+            <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com"
+                   class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+          </div>
+          <div class="space-y-2">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เบอร์โทรศัพท์</label>
+            <input name="registerPhone" type="text" [(ngModel)]="registerForm.phone" placeholder="เช่น 0812345678"
+                   class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสผ่าน</label>
+              <input name="registerPassword" type="password" [(ngModel)]="registerForm.password" placeholder="••••••"
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ยืนยันรหัสผ่าน</label>
+              <input name="registerConfirm" type="password" [(ngModel)]="registerForm.confirmPassword" placeholder="••••••"
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+            </div>
+          </div>
+
+          <p *ngIf="skipCompanyFields && presetCompanyName" class="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-3 rounded-xl border border-blue-100">
+            ข้อมูลบริษัทถูกกำหนดไว้แล้ว: {{ presetCompanyName }} — ไม่ต้องกรอกข้อมูลบริษัทเพิ่มเติม
+          </p>
+
+          <!-- Company fields (new company admin only, not preset employees) -->
+          <div *ngIf="isRegisterCompany" class="pt-5 space-y-5 border-t border-slate-100">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">ข้อมูลบริษัท</p>
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อบริษัท</label>
+              <input name="companyName" [(ngModel)]="registerForm.companyName" placeholder="Company Name"
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">อีเมลติดต่อ (HR)</label>
+              <input name="contactEmail" type="email" [(ngModel)]="registerForm.contactEmail" placeholder="hr@company.com"
+                     class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คำอธิบายบริษัท</label>
+              <textarea name="companyDescription" [(ngModel)]="registerForm.description" placeholder="รายละเอียดของบริษัทและธุรกิจ..." rows="3"
+                        class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+            </div>
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ที่อยู่บริษัท</label>
+              <textarea name="companyAddress" [(ngModel)]="registerForm.address" placeholder="ที่ตั้งของสำนักงาน..." rows="2"
+                        class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+            </div>
+          </div>
         </div>
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">อีเมลติดต่อ (HR)</label>
-          <input name="contactEmail" type="email" [(ngModel)]="registerForm.contactEmail" placeholder="hr@company.com"
-                 class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
-        </div>
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คำอธิบายบริษัท</label>
-          <textarea name="companyDescription" [(ngModel)]="registerForm.description" placeholder="รายละเอียดของบริษัทและธุรกิจ..." rows="3"
-                    class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
-        </div>
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ที่อยู่บริษัท</label>
-          <textarea name="companyAddress" [(ngModel)]="registerForm.address" placeholder="ที่ตั้งของสำนักงาน..." rows="2"
-                    class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
-        </div>
-      </div>
+      </ng-container>
 
       <p *ngIf="registerError" class="text-xs font-black text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">{{ registerError }}</p>
-      <button type="submit" [disabled]="registerLoading"
-              class="w-full py-5 bg-slate-900 hover:bg-blue-600 disabled:opacity-50 text-white rounded-2xl font-black text-lg shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-1 active:translate-y-0 active:scale-95 mt-6">
+      <button type="submit" [disabled]="registerLoading || !detectedRoleName"
+              class="w-full py-5 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-2xl font-black text-lg shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-1 active:translate-y-0 active:scale-95 mt-6">
         {{ registerLoading ? 'กำลังสร้างบัญชี...' : 'ยืนยันการสมัคร' }}
       </button>
       <p class="text-center text-xs font-bold text-slate-400 pt-4 pb-6 uppercase tracking-widest">

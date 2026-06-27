@@ -324,6 +324,11 @@ export class App {
   protected compSchoolTab: 'schools' | 'companies' = 'schools';
   protected compSchoolSearch = '';
 
+  // Employee management (company admin)
+  protected employeeInviteCode = '';
+  protected employeeInviteLoading = false;
+  protected showEmployeeInviteModal = false;
+
   // Support Tickets view variables
   protected newTicketTitle = '';
   protected newTicketDesc = '';
@@ -492,9 +497,10 @@ export class App {
       views = views.filter(v => v !== 'jobs' && v !== 'applications');
     }
 
-    // Company employees only see: applications, internships, and tickets (no job management, no classwork, no edit)
+    // Company employees can see: dashboard, internships, attendance, logbooks, leaves, evaluations, classwork, tickets
+    // (cannot manage jobs, applications, or edit company settings)
     if (this.isCompanyEmployee) {
-      views = ['dashboard', 'applications', 'internships', 'tickets'];
+      views = ['dashboard', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets'];
     }
 
     return views;
@@ -618,6 +624,90 @@ export class App {
     const company = this.currentCompany;
     if (!company) return [];
     return this.jobPostings.filter((j) => j.companyId === company.id && j.status === 'open' && !j.isDeleted);
+  }
+
+  /** All company users (admin + employees) for the same company */
+  protected get companyEmployees(): User[] {
+    const company = this.currentCompany;
+    if (!company) return [];
+    return this.users.filter(u =>
+      u.role === 'company' &&
+      u.id !== this.currentUserId &&
+      (u.companyId === company.id || this.data.companyIdForUser(u.id) === company.id)
+    );
+  }
+
+  /** Generate a random alphanumeric invite code for company employees */
+  protected generateEmployeeInviteCode(): void {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    this.employeeInviteCode = `EMP-${code}`;
+  }
+
+  /** Create an enrollment code for company employees (company admin only) */
+  protected async createEmployeeInviteCode(): Promise<void> {
+    if (!this.isCompanyAdmin) return;
+    const company = this.currentCompany;
+    if (!company) return;
+
+    if (!this.employeeInviteCode.trim()) {
+      this.generateEmployeeInviteCode();
+    }
+
+    this.employeeInviteLoading = true;
+    const codeStr = this.employeeInviteCode.trim().toUpperCase();
+    try {
+      if (this.data.api.apiEnabled()) {
+        // Use dedicated company employee code endpoint
+        const res = await firstValueFrom(this.data.api.createEmployeeCode(codeStr));
+        if (res && res.error) {
+          this.notifications.error(res.error, 'สร้างรหัสเชิญพนักงานล้มเหลว');
+        } else {
+          this.notifications.success(`สร้างรหัสเชิญพนักงาน "${codeStr}" สำเร็จ — แชร์รหัสนี้ให้พนักงานลงทะเบียนในหน้า Register`, 'สร้างรหัสพนักงาน');
+          this.showEmployeeInviteModal = false;
+          this.employeeInviteCode = '';
+          await this.data.refreshFromApi();
+        }
+      } else {
+        // Mock mode: use existing addAdminCode
+        const body = {
+          role: 'company' as const,
+          code: codeStr,
+          maxUses: null as number | null,
+          expiresAt: null as string | null,
+          companyName: company.companyName,
+          companyAddress: company.address || '',
+          companyDescription: company.description || ''
+        };
+        const res = await this.data.addAdminCode(body);
+        if (res && res.error) {
+          this.notifications.error(res.error, 'สร้างรหัสเชิญพนักงานล้มเหลว');
+        } else {
+          this.notifications.success(`สร้างรหัสเชิญพนักงาน "${codeStr}" สำเร็จ — แชร์รหัสนี้ให้พนักงานลงทะเบียนในหน้า Register`, 'สร้างรหัสพนักงาน');
+          this.showEmployeeInviteModal = false;
+          this.employeeInviteCode = '';
+          await this.data.refreshFromApi();
+        }
+      }
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'สร้างรหัสพนักงาน');
+    } finally {
+      this.employeeInviteLoading = false;
+    }
+  }
+
+  /** Get active company invite codes for employees */
+  protected get companyEmployeeInviteCodes() {
+    const company = this.currentCompany;
+    if (!company) return [];
+    return this.data.enrollmentCodes.filter(c =>
+      c.role === 'company' &&
+      (c.companyId === company.id || c.companyName === company.companyName) &&
+      c.isActive
+    );
   }
 
   protected get assignmentStudents(): User[] {
@@ -2178,6 +2268,33 @@ export class App {
     const user = this.currentUser;
     if (!user || !user.school) return [];
     return this.users.filter(u => u.role === 'advisor' && u.school === user.school && u.status === 'active');
+  }
+
+  /** Template-friendly getter alias for getSchoolAdvisors() */
+  protected get schoolAdvisors(): User[] {
+    return this.getSchoolAdvisors();
+  }
+
+  /** Template-friendly getter alias for getCompanyDistance() */
+  protected get companyDistance(): number | null {
+    return this.getCompanyDistance();
+  }
+
+  /** Template-friendly alias for jobName() */
+  protected jobTitle(jobPostingId: number): string {
+    return this.jobName(jobPostingId);
+  }
+
+  /** Resolve student name via logbook → internship → student */
+  protected logbookStudentName(logbook: Logbook): string {
+    const internship = this.internshipFor(logbook.internshipId);
+    return internship ? this.userName(internship.studentId) : '-';
+  }
+
+  /** Resolve student name via evaluation → internship → student */
+  protected evaluationStudentName(evaluation: { internshipId: number }): string {
+    const internship = this.internshipFor(evaluation.internshipId);
+    return internship ? this.userName(internship.studentId) : '-';
   }
 
   // --- Checkbox Batch Actions ---

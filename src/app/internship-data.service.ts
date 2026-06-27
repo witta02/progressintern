@@ -106,6 +106,24 @@ export class InternshipDataService {
             if (payload.role === 'admin') {
               const codes = await firstValueFrom(this.api.getAdminCodes());
               this.enrollmentCodes = codes || [];
+            } else if (payload.role === 'company') {
+              try {
+                const companyCodes = await firstValueFrom(this.api.getCompanyCodes());
+                this.enrollmentCodes = (companyCodes || []).map((c: any) => ({
+                  id: c.id,
+                  role: c.role,
+                  code: c.code,
+                  usedCount: c.used_count ?? 0,
+                  maxUses: c.max_uses ?? undefined,
+                  expiresAt: c.expires_at ? new Date(c.expires_at).toISOString() : undefined,
+                  isActive: c.is_active,
+                  companyId: c.company_id ?? undefined,
+                  companyName: c.company_name ?? undefined,
+                  createdAt: c.created_at ?? undefined
+                }));
+              } catch {
+                this.enrollmentCodes = [];
+              }
             }
           }
         }

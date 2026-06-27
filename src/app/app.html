@@ -87,7 +87,7 @@
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสลงทะเบียน / รหัสเชิญ</label>
         <div class="relative">
-          <input name="registerCode" [(ngModel)]="registerForm.code" (ngModelChange)="onCodeChange($event)" placeholder="เช่น BU-STU-2026, COMP-INV-2026" 
+          <input name="registerCode" [(ngModel)]="registerForm.code" (ngModelChange)="onCodeChange($event)" placeholder="เช่น BU-STU-2026, COMP-INV-2026"
                  class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
           <span *ngIf="validatingCode" class="absolute right-4 top-4 text-xs font-bold text-slate-400">กำลังตรวจสอบ...</span>
         </div>
@@ -100,28 +100,28 @@
       </div>
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
-        <input name="registerName" [(ngModel)]="registerForm.name" placeholder="Full Name" 
+        <input name="registerName" [(ngModel)]="registerForm.name" placeholder="Full Name"
                class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
       </div>
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
-        <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com" 
+        <input name="registerEmail" type="email" [(ngModel)]="registerForm.email" placeholder="email@example.com"
                class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
       </div>
       <div class="space-y-2">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เบอร์โทรศัพท์</label>
-        <input name="registerPhone" type="text" [(ngModel)]="registerForm.phone" placeholder="เช่น 0812345678" 
+        <input name="registerPhone" type="text" [(ngModel)]="registerForm.phone" placeholder="เช่น 0812345678"
                class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รหัสผ่าน</label>
-          <input name="registerPassword" type="password" [(ngModel)]="registerForm.password" placeholder="••••••" 
+          <input name="registerPassword" type="password" [(ngModel)]="registerForm.password" placeholder="••••••"
                  class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
         </div>
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ยืนยันรหัสผ่าน</label>
-          <input name="registerConfirm" type="password" [(ngModel)]="registerForm.confirmPassword" placeholder="••••••" 
+          <input name="registerConfirm" type="password" [(ngModel)]="registerForm.confirmPassword" placeholder="••••••"
                  class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
         </div>
       </div>
@@ -133,12 +133,12 @@
       <div *ngIf="isRegisterCompany" class="pt-6 space-y-5 border-t border-slate-100 mt-6">
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อบริษัท</label>
-          <input name="companyName" [(ngModel)]="registerForm.companyName" placeholder="Company Name" 
+          <input name="companyName" [(ngModel)]="registerForm.companyName" placeholder="Company Name"
                  class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
         </div>
         <div class="space-y-2">
           <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">อีเมลติดต่อ (HR)</label>
-          <input name="contactEmail" type="email" [(ngModel)]="registerForm.contactEmail" placeholder="hr@company.com" 
+          <input name="contactEmail" type="email" [(ngModel)]="registerForm.contactEmail" placeholder="hr@company.com"
                  class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
         </div>
         <div class="space-y-2">
@@ -154,7 +154,7 @@
       </div>
 
       <p *ngIf="registerError" class="text-xs font-black text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">{{ registerError }}</p>
-      <button type="submit" [disabled]="registerLoading" 
+      <button type="submit" [disabled]="registerLoading"
               class="w-full py-5 bg-slate-900 hover:bg-blue-600 disabled:opacity-50 text-white rounded-2xl font-black text-lg shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-1 active:translate-y-0 active:scale-95 mt-6">
         {{ registerLoading ? 'กำลังสร้างบัญชี...' : 'ยืนยันการสมัคร' }}
       </button>
@@ -291,14 +291,14 @@
             </div>
           </div>
           
-          <div *ngIf="getSchoolAdvisors().length > 0" class="w-full mt-6 pt-6 border-t border-amber-200/50">
+          <div *ngIf="schoolAdvisors.length > 0" class="w-full mt-6 pt-6 border-t border-amber-200/50">
             <h4 class="text-xs font-black text-amber-900 uppercase tracking-widest mb-3">อาจารย์ที่ปรึกษาในสถาบันของคุณ (ติดต่อเพื่อเร่งอนุมัติ):</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div *ngFor="let adv of getSchoolAdvisors()" class="bg-white/80 rounded-2xl p-4 border border-amber-100 flex flex-col justify-between">
+              <div *ngFor="let adv of schoolAdvisors" class="bg-white/80 rounded-2xl p-4 border border-amber-100 flex flex-col justify-between">
                 <div>
                   <strong class="text-slate-800 text-sm font-black block">{{ adv.name }}</strong>
                   <span class="text-slate-500 text-xs font-bold block mt-1">📧 {{ adv.email }}</span>
-                  <span class="text-slate-500 text-xs font-bold block mt-0.5" *ngIf="adv.phone">📞 {{ adv.phone }}</span>
+                  <span class="text-slate-500 text-xs font-bold block mt-0.5" *ngIf="adv.phone">📞 {{ adv.phone | slice:0:3 }}-{{ adv.phone | slice:3:6 }}-{{ adv.phone | slice:6 }}</span>
                 </div>
               </div>
             </div>
@@ -307,7 +307,7 @@
 
         <!-- METRIC CARDS GRID -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          <article (click)="setActiveView(metric.view)" 
+          <article (click)="setActiveView(metric.view)"
                    class="glass-card p-8 rounded-[2.5rem] relative overflow-hidden group hover:scale-[1.03] transition-all duration-300 cursor-pointer animate-slide-up flex flex-col justify-between min-h-[160px]" 
                    *ngFor="let metric of dashboardMetrics; let i = index">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r" [ngClass]="['from-indigo-500 to-indigo-600', 'from-purple-500 to-purple-600', 'from-sky-400 to-teal-500', 'from-amber-500 to-rose-500'][i % 4]"></div>
@@ -338,7 +338,7 @@
               <div class="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
               <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"></div>
               
-              <div class="relative z-10">
+              <div class="relative z-10" *ngIf="activeInternship">
                 <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/10 text-blue-200 border border-white/10 shadow-sm mb-6">
                   ลงเวลาทำงานวันนี้
                 </span>
@@ -346,10 +346,10 @@
                   <h4 class="text-3xl font-black mb-2 tracking-tight">{{ internshipJobTitle(activeInternship) }}</h4>
                   <p class="text-blue-100/70 font-medium text-sm">เข้า/ออกงานเพื่อสะสมชั่วโมงฝึกงานของคุณ</p>
                 </div>
-                <div *ngIf="!activeInternship">
-                  <h4 class="text-3xl font-black mb-2 tracking-tight">ไม่มีกิจกรรมฝึกงาน</h4>
-                  <p class="text-blue-100/70 font-medium text-sm">คุณยังไม่มีกิจกรรมฝึกงานที่อยู่ระหว่างดำเนินการ</p>
-                </div>
+              </div>
+              <div *ngIf="!activeInternship" class="relative z-10">
+                <h4 class="text-3xl font-black mb-2 tracking-tight">ไม่มีกิจกรรมฝึกงาน</h4>
+                <p class="text-blue-100/70 font-medium text-sm">คุณยังไม่มีกิจกรรมฝึกงานที่อยู่ระหว่างดำเนินการ</p>
               </div>
 
               <div class="relative z-10 mt-8">
@@ -358,10 +358,10 @@
                   <!-- GPS Warning Badge -->
                   <div *ngIf="currentLatitude && currentLongitude" class="text-[10px] font-black text-blue-200/80 bg-white/5 border border-white/10 rounded-xl p-3">
                     📍 พิกัดลงเวลาปัจจุบัน: {{ currentLatitude | number:'1.4-4' }}, {{ currentLongitude | number:'1.4-4' }}
-                    <span *ngIf="getCompanyDistance() !== null" class="block mt-1 font-bold" [class.text-rose-300]="getCompanyDistance()! > 200" [class.text-emerald-300]="getCompanyDistance()! <= 200">
-                      ระยะห่างจากบริษัท: {{ getCompanyDistance()! | number:'1.0-0' }} เมตร 
-                      <span *ngIf="getCompanyDistance()! > 200">⚠️ (เกินระยะ 200ม.)</span>
-                      <span *ngIf="getCompanyDistance()! <= 200">✓ (อยู่ในขอบเขตบริษัท)</span>
+                    <span *ngIf="companyDistance !== null" class="block mt-1 font-bold" [class.text-rose-300]="companyDistance > 200" [class.text-emerald-300]="companyDistance <= 200">
+                      ระยะห่างจากบริษัท: {{ companyDistance | number:'1.0-0' }} เมตร
+                      <span *ngIf="companyDistance > 200">⚠️ (เกินระยะ 200ม.)</span>
+                      <span *ngIf="companyDistance <= 200">✓ (อยู่ในขอบเขตบริษัท)</span>
                     </span>
                   </div>
                   <button type="button" (click)="checkIn()" class="w-full py-5 bg-white text-blue-600 hover:bg-slate-50 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
@@ -450,7 +450,7 @@
                 <button type="button" (click)="bulkApproveStudents()" class="px-3.5 py-2 bg-slate-950 hover:bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm">
                   อนุมัติที่เลือก
                 </button>
-              </div>
+              </div>              
               <div class="glass-card rounded-3xl divide-y divide-slate-100/60 overflow-hidden shadow-sm">
                 <div class="p-4 bg-slate-100/50 flex items-center gap-3">
                   <input type="checkbox" [checked]="isAllStudentsSelected" (change)="toggleSelectAllStudents($event)" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
@@ -486,7 +486,7 @@
                 <div *ngFor="let l of pendingLogbooks" class="p-6 hover:bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="text-xs font-black text-slate-900">{{ userName(internshipFor(l.internshipId)?.studentId || 0) }}</span>
+                      <span class="text-xs font-black text-slate-900">{{ logbookStudentName(l) }}</span>
                       <span class="text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
                         {{ internshipJobTitle(internshipFor(l.internshipId)!) }}
                       </span>
@@ -571,7 +571,7 @@
                 <div *ngFor="let app of pendingApplications" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                   <div class="min-w-0 pr-3">
                     <div class="font-black text-slate-900 text-sm truncate">{{ userName(app.studentId) }}</div>
-                    <div class="text-xs text-blue-600 font-bold uppercase tracking-wider truncate mt-0.5">{{ jobName(app.jobPostingId) }}</div>
+                    <div class="text-xs text-blue-600 font-bold uppercase tracking-wider truncate mt-0.5">{{ jobTitle(app.jobPostingId) }}</div>
                   </div>
                   <div class="flex gap-2 shrink-0">
                     <button type="button" (click)="updateApplication(app, 'approved')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm">
@@ -655,12 +655,12 @@
                     <td class="px-10 py-6 font-bold text-slate-500">{{ intern.startDate | date:'dd MMM yyyy' }} - {{ intern.endDate | date:'dd MMM yyyy' }}</td>
                     <td class="px-10 py-6">
                       <div class="w-32 flex items-center gap-3">
-                        <div class="flex-1 bg-slate-100/80 rounded-full h-1.5 overflow-hidden">
-                          <div class="bg-gradient-to-r from-indigo-500 to-teal-400 h-full rounded-full" [style.width.%]="getInternshipProgress(intern).percent"></div>
+                        <div class="flex-1 bg-slate-100/80 rounded-full h-1.5 overflow-hidden" *ngIf="getInternshipProgress(intern) as progress">
+                          <div class="bg-gradient-to-r from-indigo-500 to-teal-400 h-full rounded-full" [style.width.%]="progress.percent"></div>
                         </div>
-                        <span class="text-xs font-black text-slate-700">{{ getInternshipProgress(intern).percent }}%</span>
+                        <span class="text-xs font-black text-slate-700">{{ getInternshipProgress(intern)?.percent }}%</span>
                       </div>
-                    </td>
+                    </td>                    
                     <td class="px-10 py-6">
                       <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                         {{ intern.status }}
@@ -855,7 +855,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex flex-wrap items-center gap-3 mb-2">
                   <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border border-slate-200/60 shadow-sm">
-                    {{ job.status }}
+                    {{ job.status === 'open' ? 'เปิดรับ' : 'ปิดรับ' }}
                   </span>
                   <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">รับ {{ job.slots }} อัตรา</span>
                   <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border border-blue-100 shadow-sm" *ngIf="getApplicantCount(job.id) > 0">
@@ -879,7 +879,7 @@
                   <!-- Company Name -->
                   <span class="flex items-center gap-1.5">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"></path></svg>
-                    {{ job.companyName || companyName(job.companyId) }}
+                    {{ job.companyName || companyName(job.companyId) || 'N/A' }}
                   </span>
                   <!-- Work Days -->
                   <span class="flex items-center gap-1.5">
@@ -980,7 +980,7 @@
                     </div>
                   </td>
                   <td class="px-10 py-6 font-black text-blue-600 text-lg">
-                    {{ jobName(app.jobPostingId) }}
+                    {{ jobTitle(app.jobPostingId) }}
                     <div *ngIf="studentResume(app.studentId)" class="mt-2">
                       <a [href]="getClickableFilePath(studentResume(app.studentId))" target="_blank" class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm transition-all hover:scale-105">
                         📄 ดูเรซูเม
@@ -1156,13 +1156,12 @@
                   </td>
                   <!-- Progress -->
                   <td class="px-8 py-5">
-                    <div class="w-36">
+                    <div class="w-36" *ngIf="getInternshipProgress(internship) as progress">
                       <div class="flex justify-between text-[10px] font-black text-slate-500 mb-1.5">
-                        <span>{{ getInternshipProgress(internship).percent }}%</span>
+                        <span>{{ progress.percent }}%</span>
                       </div>
                       <div class="w-full bg-slate-100/80 rounded-full h-2 overflow-hidden">
-                        <div class="bg-gradient-to-r from-indigo-500 to-teal-400 h-2 rounded-full transition-all"
-                             [style.width.%]="getInternshipProgress(internship).percent"></div>
+                        <div class="bg-gradient-to-r from-indigo-500 to-teal-400 h-2 rounded-full transition-all" [style.width.%]="progress.percent"></div>
                       </div>
                     </div>
                   </td>
@@ -1372,13 +1371,13 @@
                 </div>
                 <!-- Progress bar -->
                 <div class="pt-3 border-t border-slate-100">
-                  <div class="flex justify-between text-xs font-black text-slate-500 mb-2">
+                  <div class="flex justify-between text-xs font-black text-slate-500 mb-2" *ngIf="getInternshipProgress(selectedInternshipDetail!) as progress">
                     <span>ความคืบหน้า</span>
-                    <span>{{ getInternshipProgress(selectedInternshipDetail!).percent }}%</span>
+                    <span>{{ progress.percent }}%</span>
                   </div>
                   <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner">
                     <div class="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all"
-                         [style.width.%]="getInternshipProgress(selectedInternshipDetail!).percent"></div>
+                         [style.width.%]="getInternshipProgress(selectedInternshipDetail!)?.percent"></div>
                   </div>
                   <div class="text-[10px] font-bold text-slate-400 mt-2">{{ getInternshipProgress(selectedInternshipDetail!).label }}</div>
                 </div>
@@ -1658,7 +1657,7 @@
       <!-- ATTENDANCE -->
       <section *ngIf="activeView === 'attendance'" class="space-y-12">
         <!-- Student Selector for Company/Advisor -->
-        <div *ngIf="currentUser?.role === 'company' || currentUser?.role === 'advisor'" 
+        <div *ngIf="currentUser?.role === 'company' || currentUser?.role === 'advisor'"
              class="flex items-center gap-4 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
           <label class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Filter by Student:</label>
           <select [(ngModel)]="attendanceStudentFilterId" 
@@ -1681,11 +1680,11 @@
               <p class="text-base sm:text-xl text-blue-100/60 font-bold tracking-tight">Clock in and out accurately to track your progress.</p>
             </div>
             <div class="flex gap-4 sm:gap-6 shrink-0 w-full lg:w-auto">
-              <button (click)="checkIn()" [disabled]="hasOpenAttendance()" 
+              <button (click)="checkIn()" [disabled]="hasOpenAttendance()"
                       class="flex-1 lg:flex-none px-8 sm:px-14 py-5 sm:py-8 bg-white text-blue-600 rounded-[1.5rem] sm:rounded-[2rem] font-black text-lg sm:text-2xl shadow-[0_20px_50px_rgba(255,255,255,0.1)] disabled:opacity-50 transition-all hover:scale-105 active:scale-95">
                 Check In
               </button>
-              <button (click)="checkOut()" [disabled]="!hasOpenAttendance()" 
+              <button (click)="checkOut()" [disabled]="!hasOpenAttendance()"
                       class="flex-1 lg:flex-none px-8 sm:px-14 py-5 sm:py-8 bg-blue-500/20 border-2 border-white/20 text-white rounded-[1.5rem] sm:rounded-[2rem] font-black text-lg sm:text-2xl hover:bg-white/10 disabled:opacity-50 transition-all hover:scale-105 active:scale-95">
                 Check Out
               </button>
@@ -1714,8 +1713,8 @@
                   <td class="px-5 sm:px-10 py-5 sm:py-8">
                     <div class="flex flex-col gap-2">
                       <span *ngIf="att.latitude && att.longitude">
-                        <ng-container *ngIf="currentUser?.role !== 'student'">
-                          <button type="button" 
+                        <ng-container *ngIf="currentUser?.role !== 'student' && att.latitude">
+                          <button type="button"
                                   (click)="showMap(att.latitude, att.longitude, 'พิกัดเข้างาน (Check-In)')" 
                                   class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm transition-all hover:scale-105 w-fit cursor-pointer">
                             📍 In Map
@@ -1728,8 +1727,8 @@
                         </ng-container>
                       </span>
                       <span *ngIf="att.checkoutLatitude && att.checkoutLongitude">
-                        <ng-container *ngIf="currentUser?.role !== 'student'">
-                          <button type="button" 
+                        <ng-container *ngIf="currentUser?.role !== 'student' && att.checkoutLatitude">
+                          <button type="button"
                                   (click)="showMap(att.checkoutLatitude, att.checkoutLongitude, 'พิกัดออกงาน (Check-Out)')" 
                                   class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-800 font-black text-[10px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 shadow-sm transition-all hover:scale-105 w-fit cursor-pointer">
                             📍 Out Map
@@ -1753,11 +1752,11 @@
                       {{ attendanceStatusLabel(att.status) }}
                     </span>
                   </td>
-                  <td class="px-10 py-8">
+                  <td class="px-5 sm:px-10 py-5 sm:py-8">
                     <div *ngIf="att.verificationStatus === 'pending' && currentUser?.role === 'company'" 
                          class="flex gap-2">
-                      <button title="อนุมัติ" 
-                              class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest shadow-sm" 
+                      <button title="อนุมัติ"
+                              class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest shadow-sm"
                               (click)="setAttendanceVerification(att, 'approved')">อนุมัติ</button>
                       <button title="ปฏิเสธ" 
                               class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest shadow-sm" 
@@ -1800,7 +1799,7 @@
             <form class="space-y-5 w-full" (ngSubmit)="addLogbook()">
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อบันทึก / งานที่ทำ</label>
-                <input name="logbookTitle" [(ngModel)]="logbookTitle" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard" 
+                <input name="logbookTitle" [(ngModel)]="logbookTitle" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard"
                        class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
               </div>
               <div class="space-y-2">
@@ -1834,12 +1833,12 @@
             <form class="space-y-5 w-full" (ngSubmit)="submitEditLogbook()">
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อบันทึก / งานที่ทำ</label>
-                <input name="editLogbookTitle" [(ngModel)]="editLogbookForm.title" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard" 
+                <input name="editLogbookTitle" [(ngModel)]="editLogbookForm.title" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard"
                        class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดการปฏิบัติงาน</label>
-                <textarea name="editLogbookText" [(ngModel)]="editLogbookForm.content" rows="4" placeholder="ระบุรายละเอียดงานที่ทำ ความรู้ที่ได้รับ และอุปสรรคปัญหาในการทำงาน..." 
+                <textarea name="editLogbookText" [(ngModel)]="editLogbookForm.content" rows="4" placeholder="ระบุรายละเอียดงานที่ทำ ความรู้ที่ได้รับ และอุปสรรคปัญหาในการทำงาน..."
                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
               </div>
               <div class="flex gap-4">
@@ -1868,7 +1867,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100/60">
                 <tr *ngFor="let logbook of visibleLogbooks" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
-                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(internshipFor(logbook.internshipId)?.studentId || 0) }}</td>
+                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ logbookStudentName(logbook) }}</td>
                   <td class="px-10 py-6 font-bold text-slate-700">{{ logbook.title }}</td>
                   <td class="px-10 py-6 font-medium text-slate-500 max-w-xs truncate" title="{{ logbook.content }}">{{ logbook.content }}</td>
                   <td class="px-10 py-6">
@@ -1922,7 +1921,7 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทการลา</label>
-                  <select name="leaveType" [(ngModel)]="leaveForm.leaveType" 
+                  <select name="leaveType" [(ngModel)]="leaveForm.leaveType"
                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                     <option value="sick">ลาป่วย</option>
                     <option value="personal">ลากิจ</option>
@@ -1930,14 +1929,14 @@
                 </div>
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ตั้งแต่วันที่</label>
-                  <input name="leaveStart" type="date" [(ngModel)]="leaveForm.startDate" 
+                  <input name="leaveStart" type="date" [(ngModel)]="leaveForm.startDate"
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ถึงวันที่</label>
-                  <input name="leaveEnd" type="date" [(ngModel)]="leaveForm.endDate" 
+                  <input name="leaveEnd" type="date" [(ngModel)]="leaveForm.endDate"
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
-                </div>
+                </div>                
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เหตุผลการลา</label>
@@ -1971,7 +1970,7 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ประเภทการลา</label>
-                  <select name="editLeaveType" [(ngModel)]="editLeaveForm.leaveType" 
+                  <select name="editLeaveType" [(ngModel)]="editLeaveForm.leaveType"
                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                     <option value="sick">ลาป่วย</option>
                     <option value="personal">ลากิจ</option>
@@ -1979,14 +1978,14 @@
                 </div>
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ตั้งแต่วันที่</label>
-                  <input name="editLeaveStart" type="date" [(ngModel)]="editLeaveForm.startDate" 
+                  <input name="editLeaveStart" type="date" [(ngModel)]="editLeaveForm.startDate"
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ถึงวันที่</label>
-                  <input name="editLeaveEnd" type="date" [(ngModel)]="editLeaveForm.endDate" 
+                  <input name="editLeaveEnd" type="date" [(ngModel)]="editLeaveForm.endDate"
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
-                </div>
+                </div>                
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เหตุผลการลา</label>
@@ -2056,7 +2055,7 @@
 
       <!-- EVALUATIONS -->
       <section *ngIf="activeView === 'evaluations'" class="space-y-12">
-        <article *ngIf="(currentUser?.role === 'company' || currentUser?.role === 'advisor') && visibleInternships[0]" 
+        <article *ngIf="(currentUser?.role === 'company' || currentUser?.role === 'advisor') && visibleInternships.length > 0"
                  class="glass-card p-12 relative overflow-hidden rounded-[2.5rem]">
           <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
           <div class="relative z-10 space-y-8">
@@ -2076,7 +2075,7 @@
               <div class="grid grid-cols-1 gap-5">
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">นักศึกษาฝึกงาน</label>
-                  <select name="evaluationInternship" [(ngModel)]="selectedEvaluationInternshipId" 
+                  <select name="evaluationInternship" [(ngModel)]="selectedEvaluationInternshipId"
                           class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                     <option [ngValue]="null" disabled>เลือกนักศึกษา</option>
                     <option *ngFor="let internship of visibleInternships" [ngValue]="internship.id">
@@ -2088,16 +2087,16 @@
               <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
                 <div class="md:col-span-1 space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คะแนน (0-100)</label>
-                  <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore" 
+                  <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore"
                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="md:col-span-3 space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ข้อเสนอแนะ / ความเห็นเพิ่มเติม</label>
-                  <input name="evaluationFeedback" [(ngModel)]="evaluationFeedback" placeholder="ความรับผิดชอบดีมาก เรียนรู้เร็ว ควรพัฒนาทักษะภาษาอังกฤษเพิ่มเติม..." 
+                  <input name="evaluationFeedback" [(ngModel)]="evaluationFeedback" placeholder="ความรับผิดชอบดีมาก เรียนรู้เร็ว ควรพัฒนาทักษะภาษาอังกฤษเพิ่มเติม..."
                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
                 </div>
               </div>
-              <button type="submit" [disabled]="!selectedEvaluationInternshipId" 
+              <button type="submit" [disabled]="!selectedEvaluationInternshipId"
                       class="w-full py-5 bg-slate-900 hover:bg-blue-600 disabled:opacity-50 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
                 บันทึกผลการประเมิน
               </button>
@@ -2118,10 +2117,10 @@
               </thead>
               <tbody class="divide-y divide-slate-100/60">
                 <tr *ngFor="let evaluation of visibleEvaluations" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
-                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ userName(internshipFor(evaluation.internshipId)?.studentId || 0) }}</td>
+                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ evaluationStudentName(evaluation) }}</td>
                   <td class="px-10 py-6 font-bold text-slate-700">{{ evaluatorLabel(evaluation) }}</td>
                   <td class="px-10 py-6">
-                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">
+                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">                      
                       {{ evaluation.score }} / 100
                     </span>
                   </td>
@@ -2277,12 +2276,12 @@
 
             <!-- Tab Content: Create Student -->
             <form *ngIf="addStudentModalTab === 'create'" (ngSubmit)="addStudent()" class="p-8 space-y-6">
-              <div class="space-y-2">
+              <div class="space-y-2">                
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อ-นามสกุล</label>
                 <input name="newName" type="text" [(ngModel)]="newStudent.name" required placeholder="ชื่อจริง นามสกุล" 
                        class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
               </div>
-              <div class="space-y-2">
+              <div class="space-y-2">                
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">อีเมลแอดเดรส</label>
                 <input name="newEmail" type="email" [(ngModel)]="newStudent.email" required placeholder="student@school.ac.th" 
                        class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
@@ -2310,8 +2309,8 @@
       <!-- CLASSWORK (Google Classroom Work System) -->
       <section *ngIf="activeView === 'classwork'" class="space-y-8 animate-in fade-in duration-200">
 
-        <!-- ADVISOR & COMPANY ADMIN CREATION PANEL -->
-        <article *ngIf="currentUser?.role === 'advisor' || isCompanyAdmin" class="bg-gradient-to-br from-white to-indigo-50/40 rounded-[2rem] p-8 xl:p-10 text-slate-900 border border-indigo-100/80 shadow-xl shadow-indigo-100/30 relative overflow-hidden">
+        <!-- ADVISOR & COMPANY CREATION PANEL (admin + employee) -->
+        <article *ngIf="currentUser?.role === 'advisor' || currentUser?.role === 'company'" class="bg-gradient-to-br from-white to-indigo-50/40 rounded-[2rem] p-8 xl:p-10 text-slate-900 border border-indigo-100/80 shadow-xl shadow-indigo-100/30 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-100/30 rounded-full blur-[120px] -mr-60 -mt-60 pointer-events-none"></div>
           <div class="absolute bottom-0 left-0 w-72 h-72 bg-violet-100/20 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
           <div class="relative z-10 space-y-8">
@@ -2730,7 +2729,7 @@
 
                   <!-- Score Display -->
                   <div class="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-2xl px-6 py-4">
-                    <span class="text-sm font-black text-slate-700">คะแนนสุทธิรวม</span>
+                    <span class="text-sm font-black text-slate-700">คะแนนสุทธิรวม</span>                    
                     <div class="text-right">
                       <strong class="text-4xl font-black text-indigo-600">{{ gradeForm.score }}</strong>
                       <span class="text-lg text-slate-400 font-bold"> / 100</span>
@@ -2757,12 +2756,12 @@
                     <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest">เกณฑ์การประเมินรูบริกส์ (เกณฑ์ละ 25 คะแนน)</h4>
 
                     <div *ngFor="let rubric of [
-                      {label: '1. ความตรงต่อเวลา (Punctuality)', model: 'rubricPunctuality', value: rubricPunctuality},
-                      {label: '2. ทักษะทางเทคนิค (Technical Skill)', model: 'rubricTechnical', value: rubricTechnical},
-                      {label: '3. ความตั้งใจ/ทัศนคติ (Attitude)', model: 'rubricAttitude', value: rubricAttitude},
-                      {label: '4. การบันทึกและเอกสาร (Documentation)', model: 'rubricDocumentation', value: rubricDocumentation}
+                      {label: '1. ความตรงต่อเวลา (Punctuality)', value: rubricPunctuality},
+                      {label: '2. ทักษะทางเทคนิค (Technical Skill)', value: rubricTechnical},
+                      {label: '3. ความตั้งใจ/ทัศนคติ (Attitude)', value: rubricAttitude},
+                      {label: '4. การบันทึกและเอกสาร (Documentation)', value: rubricDocumentation}
                     ]" class="space-y-1.5">
-                      <div class="flex justify-between items-center">
+                      <div class="flex justify-between items-center">                        
                         <span class="text-xs font-bold text-slate-600">{{ rubric.label }}</span>
                         <span class="text-xs font-black text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-0.5">
                           {{ rubric.value }} / 25
@@ -2775,22 +2774,22 @@
                       <div class="space-y-1">
                         <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest">
                           <span>ความตรงต่อเวลา</span><span>{{ rubricPunctuality }}/25</span>
-                        </div>
+                        </div>                        
                         <input name="rub1" type="range" min="0" max="25" [(ngModel)]="rubricPunctuality" (ngModelChange)="updateGradingScore()" class="w-full accent-indigo-600">
                       </div>
                       <div class="space-y-1">
                         <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest">
                           <span>ทักษะทางเทคนิค</span><span>{{ rubricTechnical }}/25</span>
-                        </div>
+                        </div>                        
                         <input name="rub2" type="range" min="0" max="25" [(ngModel)]="rubricTechnical" (ngModelChange)="updateGradingScore()" class="w-full accent-indigo-600">
                       </div>
                       <div class="space-y-1">
                         <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest">
                           <span>ความตั้งใจ/ทัศนคติ</span><span>{{ rubricAttitude }}/25</span>
-                        </div>
+                        </div>                        
                         <input name="rub3" type="range" min="0" max="25" [(ngModel)]="rubricAttitude" (ngModelChange)="updateGradingScore()" class="w-full accent-indigo-600">
                       </div>
-                      <div class="space-y-1">
+                      <div class="space-y-1">                        
                         <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest">
                           <span>การบันทึกและเอกสาร</span><span>{{ rubricDocumentation }}/25</span>
                         </div>
@@ -2958,6 +2957,110 @@
                 บันทึกการแก้ไขข้อมูล
               </button>
             </form>
+          </div>
+        </article>
+
+        <!-- ================================================ -->
+        <!-- EMPLOYEE MANAGEMENT CARD — Company Admin Only     -->
+        <!-- ================================================ -->
+        <article *ngIf="isCompanyAdmin" class="bg-white rounded-[2.5rem] p-10 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-80 h-80 bg-amber-50/60 rounded-full blur-[80px] -mr-40 -mt-40"></div>
+          <div class="relative z-10">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/25">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-black text-slate-900 tracking-tight">จัดการพนักงาน</h3>
+                  <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Employee Management — Company Admin Only</p>
+                </div>
+              </div>
+              <button type="button" (click)="showEmployeeInviteModal = !showEmployeeInviteModal"
+                      class="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-200 hover:scale-105 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                สร้างรหัสเชิญพนักงาน
+              </button>
+            </div>
+
+            <!-- Invite Code Generator Modal (inline) -->
+            <div *ngIf="showEmployeeInviteModal" class="mb-8 bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-8 border border-amber-100 shadow-inner">
+              <h4 class="font-black text-amber-900 text-lg mb-2">สร้างรหัสเชิญสำหรับพนักงาน</h4>
+              <p class="text-xs text-amber-700 font-medium mb-6">พนักงานจะใช้รหัสนี้ในการสมัครสมาชิกผ่านหน้า Register (เลือก role: Company) — พวกเขาจะถูกเชื่อมโยงกับบริษัทของคุณโดยอัตโนมัติ</p>
+              <div class="flex gap-3">
+                <div class="flex-1 space-y-2">
+                  <label class="text-[10px] font-black text-amber-800 uppercase tracking-widest ml-1">รหัสเชิญ</label>
+                  <div class="flex gap-2">
+                    <input id="empInviteCodeInput" type="text" [(ngModel)]="employeeInviteCode" placeholder="EMP-XXXXXXXX"
+                           class="flex-1 px-5 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900 uppercase tracking-widest focus:border-amber-500 focus:ring-4 focus:ring-amber-100 outline-none transition-all placeholder:font-normal placeholder:tracking-normal placeholder:normal-case">
+                    <button type="button" (click)="generateEmployeeInviteCode()"
+                            class="px-4 py-3 bg-white border-2 border-amber-200 text-amber-700 rounded-xl font-black text-xs hover:bg-amber-50 transition-all cursor-pointer" title="สุ่มรหัสใหม่">
+                      🔀
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="flex gap-3 mt-5">
+                <button type="button" (click)="createEmployeeInviteCode()" [disabled]="employeeInviteLoading"
+                        class="flex-1 py-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl font-black text-sm transition-all shadow-lg shadow-amber-200 cursor-pointer">
+                  {{ employeeInviteLoading ? 'กำลังสร้าง...' : '✓ สร้างรหัสเชิญ' }}
+                </button>
+                <button type="button" (click)="showEmployeeInviteModal = false"
+                        class="px-6 py-3 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-black text-sm transition-all cursor-pointer">
+                  ยกเลิก
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Employee Invite Codes -->
+            <div *ngIf="companyEmployeeInviteCodes.length > 0" class="mb-8">
+              <h4 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">รหัสเชิญพนักงานที่ใช้งานได้</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div *ngFor="let code of companyEmployeeInviteCodes"
+                     class="flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-100">
+                  <div>
+                    <span class="font-black text-amber-900 text-lg tracking-widest">{{ code.code }}</span>
+                    <div class="text-[10px] text-amber-600 font-bold mt-1">
+                      ใช้แล้ว {{ code.usedCount ?? 0 }} ครั้ง
+                      <span *ngIf="code.expiresAt"> · หมดอายุ {{ formatTermDate(code.expiresAt) }}</span>
+                    </div>
+                  </div>
+                  <span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-full uppercase tracking-wider">Active</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Current Employees List -->
+            <div>
+              <h4 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">พนักงานในบริษัท ({{ companyEmployees.length }} คน)</h4>
+              <div *ngIf="companyEmployees.length === 0" class="text-center py-10 text-slate-400 font-bold text-sm bg-slate-50 rounded-2xl border border-slate-100">
+                ยังไม่มีพนักงานในระบบ — สร้างรหัสเชิญและแชร์ให้พนักงานลงทะเบียน
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div *ngFor="let emp of companyEmployees"
+                     class="flex items-center gap-4 bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-amber-200 transition-colors">
+                  <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-black text-base flex-shrink-0">
+                    {{ emp.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="font-black text-slate-900 text-sm truncate">{{ emp.name }}</p>
+                    <p class="text-xs text-slate-500 font-medium truncate">{{ emp.email }}</p>
+                  </div>
+                  <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex-shrink-0"
+                        [class.bg-amber-100]="emp.companyRole === 'admin'"
+                        [class.text-amber-700]="emp.companyRole === 'admin'"
+                        [class.bg-slate-100]="emp.companyRole !== 'admin'"
+                        [class.text-slate-600]="emp.companyRole !== 'admin'">
+                    {{ emp.companyRole === 'admin' ? '👑 Admin' : '👤 พนักงาน' }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
       </section>
@@ -3224,11 +3327,12 @@
                   <td class="px-6 py-4 font-black text-slate-900 text-lg">{{ c.code }}</td>
                   <td class="px-6 py-4">
                     <div class="font-black text-blue-600 text-xs uppercase tracking-wider">{{ roleName(c.role) }}</div>
-                    <div class="text-xs text-slate-400 mt-0.5">{{ c.schoolName || c.school_name || '-' }}</div>
-                    <div *ngIf="c.companyName || c.company_name" class="text-xs text-amber-600 font-bold mt-0.5">{{ c.companyName || c.company_name }}</div>
+                    <div class="text-xs text-slate-400 mt-0.5">{{ c.schoolName || '-' }}</div>
+                    <div *ngIf="c.companyName" class="text-xs text-amber-600 font-bold mt-0.5">{{ c.companyName }}</div>
                   </td>
                   <td class="px-6 py-4 font-bold text-slate-500">
-                    <span class="text-slate-800">{{ c.usedCount ?? c.used_count }}</span> / {{ c.maxUses ?? c.max_uses || 'ไม่จำกัด' }}
+                    <span class="text-slate-800">{{ c.usedCount ?? 0 }}</span> / {{ c.maxUses ?? 'ไม่จำกัด' }}
+              
                   </td>
                   <td class="px-6 py-4 font-bold text-slate-500">{{ formatTermDate(c.expiresAt) }}</td>
                   <td class="px-6 py-4">
@@ -3887,13 +3991,13 @@
   <!-- C. สรุปผลการเข้าปฏิบัติงาน -->
   <div class="print-section-title">3. สรุปผลการปฏิบัติงานและการเข้างาน (Performance Summary)</div>
   <table class="print-table-stats">
-    <thead>
+    <thead>      
       <tr>
         <th style="width: 35%;">หัวข้อการประเมิน</th>
         <th style="text-align: center; width: 15%;">จำนวน</th>
         <th style="text-align: center; width: 10%;">หน่วย</th>
         <th>หมายเหตุ / รายละเอียดเพิ่มเติม</th>
-      </tr>
+      </tr>      
     </thead>
     <tbody>
       <tr *ngIf="getStudentAttendanceSummary(selectedInternshipDetail.studentId, selectedInternshipDetail.id) as att">
@@ -3970,7 +4074,3 @@
     </table>
   </div>
 </div>
-
-
-
-

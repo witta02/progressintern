@@ -568,4 +568,21 @@ export class InternshipApiService {
       })
     );
   }
+
+  /** Company admin: create an employee invite code linked to their company */
+  createEmployeeCode(code: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/company/employees/codes`, { code }, this.authOptions()).pipe(
+      catchError((err) => {
+        throw err;
+      })
+    );
+  }
+
+  /** Company admin: list their company's active employee invite codes */
+  getCompanyCodes(): Observable<any[]> {
+    return this.http.get<any>(`${this.base}/company/employees/codes`, this.authOptions()).pipe(
+      map((res) => res?.data || []),
+      catchError(() => of([]))
+    );
+  }
 }

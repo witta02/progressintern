@@ -416,7 +416,7 @@ func CreateEmployeeCodeHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": 401, "error": "ไม่พบข้อมูลผู้ใช้"})
 		return
 	}
-	userID := int(userIDRaw.(float64))
+	userID := userIDRaw.(int)
 
 	// Verify the user is a company admin
 	var companyRole sql.NullString
@@ -492,7 +492,7 @@ func GetCompanyCodesHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": 401, "error": "ไม่พบข้อมูลผู้ใช้"})
 		return
 	}
-	userID := int(userIDRaw.(float64))
+	userID := userIDRaw.(int)
 
 	var companyID sql.NullInt64
 	err := config.DB.QueryRow("SELECT company_id FROM users WHERE id = ? AND role = 'company' AND company_role = 'admin'", userID).Scan(&companyID)

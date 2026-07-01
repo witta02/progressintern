@@ -2997,9 +2997,23 @@
         </article>
 
         <!-- ================================================ -->
-        <!-- EMPLOYEE MANAGEMENT CARD — Company Admin Only     -->
+        <!-- EMPLOYEE MANAGEMENT REDIRECT BANNER              -->
         <!-- ================================================ -->
-        <article *ngIf="isCompanyAdmin" class="bg-white rounded-[2.5rem] p-10 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
+        <article *ngIf="isCompanyAdmin" class="bg-white rounded-[2.5rem] p-10 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-6">
+          <div class="absolute top-0 right-0 w-80 h-80 bg-blue-50/40 rounded-full blur-[80px] -mr-40 -mt-40"></div>
+          <div class="relative z-10 space-y-2">
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">การจัดการพนักงาน</h3>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest leading-relaxed">โปรดใช้แท็บ "จัดการพนักงาน" บนเมนูด้านบนเพื่อสร้างรหัสเชิญ ปรับเปลี่ยนสิทธิ์/สถานะ หรือลบพนักงานออกจากบริษัท</p>
+          </div>
+          <button type="button" (click)="setActiveView('company_employees')" class="relative z-10 px-6 py-3.5 bg-brand-accent hover:bg-brand-accent-teal text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-glow-indigo transition-all hover:scale-105 cursor-pointer shrink-0">
+            ไปที่หน้าจัดการพนักงาน →
+          </button>
+        </article>
+
+        <!-- ================================================ -->
+        <!-- EMPLOYEE MANAGEMENT CARD — Company Admin Only (Disabled) -->
+        <!-- ================================================ -->
+        <article *ngIf="false" class="bg-white rounded-[2.5rem] p-10 border border-slate-200/60 shadow-2xl shadow-slate-200/20 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-80 h-80 bg-amber-50/60 rounded-full blur-[80px] -mr-40 -mt-40"></div>
           <div class="relative z-10">
             <!-- Header -->
@@ -3097,6 +3111,138 @@
                 </div>
               </div>
             </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- COMPANY EMPLOYEES VIEW -->
+      <section *ngIf="activeView === 'company_employees' && currentUser?.role === 'company' && isCompanyAdmin" class="space-y-8 animate-in fade-in duration-200">
+        
+        <!-- ── Header & Action ───────────────────────────────── -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div>
+            <h3 class="text-3xl font-black text-slate-900 tracking-tight">จัดการพนักงานในบริษัท</h3>
+            <p class="text-xs font-black text-blue-600 uppercase tracking-widest mt-2">Employee management — create invite codes and manage permissions</p>
+          </div>
+          <button type="button" (click)="showEmployeeInviteModal = true"
+                  class="px-6 py-4 bg-brand-accent hover:bg-brand-accent-teal text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-glow-indigo hover:scale-105 cursor-pointer">
+            + สร้างรหัสเชิญพนักงาน
+          </button>
+        </div>
+
+        <!-- Invite Code Generator Modal (inline) -->
+        <div *ngIf="showEmployeeInviteModal" class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-8 border border-amber-100 shadow-inner">
+          <h4 class="font-black text-amber-900 text-lg mb-2">สร้างรหัสเชิญสำหรับพนักงาน</h4>
+          <p class="text-xs text-amber-700 font-medium mb-6">พนักงานจะใช้รหัสนี้ในการสมัครสมาชิกผ่านหน้า Register (เลือก role: Company) — พวกเขาจะถูกเชื่อมโยงกับบริษัทของคุณโดยอัตโนมัติ</p>
+          <div class="flex gap-3">
+            <div class="flex-1 space-y-2">
+              <label class="text-[10px] font-black text-amber-800 uppercase tracking-widest ml-1">รหัสเชิญ</label>
+              <div class="flex gap-2">
+                <input id="empInviteCodeInput2" type="text" [(ngModel)]="employeeInviteCode" placeholder="EMP-XXXXXXXX"
+                       class="flex-1 px-5 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900 uppercase tracking-widest focus:border-amber-500 focus:ring-4 focus:ring-amber-100 outline-none transition-all placeholder:font-normal placeholder:tracking-normal placeholder:normal-case">
+                <button type="button" (click)="generateEmployeeInviteCode()"
+                        class="px-4 py-3 bg-white border-2 border-amber-200 text-amber-700 rounded-xl font-black text-xs hover:bg-amber-50 transition-all cursor-pointer" title="สุ่มรหัสใหม่">
+                  🔀
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-5">
+            <button type="button" (click)="createEmployeeInviteCode()" [disabled]="employeeInviteLoading"
+                    class="flex-1 py-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl font-black text-sm transition-all shadow-lg shadow-amber-200 cursor-pointer">
+              {{ employeeInviteLoading ? 'กำลังสร้าง...' : '✓ สร้างรหัสเชิญ' }}
+            </button>
+            <button type="button" (click)="showEmployeeInviteModal = false"
+                    class="px-6 py-3 bg-white border-2 border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-black text-sm transition-all cursor-pointer">
+              ยกเลิก
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Employee Invite Codes -->
+        <div *ngIf="companyEmployeeInviteCodes.length > 0" class="glass-card rounded-[2.5rem] p-8 bg-gradient-to-br from-white to-amber-50/10 border border-slate-100">
+          <h4 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">รหัสเชิญพนักงานที่ใช้งานได้ (Invite Codes)</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div *ngFor="let code of companyEmployeeInviteCodes"
+                 class="flex items-center justify-between bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+              <div>
+                <span class="font-black text-amber-900 text-lg tracking-widest">{{ code.code }}</span>
+                <div class="text-[10px] text-amber-600 font-bold mt-1">
+                  ใช้แล้ว {{ code.usedCount ?? 0 }} ครั้ง
+                  <span *ngIf="code.expiresAt"> · หมดอายุ {{ formatTermDate(code.expiresAt) }}</span>
+                </div>
+              </div>
+              <span class="px-3 py-1 bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-black rounded-full uppercase tracking-wider">Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employees Table -->
+        <article class="glass-card rounded-[2.5rem] overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-gradient-to-r from-slate-50 to-blue-50/30">
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">#</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">พนักงาน</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">อีเมล / โทรศัพท์</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">บทบาท (Role)</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ (Status)</th>
+                  <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100/60">
+                <tr *ngIf="companyEmployees.length === 0">
+                  <td colspan="6" class="px-8 py-16 text-center text-slate-400 font-bold">
+                    ยังไม่มีพนักงานคนอื่นในระบบ (กดสร้างรหัสเชิญพนักงานเพื่อเชิญคนแรก)
+                  </td>
+                </tr>
+                <tr *ngFor="let emp of companyEmployees; let idx = index" class="hover:bg-blue-50/30 transition-colors">
+                  <td class="px-8 py-5 text-sm font-black text-slate-400">{{ idx + 1 }}</td>
+                  <td class="px-8 py-5">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-md shadow-indigo-200">
+                        {{ emp.name.charAt(0).toUpperCase() }}
+                      </div>
+                      <div>
+                        <div class="font-black text-slate-900 text-sm leading-tight">{{ emp.name }}</div>
+                        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">ลงทะเบียนเมื่อ: {{ emp.createdAt ? formatTermDate(emp.createdAt) : '-' }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-8 py-5">
+                    <div class="text-sm font-bold text-slate-700">{{ emp.email }}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">{{ emp.phone || '-' }}</div>
+                  </td>
+                  <td class="px-8 py-5">
+                    <select [ngModel]="emp.companyRole" 
+                            (ngModelChange)="changeEmployeeRole(emp, $event)"
+                            class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase text-slate-700 outline-none focus:ring-2 focus:ring-brand-accent/20 cursor-pointer">
+                      <option value="employee">👤 พนักงาน (Employee)</option>
+                      <option value="admin">👑 ผู้ดูแล (Admin)</option>
+                    </select>
+                  </td>
+                  <td class="px-8 py-5">
+                    <select [ngModel]="emp.status || 'active'" 
+                            (ngModelChange)="changeEmployeeStatus(emp, $event)"
+                            class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase text-slate-700 outline-none focus:ring-2 focus:ring-brand-accent/20 cursor-pointer"
+                            [class.text-emerald-600]="emp.status === 'active'"
+                            [class.text-rose-600]="emp.status === 'suspended'"
+                            [class.text-amber-600]="emp.status === 'pending'">
+                      <option value="active" class="text-emerald-600">✓ Active</option>
+                      <option value="suspended" class="text-rose-600">✗ Suspended</option>
+                      <option value="pending" class="text-amber-600">? Pending</option>
+                    </select>
+                  </td>
+                  <td class="px-8 py-5 text-right">
+                    <button type="button" (click)="removeEmployeeFromCompany(emp)" 
+                            class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 text-xs font-black rounded-xl border border-rose-100/50 transition-colors uppercase tracking-wider cursor-pointer">
+                      ลบออก
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </article>
       </section>

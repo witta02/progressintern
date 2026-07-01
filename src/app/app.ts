@@ -350,6 +350,7 @@ export class App {
     jobs: 'ตำแหน่งงาน',
     applications: 'การสมัคร',
     internships: 'ฝึกงาน',
+    company_employees: 'จัดการพนักงาน',
     attendance: 'ลงเวลา',
     logbooks: 'บันทึก',
     leaves: 'การลา',
@@ -487,7 +488,7 @@ export class App {
       admin: ['dashboard', 'admin_users', 'admin_codes', 'company_school', 'tickets', 'edit'],
       advisor: ['dashboard', 'students', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets', 'edit'],
       student: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets', 'edit'],
-      company: ['dashboard', 'jobs', 'applications', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets', 'edit']
+      company: ['dashboard', 'jobs', 'applications', 'internships', 'company_employees', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets', 'edit']
     };
 
     if (!this.currentUser) return [];
@@ -497,10 +498,10 @@ export class App {
       views = views.filter(v => v !== 'jobs' && v !== 'applications');
     }
 
-    // Company employees can see: dashboard, internships, attendance, logbooks, leaves, evaluations, classwork, tickets
-    // (cannot manage jobs, applications, or edit company settings)
+    // Company employees can see: dashboard, internships, attendance, logbooks, leaves, evaluations, classwork, tickets, edit
+    // (cannot manage jobs, applications, or employee settings)
     if (this.isCompanyEmployee) {
-      views = ['dashboard', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets'];
+      views = ['dashboard', 'internships', 'attendance', 'logbooks', 'leaves', 'evaluations', 'classwork', 'tickets', 'edit'];
     }
 
     return views;
@@ -635,6 +636,36 @@ export class App {
       u.id !== this.currentUserId &&
       (u.companyId === company.id || this.data.companyIdForUser(u.id) === company.id)
     );
+  }
+
+  protected async changeEmployeeRole(emp: User, newRole: 'admin' | 'employee'): Promise<void> {
+    try {
+      await this.data.updateUser(emp.id, { companyRole: newRole });
+      this.notifications.success(`เปลี่ยนบทบาทของพนักงาน ${emp.name} เป็น ${newRole === 'admin' ? 'ผู้ดูแล' : 'พนักงาน'} สำเร็จ`, 'จัดการพนักงาน');
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการพนักงาน');
+    }
+  }
+
+  protected async changeEmployeeStatus(emp: User, newStatus: any): Promise<void> {
+    try {
+      await this.data.updateUser(emp.id, { status: newStatus });
+      this.notifications.success(`อัปเดตสถานะของพนักงาน ${emp.name} เป็น ${newStatus} สำเร็จ`, 'จัดการพนักงาน');
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการพนักงาน');
+    }
+  }
+
+  protected async removeEmployeeFromCompany(emp: User): Promise<void> {
+    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบพนักงาน ${emp.name} ออกจากบริษัท?`)) {
+      return;
+    }
+    try {
+      await this.data.updateUser(emp.id, { removeCompany: true } as any);
+      this.notifications.success(`ลบพนักงาน ${emp.name} ออกจากบริษัทเรียบร้อยแล้ว`, 'จัดการพนักงาน');
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการพนักงาน');
+    }
   }
 
   /** Generate a random alphanumeric invite code for company employees */

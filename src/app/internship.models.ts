@@ -31,7 +31,7 @@ export type EvaluationType = 'mentor' | 'advisor';
 export type LeaveType = 'sick' | 'personal';
 export type LeaveStatus = 'pending' | 'approved' | 'rejected';
 
-export type UserStatus = 'pending' | 'active' | 'rejected';
+export type UserStatus = 'pending' | 'active' | 'rejected' | 'suspended';
 
 export interface User {
   id: number;

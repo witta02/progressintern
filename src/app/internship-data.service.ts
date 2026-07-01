@@ -330,7 +330,11 @@ export class InternshipDataService {
     }
 
     const user = this.users.find((u) => u.id === userId);
-    this.users = this.users.map((u) => (u.id === userId ? { ...u, ...updates } : u));
+    if ((updates as any).removeCompany) {
+      this.users = this.users.map((u) => (u.id === userId ? { ...u, companyId: undefined, companyRole: undefined } : u));
+    } else {
+      this.users = this.users.map((u) => (u.id === userId ? { ...u, ...updates } : u));
+    }
 
     if (user && user.role === 'company') {
       this.companies = this.companies.map((c) => {

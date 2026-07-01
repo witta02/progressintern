@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"internship-backend/config"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -58,6 +59,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			 LEFT JOIN internships i ON i.company_id = ? AND i.student_id = u.id
 			 WHERE u.id = ? 
 			    OR u.role = 'admin'
+			    OR (u.role = 'company' AND u.company_id = ?)
 			    OR (u.role = 'student' AND (a.id IS NOT NULL OR i.id IS NOT NULL))
 			    OR (u.role = 'advisor' AND u.school IN (
 			         SELECT DISTINCT school FROM users s 
@@ -65,7 +67,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			         LEFT JOIN internships si ON si.student_id = s.id AND si.company_id = ?
 			         WHERE s.role = 'student' AND (sa.id IS NOT NULL OR si.id IS NOT NULL)
 			    ))`,
-			cID, cID, userIDInt, cID,
+			cID, cID, userIDInt, cID, cID,
 		)
 	} else { // student
 		var school string
@@ -438,6 +440,16 @@ func GetAllInternshipsHandler(c *gin.Context) {
 			school,
 		)
 	} else if roleStr == "company" {
+		var userCompanyID sql.NullInt64
+		_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", userIDInt).Scan(&userCompanyID)
+
+		cID := 0
+		if userCompanyID.Valid {
+			cID = int(userCompanyID.Int64)
+		} else {
+			_ = config.DB.QueryRow("SELECT id FROM companies WHERE user_id = ?", userIDInt).Scan(&cID)
+		}
+
 		rows, err = config.DB.Query(
 			`SELECT i.id, i.student_id, i.company_id, i.job_posting_id, i.start_date, i.end_date, i.status, i.updated_at,
 			        COALESCE(u.name, '') as student_name, COALESCE(c.company_name, '') as company_name,
@@ -446,9 +458,9 @@ func GetAllInternshipsHandler(c *gin.Context) {
 			 LEFT JOIN users u ON i.student_id = u.id
 			 LEFT JOIN companies c ON i.company_id = c.id
 			 LEFT JOIN job_postings j ON i.job_posting_id = j.id
-			 WHERE c.user_id = ?
+			 WHERE i.company_id = ?
 			 ORDER BY i.created_at DESC`,
-			userIDInt,
+			cID,
 		)
 	} else { // student
 		rows, err = config.DB.Query(
@@ -939,6 +951,8 @@ func UpdateUserHandler(c *gin.Context) {
 		Address         string   `json:"address"`
 		Latitude        *float64 `json:"latitude"`
 		Longitude       *float64 `json:"longitude"`
+		CompanyRole     *string  `json:"company_role"`
+		RemoveCompany   *bool    `json:"remove_company"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
@@ -1006,6 +1020,50 @@ func UpdateUserHandler(c *gin.Context) {
 
 			c.JSON(200, gin.H{"status": 200, "message": "อนุมัติ/แก้ไขข้อมูลนักศึกษาสำเร็จ"})
 			return
+		}
+
+		if roleStr == "company" && targetRole == "company" {
+			var requesterRole string
+			var requesterCompanyID sql.NullInt64
+			_ = config.DB.QueryRow("SELECT COALESCE(company_role,''), company_id FROM users WHERE id = ?", userIDInt).Scan(&requesterRole, &requesterCompanyID)
+
+			var targetCompanyID sql.NullInt64
+			_ = config.DB.QueryRow("SELECT company_id FROM users WHERE id = ?", targetUserIDInt).Scan(&targetCompanyID)
+
+			if requesterRole == "admin" && requesterCompanyID.Valid && targetCompanyID.Valid && requesterCompanyID.Int64 == targetCompanyID.Int64 {
+				if input.RemoveCompany != nil && *input.RemoveCompany {
+					_, err = config.DB.Exec("UPDATE users SET company_id = NULL, company_role = NULL WHERE id = ?", targetUserIDInt)
+					if err != nil {
+						c.JSON(500, gin.H{"status": 500, "error": "ลบพนักงานออกจากบริษัทล้มเหลว: " + err.Error()})
+						return
+					}
+					c.JSON(200, gin.H{"status": 200, "message": "ลบพนักงานออกจากบริษัทสำเร็จ"})
+					return
+				}
+
+				var queryParts []string
+				var args []interface{}
+				if input.Status != "" {
+					queryParts = append(queryParts, "status = ?")
+					args = append(args, input.Status)
+				}
+				if input.CompanyRole != nil {
+					queryParts = append(queryParts, "company_role = ?")
+					args = append(args, *input.CompanyRole)
+				}
+
+				if len(queryParts) > 0 {
+					query := "UPDATE users SET " + strings.Join(queryParts, ", ") + " WHERE id = ?"
+					args = append(args, targetUserIDInt)
+					_, err = config.DB.Exec(query, args...)
+					if err != nil {
+						c.JSON(500, gin.H{"status": 500, "error": "อัปเดตข้อมูลพนักงานล้มเหลว: " + err.Error()})
+						return
+					}
+				}
+				c.JSON(200, gin.H{"status": 200, "message": "อัปเดตข้อมูลพนักงานสำเร็จ"})
+				return
+			}
 		}
 
 		c.JSON(403, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์แก้ไขข้อมูลผู้ใช้อื่น"})

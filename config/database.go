@@ -202,8 +202,10 @@ func migrateDatabase(db *sql.DB) {
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
 
 	// --- STUDENT EXTRA FIELDS ---
-	_, _ = db.Exec("ALTER TABLE users ADD COLUMN student_code INT NOT NULL DEFAULT 0")
-	_, _ = db.Exec("ALTER TABLE users MODIFY COLUMN student_code INT NOT NULL DEFAULT 0")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN number INT NOT NULL DEFAULT 0")
+	_, _ = db.Exec("ALTER TABLE users MODIFY COLUMN number INT NOT NULL DEFAULT 0")
+	_, _ = db.Exec("UPDATE users SET number = student_code")
+	_, _ = db.Exec("ALTER TABLE users DROP COLUMN student_code")
 	_, _ = db.Exec("ALTER TABLE users ADD COLUMN year_level VARCHAR(20) NOT NULL DEFAULT ''")
 	_, _ = db.Exec("ALTER TABLE users ADD COLUMN class_group VARCHAR(50) NOT NULL DEFAULT ''")
 }

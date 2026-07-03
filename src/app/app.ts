@@ -342,6 +342,7 @@ export class App {
   protected showAddStudentModal = false;
   protected addStudentModalTab: 'pick' | 'create' = 'pick';
   protected pickStudentSearchQuery = '';
+  protected selectedStudentToAssignId = 0;
 
   // Company & School management view variables
   protected newSchoolName = '';
@@ -3459,6 +3460,31 @@ export class App {
     const ids = advisorIds || (fallbackAdvisorId ? [fallbackAdvisorId] : []);
     if (ids.length === 0) return [];
     return this.users.filter(u => ids.includes(u.id) && u.role === 'advisor');
+  }
+
+  protected getAllPickableStudents(): User[] {
+    const user = this.currentUser;
+    if (user?.role !== 'advisor') return [];
+    return this.users.filter(u => 
+      u.role === 'student' && 
+      !(u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id)
+    );
+  }
+
+  protected getSelectedStudentInfo(): User | undefined {
+    if (!this.selectedStudentToAssignId) return undefined;
+    return this.users.find(u => u.id === Number(this.selectedStudentToAssignId));
+  }
+
+  protected assignSelectedStudent(): void {
+    if (!this.selectedStudentToAssignId) return;
+    this.assignStudentToAdvisor(Number(this.selectedStudentToAssignId));
+    this.selectedStudentToAssignId = 0;
+  }
+
+  protected hasAdvisor(student: User | undefined): boolean {
+    if (!student) return false;
+    return !!(student.advisorId || (student.advisorIds && student.advisorIds.length > 0));
   }
 
   protected async completeInternship(internshipId: number): Promise<void> {

@@ -42,6 +42,42 @@ export class NotificationService {
       }
     }
   }
+
+  hasNotificationSupport(): boolean {
+    return typeof window !== 'undefined' && 'Notification' in window;
+  }
+
+  get permissionStatus(): string {
+    if (this.hasNotificationSupport()) {
+      return Notification.permission;
+    }
+    return 'unsupported';
+  }
+
+  async requestPermission(): Promise<boolean> {
+    if (!this.hasNotificationSupport()) {
+      console.warn('This browser does not support desktop notifications.');
+      return false;
+    }
+    if (Notification.permission === 'granted') {
+      return true;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      return permission === 'granted';
+    } catch (err) {
+      // Legacy browsers might use callbacks instead of promises
+      return new Promise<boolean>((resolve) => {
+        try {
+          Notification.requestPermission((permission) => {
+            resolve(permission === 'granted');
+          });
+        } catch (e) {
+          resolve(false);
+        }
+      });
+    }
+  }
   
   notify(
     message: string,
@@ -66,6 +102,18 @@ export class NotificationService {
       this.items.pop();
     }
     this.saveToStorage();
+
+    // Trigger native desktop/mobile notification if supported, permission granted, and tab backgrounded
+    if (this.hasNotificationSupport() && Notification.permission === 'granted') {
+      try {
+        new Notification(itemTitle, {
+          body: message,
+          icon: '/favicon.ico'
+        });
+      } catch (err) {
+        console.error('Error triggering native browser notification:', err);
+      }
+    }
 
     const Toast = Swal.mixin({
       toast: true,

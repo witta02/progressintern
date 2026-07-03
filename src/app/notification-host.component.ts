@@ -65,6 +65,23 @@ import { NotificationService } from './notification.service';
 
         <!-- Notification List -->
         <div class="flex-1 overflow-y-auto p-6 space-y-4">
+          <!-- Device Notifications Permission Alert -->
+          <div *ngIf="hasNotificationSupport && permissionStatus !== 'granted'" class="p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100/80 shadow-sm flex flex-col gap-3 font-sans">
+            <div class="flex gap-3">
+              <span class="text-xl">🔔</span>
+              <div>
+                <h5 class="text-sm font-black text-slate-800 leading-snug">เปิดแจ้งเตือนบนอุปกรณ์</h5>
+                <p class="text-xs text-slate-500 font-bold leading-normal mt-1">รับทราบทันทีเมื่อพี่เลี้ยงมอบหมายงานใหม่ หรืออนุมัติคำขอ</p>
+              </div>
+            </div>
+            <button 
+              (click)="requestPermission()"
+              class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-[0.98]"
+            >
+              เปิดใช้งานการแจ้งเตือน
+            </button>
+          </div>
+
           <div *ngIf="notificationsList.length === 0" class="h-full flex flex-col items-center justify-center text-center p-8">
             <div class="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300 mb-4 border border-slate-100/50">
               <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -142,6 +159,23 @@ export class NotificationHostComponent {
   @Output() panelClosed = new EventEmitter<void>();
 
   private notifications = inject(NotificationService);
+
+  get hasNotificationSupport(): boolean {
+    return this.notifications.hasNotificationSupport();
+  }
+
+  get permissionStatus(): string {
+    return this.notifications.permissionStatus;
+  }
+
+  async requestPermission(): Promise<void> {
+    const granted = await this.notifications.requestPermission();
+    if (granted) {
+      this.notifications.success('ขอบคุณที่เปิดการแจ้งเตือนระบบ', 'เปิดการแจ้งเตือนสำเร็จ');
+    } else {
+      this.notifications.warning('ไม่สามารถเปิดใช้งานแจ้งเตือนได้ กรุณาตรวจสอบสิทธิ์การตั้งค่าของเบราว์เซอร์', 'แจ้งเตือนถูกปฏิเสธ');
+    }
+  }
 
   get notificationsList() {
     return this.notifications.toasts();

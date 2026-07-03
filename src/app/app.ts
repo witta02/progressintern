@@ -50,6 +50,8 @@ export class App {
   private readonly sessionKey = 'intern-manager-session-v1';
 
   private codeDebounceTimer: any = null;
+  private pollingIntervalId: any = null;
+  private knownAssignmentIds = new Set<number>();
 
   protected currentUserId: number | null = null;
   protected initialized = false;
@@ -1233,6 +1235,7 @@ export class App {
   }
 
   protected logout(): void {
+    this.stopNotificationSync();
     this.currentUserId = null;
     this.applyRoleTheme(undefined);
     if (typeof localStorage !== 'undefined') {
@@ -2826,7 +2829,79 @@ export class App {
       });
     }
 
+    this.startNotificationSync();
     this.cdr.detectChanges();
+  }
+
+  ngOnDestroy(): void {
+    this.stopNotificationSync();
+  }
+
+  private startNotificationSync(): void {
+    this.stopNotificationSync();
+    const user = this.currentUser;
+    if (!user) return;
+
+    this.knownAssignmentIds = new Set(this.assignments.map(a => a.id));
+
+    if (typeof window !== 'undefined') {
+      this.pollingIntervalId = setInterval(async () => {
+        if (!this.currentUser) {
+          this.stopNotificationSync();
+          return;
+        }
+        try {
+          await this.data.refreshFromApi();
+          this.checkNewAssignments();
+        } catch (err) {
+          console.error('[Notification Polling] Error checking assignments:', err);
+        }
+      }, 30000); // 30 seconds
+
+      window.addEventListener('storage', this.handleStorageEvent);
+    }
+  }
+
+  private stopNotificationSync(): void {
+    if (this.pollingIntervalId) {
+      clearInterval(this.pollingIntervalId);
+      this.pollingIntervalId = null;
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', this.handleStorageEvent);
+    }
+  }
+
+  private handleStorageEvent = (event: StorageEvent): void => {
+    if (event.key === 'intern-manager-state-v2') {
+      void this.data.refreshFromApi().then(() => {
+        this.checkNewAssignments();
+        this.cdr.detectChanges();
+      });
+    }
+  };
+
+  private checkNewAssignments(): void {
+    const currentList = this.assignments;
+    let foundNew = false;
+    
+    for (const ass of currentList) {
+      if (!this.knownAssignmentIds.has(ass.id)) {
+        this.knownAssignmentIds.add(ass.id);
+        if (ass.creatorId !== this.currentUserId) {
+          foundNew = true;
+          const creatorType = ass.creatorRole === 'company' ? 'พี่เลี้ยง/บริษัท' : 'อาจารย์';
+          this.notifications.info(
+            `งานใหม่: "${ass.title}"\nมอบหมายโดย: ${creatorType}`,
+            'ได้รับงานมอบหมายใหม่'
+          );
+        }
+      }
+    }
+    
+    if (foundNew) {
+      this.cdr.detectChanges();
+    }
   }
 
   protected today(): string {

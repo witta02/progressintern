@@ -95,6 +95,18 @@ func GetAllUsersHandler(c *gin.Context) {
 	}
 	defer rows.Close()
 
+	studentAdvisors := make(map[int][]int)
+	relRows, relErr := config.DB.Query("SELECT advisor_id, student_id FROM advisor_students")
+	if relErr == nil {
+		for relRows.Next() {
+			var advID, stuID int
+			if err := relRows.Scan(&advID, &stuID); err == nil {
+				studentAdvisors[stuID] = append(studentAdvisors[stuID], advID)
+			}
+		}
+		relRows.Close()
+	}
+
 	var list []gin.H
 	for rows.Next() {
 		var id int
@@ -102,9 +114,17 @@ func GetAllUsersHandler(c *gin.Context) {
 		var advisorID, companyID sql.NullInt64
 		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &companyRole, &internStartDate, &internEndDate)
 
+		var advIDs []int = studentAdvisors[id]
+		if advIDs == nil {
+			advIDs = []int{}
+		}
+
 		var advIDVal interface{} = nil
-		if advisorID.Valid {
+		if len(advIDs) > 0 {
+			advIDVal = advIDs[0]
+		} else if advisorID.Valid {
 			advIDVal = advisorID.Int64
+			advIDs = []int{int(advisorID.Int64)}
 		}
 
 		var cIDVal interface{} = nil
@@ -125,6 +145,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			"intro":         intro,
 			"field":         field,
 			"advisor_id":    advIDVal,
+			"advisor_ids":   advIDs,
 			"company_id":    cIDVal,
 			"company_role":  companyRole,
 			"intern_start_date": internStartDate,
@@ -234,9 +255,26 @@ func GetUserByIDHandler(c *gin.Context) {
 		return
 	}
 
+	var advIDs []int
+	relRows, relErr := config.DB.Query("SELECT advisor_id FROM advisor_students WHERE student_id = ?", targetUserIDInt)
+	if relErr == nil {
+		for relRows.Next() {
+			var advID int
+			if err := relRows.Scan(&advID); err == nil {
+				advIDs = append(advIDs, advID)
+			}
+		}
+		relRows.Close()
+	}
+
 	var advIDVal interface{} = nil
-	if advisorID.Valid {
+	if len(advIDs) > 0 {
+		advIDVal = advIDs[0]
+	} else if advisorID.Valid {
 		advIDVal = advisorID.Int64
+		advIDs = []int{int(advisorID.Int64)}
+	} else {
+		advIDs = []int{}
 	}
 
 	var cIDVal interface{} = nil
@@ -251,6 +289,7 @@ func GetUserByIDHandler(c *gin.Context) {
 			"phone": phone, "profile_image": profileImage, "school": school,
 			"status": status, "resume_url": resumeURL, "intro": intro, "field": field,
 			"advisor_id":   advIDVal,
+			"advisor_ids":  advIDs,
 			"company_id":   cIDVal,
 			"company_role": companyRole,
 			"intern_start_date": internStartDate,
@@ -982,6 +1021,7 @@ func UpdateUserHandler(c *gin.Context) {
 		Intro           string   `json:"intro"`
 		Field           string   `json:"field"`
 		AdvisorID       *int     `json:"advisor_id"`
+		AdvisorIDs      []int    `json:"advisor_ids"`
 		InternStartDate string   `json:"intern_start_date"`
 		InternEndDate   string   `json:"intern_end_date"`
 		CompanyName     string   `json:"company_name"`
@@ -1027,13 +1067,12 @@ func UpdateUserHandler(c *gin.Context) {
 			var query string
 			var args []interface{}
 			if input.AdvisorID != nil {
+				var fallbackAdvisorVal interface{} = *input.AdvisorID
 				if *input.AdvisorID == 0 {
-					query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = NULL, intern_start_date = ?, intern_end_date = ? WHERE id = ?"
-					args = []interface{}{input.Status, advisorSchool, input.InternStartDate, input.InternEndDate, targetUserIDInt}
-				} else {
-					query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?"
-					args = []interface{}{input.Status, advisorSchool, *input.AdvisorID, input.InternStartDate, input.InternEndDate, targetUserIDInt}
+					fallbackAdvisorVal = nil
 				}
+				query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, advisor_id = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?"
+				args = []interface{}{input.Status, advisorSchool, fallbackAdvisorVal, input.InternStartDate, input.InternEndDate, targetUserIDInt}
 			} else {
 				query = "UPDATE users SET status = COALESCE(NULLIF(?,''), status), school = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?"
 				args = []interface{}{input.Status, advisorSchool, input.InternStartDate, input.InternEndDate, targetUserIDInt}
@@ -1045,16 +1084,38 @@ func UpdateUserHandler(c *gin.Context) {
 				return
 			}
 
-			// Sync supervisor_id in internships table for active internship
-			if input.AdvisorID != nil {
-				var supervisorVal interface{} = *input.AdvisorID
-				if *input.AdvisorID == 0 {
-					supervisorVal = nil
+			// Manage many-to-many relationships for Advisor updating Student
+			if input.AdvisorIDs != nil {
+				_, _ = config.DB.Exec("DELETE FROM advisor_students WHERE student_id = ?", targetUserIDInt)
+				for _, advID := range input.AdvisorIDs {
+					if advID > 0 {
+						_, _ = config.DB.Exec("INSERT IGNORE INTO advisor_students (advisor_id, student_id) VALUES (?, ?)", advID, targetUserIDInt)
+					}
 				}
-				_, _ = config.DB.Exec(
-					"UPDATE internships SET supervisor_id = ? WHERE student_id = ? AND status = 'active'",
-					supervisorVal, targetUserIDInt,
-				)
+				var firstAdvID interface{} = nil
+				if len(input.AdvisorIDs) > 0 && input.AdvisorIDs[0] > 0 {
+					firstAdvID = input.AdvisorIDs[0]
+				}
+				_, _ = config.DB.Exec("UPDATE internships SET supervisor_id = ? WHERE student_id = ? AND status = 'active'", firstAdvID, targetUserIDInt)
+				_, _ = config.DB.Exec("UPDATE users SET advisor_id = ? WHERE id = ?", firstAdvID, targetUserIDInt)
+			} else if input.AdvisorID != nil {
+				if *input.AdvisorID == 0 {
+					// Unclaim: delete relationship between this advisor (requester) and student
+					_, _ = config.DB.Exec("DELETE FROM advisor_students WHERE advisor_id = ? AND student_id = ?", userIDInt, targetUserIDInt)
+				} else {
+					// Claim: add relationship
+					_, _ = config.DB.Exec("INSERT IGNORE INTO advisor_students (advisor_id, student_id) VALUES (?, ?)", *input.AdvisorID, targetUserIDInt)
+				}
+
+				// Sync supervisor_id in internships table with the first remaining advisor, or nil
+				var firstRemainingAdvisorID sql.NullInt64
+				_ = config.DB.QueryRow("SELECT advisor_id FROM advisor_students WHERE student_id = ? LIMIT 1", targetUserIDInt).Scan(&firstRemainingAdvisorID)
+				var supervisorVal interface{} = nil
+				if firstRemainingAdvisorID.Valid {
+					supervisorVal = firstRemainingAdvisorID.Int64
+				}
+				_, _ = config.DB.Exec("UPDATE internships SET supervisor_id = ? WHERE student_id = ? AND status = 'active'", supervisorVal, targetUserIDInt)
+				_, _ = config.DB.Exec("UPDATE users SET advisor_id = ? WHERE id = ?", supervisorVal, targetUserIDInt)
 			}
 
 			c.JSON(200, gin.H{"status": 200, "message": "อนุมัติ/แก้ไขข้อมูลนักศึกษาสำเร็จ"})
@@ -1236,16 +1297,35 @@ func UpdateUserHandler(c *gin.Context) {
 			}
 		}
 
-		// Sync supervisor_id in internships table for active internship
-		if err == nil && input.AdvisorID != nil && targetRole == "student" {
-			var supervisorVal interface{} = *input.AdvisorID
-			if *input.AdvisorID == 0 {
-				supervisorVal = nil
+		// Manage many-to-many relationships for Admin/Self update
+		if err == nil && targetRole == "student" {
+			if input.AdvisorIDs != nil {
+				_, _ = config.DB.Exec("DELETE FROM advisor_students WHERE student_id = ?", targetUserIDInt)
+				for _, advID := range input.AdvisorIDs {
+					if advID > 0 {
+						_, _ = config.DB.Exec("INSERT IGNORE INTO advisor_students (advisor_id, student_id) VALUES (?, ?)", advID, targetUserIDInt)
+					}
+				}
+				// Sync fallback advisor_id and supervisor_id
+				var firstAdvID interface{} = nil
+				if len(input.AdvisorIDs) > 0 && input.AdvisorIDs[0] > 0 {
+					firstAdvID = input.AdvisorIDs[0]
+				}
+				_, _ = config.DB.Exec("UPDATE internships SET supervisor_id = ? WHERE student_id = ? AND status = 'active'", firstAdvID, targetUserIDInt)
+				_, _ = config.DB.Exec("UPDATE users SET advisor_id = ? WHERE id = ?", firstAdvID, targetUserIDInt)
+			} else if input.AdvisorID != nil {
+				if *input.AdvisorID == 0 {
+					// Clear all advisors
+					_, _ = config.DB.Exec("DELETE FROM advisor_students WHERE student_id = ?", targetUserIDInt)
+					_, _ = config.DB.Exec("UPDATE internships SET supervisor_id = NULL WHERE student_id = ? AND status = 'active'", targetUserIDInt)
+					_, _ = config.DB.Exec("UPDATE users SET advisor_id = NULL WHERE id = ?", targetUserIDInt)
+				} else {
+					// Add advisor to students list
+					_, _ = config.DB.Exec("INSERT IGNORE INTO advisor_students (advisor_id, student_id) VALUES (?, ?)", *input.AdvisorID, targetUserIDInt)
+					_, _ = config.DB.Exec("UPDATE internships SET supervisor_id = ? WHERE student_id = ? AND status = 'active'", *input.AdvisorID, targetUserIDInt)
+					_, _ = config.DB.Exec("UPDATE users SET advisor_id = ? WHERE id = ?", *input.AdvisorID, targetUserIDInt)
+				}
 			}
-			_, _ = config.DB.Exec(
-				"UPDATE internships SET supervisor_id = ? WHERE student_id = ? AND status = 'active'",
-				supervisorVal, targetUserIDInt,
-			)
 		}
 	}
 

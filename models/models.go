@@ -24,6 +24,7 @@ type User struct {
 	ResumeURL    string    `json:"resume_url" db:"resume_url"`
 	ProfileImage string    `json:"profile_image" db:"profile_image"`
 	AdvisorID    *int      `json:"advisor_id,omitempty" db:"advisor_id"`
+	AdvisorIDs   []int     `json:"advisor_ids,omitempty"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }

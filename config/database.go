@@ -84,6 +84,17 @@ func migrateDatabase(db *sql.DB) {
 	_, _ = db.Exec("ALTER TABLE users ADD COLUMN intro TEXT NULL")
 	_, _ = db.Exec("ALTER TABLE users ADD COLUMN field VARCHAR(255) NULL")
 
+	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS advisor_students (
+		advisor_id INT NOT NULL,
+		student_id INT NOT NULL,
+		PRIMARY KEY (advisor_id, student_id),
+		FOREIGN KEY (advisor_id) REFERENCES users(id) ON DELETE CASCADE,
+		FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+
+	// Migrate existing relationships from users table to advisor_students
+	_, _ = db.Exec("INSERT IGNORE INTO advisor_students (advisor_id, student_id) SELECT advisor_id, id FROM users WHERE advisor_id IS NOT NULL")
+
 	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS assignments (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		title VARCHAR(255) NOT NULL,

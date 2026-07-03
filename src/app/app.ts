@@ -1664,6 +1664,8 @@ export class App {
         phone: this.profileDraft.phone,
         school: this.profileDraft.school,
         resumeUrl: this.profileDraft.resumeUrl,
+        intro: this.profileDraft.intro,
+        field: this.profileDraft.field,
         internStartDate: this.profileDraft.internStartDate || null,
         internEndDate: this.profileDraft.internEndDate || null
       };

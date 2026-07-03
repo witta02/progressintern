@@ -135,6 +135,27 @@ func SetupRoutes(router *gin.Engine) {
 	}
 
 	// ========================================================
+	// 📋 Rubric Template & Scores Routes
+	// ========================================================
+	rubricGroup := router.Group("/api/evaluation-templates")
+	rubricGroup.Use(middleware.AuthMiddleware())
+	{
+		rubricGroup.GET("", handlers.GetMyTemplates)
+		rubricGroup.POST("", handlers.CreateTemplate)
+		rubricGroup.PUT("/:id", handlers.UpdateTemplate)
+		rubricGroup.DELETE("/:id", handlers.DeleteTemplate)
+		rubricGroup.POST("/:id/criteria", handlers.AddCriterion)
+		rubricGroup.DELETE("/criteria/:cid", handlers.DeleteCriterion)
+	}
+
+	scoresGroup := router.Group("/api/evaluation-scores")
+	scoresGroup.Use(middleware.AuthMiddleware())
+	{
+		scoresGroup.POST("", handlers.SaveScores)
+		scoresGroup.GET("/:evalId", handlers.GetScores)
+	}
+
+	// ========================================================
 	// 🏖️ Leave Routes
 	// ========================================================
 	leaveGroup := router.Group("/api/leaves")

@@ -24,6 +24,7 @@ func CreateLogbookHandler(c *gin.Context) {
 		Title         string `json:"title" binding:"required"`
 		Content       string `json:"content" binding:"required"`
 		AttachmentURL string `json:"attachment_url"`
+		WorkDate      string `json:"work_date"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "กรอกข้อมูลไม่ครบถ้วน: " + err.Error()})
@@ -48,9 +49,13 @@ func CreateLogbookHandler(c *gin.Context) {
 		return
 	}
 
+	var workDateVal interface{} = nil
+	if input.WorkDate != "" {
+		workDateVal = input.WorkDate
+	}
 	result, err := config.DB.Exec(
-		"INSERT INTO logbooks (internship_id, student_id, title, content, status, submitted_at) VALUES (?, ?, ?, ?, 'submitted', NOW())",
-		input.InternshipID, studentID, input.Title, input.Content,
+		"INSERT INTO logbooks (internship_id, student_id, title, content, status, submitted_at, work_date) VALUES (?, ?, ?, ?, 'submitted', NOW(), ?)",
+		input.InternshipID, studentID, input.Title, input.Content, workDateVal,
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ส่งรายงานบันทึกไม่สำเร็จ: " + err.Error()})
@@ -180,8 +185,9 @@ func UpdateLogbookHandler(c *gin.Context) {
 	}
 
 	var input struct {
-		Title   string `json:"title" binding:"required"`
-		Content string `json:"content" binding:"required"`
+		Title    string `json:"title" binding:"required"`
+		Content  string `json:"content" binding:"required"`
+		WorkDate string `json:"work_date"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "กรอกข้อมูลไม่ครบถ้วน: " + err.Error()})
@@ -209,9 +215,13 @@ func UpdateLogbookHandler(c *gin.Context) {
 	}
 
 	// Update logbook
+	var workDateVal interface{} = nil
+	if input.WorkDate != "" {
+		workDateVal = input.WorkDate
+	}
 	_, err = config.DB.Exec(
-		"UPDATE logbooks SET title = ?, content = ?, updated_at = NOW() WHERE id = ?",
-		input.Title, input.Content, logID,
+		"UPDATE logbooks SET title = ?, content = ?, work_date = ?, updated_at = NOW() WHERE id = ?",
+		input.Title, input.Content, workDateVal, logID,
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "แก้ไขรายงานบันทึกไม่สำเร็จ: " + err.Error()})

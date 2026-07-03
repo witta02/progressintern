@@ -158,6 +158,37 @@ func migrateDatabase(db *sql.DB) {
 	_, _ = db.Exec("UPDATE users u JOIN companies c ON c.user_id = u.id SET u.company_role = 'admin' WHERE u.role = 'company' AND u.company_role IS NULL")
 	// Other company users linked by company_id but not the primary owner become employee
 	_, _ = db.Exec("UPDATE users SET company_role = 'employee' WHERE role = 'company' AND company_role IS NULL AND company_id IS NOT NULL")
+
+	// --- LOGBOOK WORK DATE, COMPANY RADIUS, AND EVALUATION RUBRICS ---
+	_, _ = db.Exec("ALTER TABLE logbooks ADD COLUMN work_date DATE NULL")
+	_, _ = db.Exec("ALTER TABLE companies ADD COLUMN check_radius INT DEFAULT 200")
+
+	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS evaluation_templates (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		created_by INT NOT NULL,
+		name VARCHAR(255) NOT NULL DEFAULT 'แบบประเมิน',
+		is_active BOOLEAN DEFAULT TRUE,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+
+	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS evaluation_criteria (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		template_id INT NOT NULL,
+		label VARCHAR(255) NOT NULL,
+		max_score INT NOT NULL DEFAULT 10,
+		sort_order INT DEFAULT 0,
+		FOREIGN KEY (template_id) REFERENCES evaluation_templates(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+
+	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS evaluation_scores (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		evaluation_id INT NOT NULL,
+		criterion_id INT NOT NULL,
+		score FLOAT NOT NULL DEFAULT 0,
+		FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
+		FOREIGN KEY (criterion_id) REFERENCES evaluation_criteria(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
 }
 
 

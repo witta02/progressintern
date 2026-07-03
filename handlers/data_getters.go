@@ -262,7 +262,7 @@ func GetUserByIDHandler(c *gin.Context) {
 // GetAllCompaniesHandler fetches all companies
 func GetAllCompaniesHandler(c *gin.Context) {
 	rows, err := config.DB.Query(
-		"SELECT id, user_id, company_name, COALESCE(description,''), COALESCE(address,''), COALESCE(website,''), latitude, longitude FROM companies",
+		"SELECT id, user_id, company_name, COALESCE(description,''), COALESCE(address,''), COALESCE(website,''), latitude, longitude, check_radius FROM companies",
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ดึงข้อมูลบริษัทล้มเหลว"})
@@ -275,7 +275,8 @@ func GetAllCompaniesHandler(c *gin.Context) {
 		var id, userID int
 		var name, desc, addr, website string
 		var lat, lng sql.NullFloat64
-		rows.Scan(&id, &userID, &name, &desc, &addr, &website, &lat, &lng)
+		var checkRadius sql.NullInt64
+		rows.Scan(&id, &userID, &name, &desc, &addr, &website, &lat, &lng, &checkRadius)
 
 		var latVal interface{} = nil
 		var lngVal interface{} = nil
@@ -284,6 +285,10 @@ func GetAllCompaniesHandler(c *gin.Context) {
 		}
 		if lng.Valid {
 			lngVal = lng.Float64
+		}
+		var radiusVal interface{} = 200
+		if checkRadius.Valid {
+			radiusVal = checkRadius.Int64
 		}
 
 		list = append(list, gin.H{
@@ -295,6 +300,7 @@ func GetAllCompaniesHandler(c *gin.Context) {
 			"website":      website,
 			"latitude":     latVal,
 			"longitude":    lngVal,
+			"check_radius": radiusVal,
 		})
 	}
 	if list == nil {
@@ -668,7 +674,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 		rows, err = config.DB.Query(
 			`SELECT l.id, l.internship_id, l.title, l.content, 
 			        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
-			        l.created_at, l.updated_at
+			        l.created_at, l.updated_at, COALESCE(l.work_date, '') AS work_date
 			 FROM logbooks l
 			 ORDER BY l.created_at DESC`,
 		)
@@ -679,7 +685,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 		rows, err = config.DB.Query(
 			`SELECT l.id, l.internship_id, l.title, l.content, 
 			        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
-			        l.created_at, l.updated_at
+			        l.created_at, l.updated_at, COALESCE(l.work_date, '') AS work_date
 			 FROM logbooks l
 			 LEFT JOIN internships i ON l.internship_id = i.id
 			 LEFT JOIN users u ON i.student_id = u.id
@@ -695,7 +701,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 			rows, err = config.DB.Query(
 				`SELECT l.id, l.internship_id, l.title, l.content, 
 				        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
-				        l.created_at, l.updated_at
+				        l.created_at, l.updated_at, COALESCE(l.work_date, '') AS work_date
 				 FROM logbooks l
 				 LEFT JOIN internships i ON l.internship_id = i.id
 				 WHERE i.company_id = ?
@@ -706,7 +712,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 			rows, err = config.DB.Query(
 				`SELECT l.id, l.internship_id, l.title, l.content, 
 				        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
-				        l.created_at, l.updated_at
+				        l.created_at, l.updated_at, COALESCE(l.work_date, '') AS work_date
 				 FROM logbooks l
 				 LEFT JOIN internships i ON l.internship_id = i.id
 				 LEFT JOIN companies c ON i.company_id = c.id
@@ -719,7 +725,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 		rows, err = config.DB.Query(
 			`SELECT l.id, l.internship_id, l.title, l.content, 
 			        '' AS attachment_url, COALESCE(l.mentor_comment, ''), l.status,
-			        l.created_at, l.updated_at
+			        l.created_at, l.updated_at, COALESCE(l.work_date, '') AS work_date
 			 FROM logbooks l
 			 LEFT JOIN internships i ON l.internship_id = i.id
 			 WHERE i.student_id = ?
@@ -737,9 +743,9 @@ func GetAllLogbooksHandler(c *gin.Context) {
 	var list []gin.H
 	for rows.Next() {
 		var id, intID int
-		var title, content, attachmentURL, mentorComment, status string
+		var title, content, attachmentURL, mentorComment, status, workDate string
 		var createdAt, updatedAt interface{}
-		err := rows.Scan(&id, &intID, &title, &content, &attachmentURL, &mentorComment, &status, &createdAt, &updatedAt)
+		err := rows.Scan(&id, &intID, &title, &content, &attachmentURL, &mentorComment, &status, &createdAt, &updatedAt, &workDate)
 		if err != nil {
 			fmt.Printf("Scan error: %v\n", err)
 			continue
@@ -765,6 +771,7 @@ func GetAllLogbooksHandler(c *gin.Context) {
 			"created_at":     createdAt,
 			"updated_at":     updatedAt,
 			"student_name":   studentName,
+			"work_date":      workDate,
 		})
 	}
 	if list == nil {
@@ -866,6 +873,36 @@ func GetAllEvaluationsHandler(c *gin.Context) {
 		var feedback, evalType, evaluatorName string
 		var createdAt interface{}
 		rows.Scan(&id, &intID, &evalID, &score, &feedback, &evalType, &createdAt, &evaluatorName)
+
+		// Fetch rubric scores if any
+		scoreRows, err := config.DB.Query(
+			`SELECT s.id, s.evaluation_id, s.criterion_id, s.score, c.label, c.max_score 
+			 FROM evaluation_scores s
+			 JOIN evaluation_criteria c ON s.criterion_id = c.id
+			 WHERE s.evaluation_id = ?`,
+			id,
+		)
+		var scores []gin.H
+		if err == nil {
+			for scoreRows.Next() {
+				var sid, sevalId, scritId int
+				var sscore float64
+				var slabel string
+				var smax int
+				if errScan := scoreRows.Scan(&sid, &sevalId, &scritId, &sscore, &slabel, &smax); errScan == nil {
+					scores = append(scores, gin.H{
+						"id":            sid,
+						"evaluation_id": sevalId,
+						"criterion_id":  scritId,
+						"score":         sscore,
+						"label":         slabel,
+						"max_score":     smax,
+					})
+				}
+			}
+			scoreRows.Close()
+		}
+
 		list = append(list, gin.H{
 			"id":              id,
 			"internship_id":   intID,
@@ -875,6 +912,7 @@ func GetAllEvaluationsHandler(c *gin.Context) {
 			"evaluation_type": evalType,
 			"created_at":      createdAt,
 			"evaluator_name":  evaluatorName,
+			"scores":          scores,
 		})
 	}
 	if list == nil {
@@ -951,6 +989,7 @@ func UpdateUserHandler(c *gin.Context) {
 		Address         string   `json:"address"`
 		Latitude        *float64 `json:"latitude"`
 		Longitude       *float64 `json:"longitude"`
+		CheckRadius     *int     `json:"check_radius"`
 		CompanyRole     *string  `json:"company_role"`
 		RemoveCompany   *bool    `json:"remove_company"`
 	}
@@ -1107,9 +1146,10 @@ func UpdateUserHandler(c *gin.Context) {
 						     description = ?, 
 						     address = ?,
 						     latitude = ?,
-						     longitude = ?
+						     longitude = ?,
+						     check_radius = ?
 						 WHERE id = ?`,
-						input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, compID.Int64,
+						input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, input.CheckRadius, compID.Int64,
 					)
 				} else {
 					_, _ = config.DB.Exec(
@@ -1118,9 +1158,10 @@ func UpdateUserHandler(c *gin.Context) {
 						     description = ?, 
 						     address = ?,
 						     latitude = ?,
-						     longitude = ?
+						     longitude = ?,
+						     check_radius = ?
 						 WHERE user_id = ?`,
-						input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, userIDInt,
+						input.CompanyName, input.Description, input.Address, input.Latitude, input.Longitude, input.CheckRadius, userIDInt,
 					)
 				}
 			}

@@ -82,6 +82,7 @@ type Company struct {
 	Description   string    `json:"description" db:"description"`
 	Latitude      *float64  `json:"latitude" db:"latitude"`
 	Longitude     *float64  `json:"longitude" db:"longitude"`
+	CheckRadius   *int      `json:"check_radius" db:"check_radius"`
 	CreatedAt     time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -245,6 +246,7 @@ type Logbook struct {
 	Status        string     `json:"status" db:"status"` // draft, submitted, approved, rejected
 	MentorComment string     `json:"mentor_comment" db:"mentor_comment"`
 	MentorID      *int       `json:"mentor_id" db:"mentor_id"`
+	WorkDate      *string    `json:"work_date" db:"work_date"`
 	CreatedAt     time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at" db:"updated_at"`
 	SubmittedAt   *time.Time `json:"submitted_at" db:"submitted_at"`
@@ -261,10 +263,11 @@ type CreateLogbookInput struct {
 
 // ใช้สำหรับ handlers/logbooks.go
 type LogbookInput struct {
-	InternshipID int    `json:"internship_id" binding:"required"`
-	StudentID    int    `json:"student_id" binding:"required"`
-	Title        string `json:"title" binding:"required"`
-	Content      string `json:"content" binding:"required"`
+	InternshipID int     `json:"internship_id" binding:"required"`
+	StudentID    int     `json:"student_id" binding:"required"`
+	Title        string  `json:"title" binding:"required"`
+	Content      string  `json:"content" binding:"required"`
+	WorkDate     *string `json:"work_date" binding:"omitempty"`
 }
 
 type ApproveLogbookInput struct {
@@ -275,17 +278,18 @@ type ApproveLogbookInput struct {
 // ==================== Evaluation ====================
 
 type Evaluation struct {
-	ID            int       `json:"id" db:"id"`
-	InternshipID  int       `json:"internship_id" db:"internship_id"`
-	EvaluatorID   int       `json:"evaluator_id" db:"evaluator_id"`
-	EvaluatorRole string    `json:"evaluator_role" db:"evaluator_role"` // mentor, advisor, company
-	Score         float64   `json:"score" db:"score"`
-	MaxScore      float64   `json:"max_score" db:"max_score"`
-	RubricData    string    `json:"rubric_data" db:"rubric_data"` // JSON
-	Comment       string    `json:"comment" db:"comment"`
-	IsFinal       bool      `json:"is_final" db:"is_final"`
-	CreatedAt     time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
+	ID            int               `json:"id" db:"id"`
+	InternshipID  int               `json:"internship_id" db:"internship_id"`
+	EvaluatorID   int               `json:"evaluator_id" db:"evaluator_id"`
+	EvaluatorRole string            `json:"evaluator_role" db:"evaluator_role"` // mentor, advisor, company
+	Score         float64           `json:"score" db:"score"`
+	MaxScore      float64           `json:"max_score" db:"max_score"`
+	RubricData    string            `json:"rubric_data" db:"rubric_data"` // JSON
+	Comment       string            `json:"comment" db:"comment"`
+	IsFinal       bool              `json:"is_final" db:"is_final"`
+	Scores        []EvaluationScore `json:"scores,omitempty"`
+	CreatedAt     time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at" db:"updated_at"`
 }
 
 type CreateEvaluationInput struct {
@@ -511,5 +515,33 @@ type CreateTicketInput struct {
 
 type CreateTicketReplyInput struct {
 	Message string `json:"message" binding:"required,min=1"`
+}
+
+// ==================== Rubrics ====================
+
+type EvaluationTemplate struct {
+	ID        int                   `json:"id" db:"id"`
+	CreatedBy int                   `json:"created_by" db:"created_by"`
+	Name      string                `json:"name" db:"name"`
+	IsActive  bool                  `json:"is_active" db:"is_active"`
+	CreatedAt time.Time             `json:"created_at" db:"created_at"`
+	Criteria  []EvaluationCriterion `json:"criteria"`
+}
+
+type EvaluationCriterion struct {
+	ID         int    `json:"id" db:"id"`
+	TemplateID int    `json:"template_id" db:"template_id"`
+	Label      string `json:"label" db:"label"`
+	MaxScore   int    `json:"max_score" db:"max_score"`
+	SortOrder  int    `json:"sort_order" db:"sort_order"`
+}
+
+type EvaluationScore struct {
+	ID           int     `json:"id" db:"id"`
+	EvaluationID int     `json:"evaluation_id" db:"evaluation_id"`
+	CriterionID  int     `json:"criterion_id" db:"criterion_id"`
+	Score        float64 `json:"score" db:"score"`
+	Label        string  `json:"label,omitempty"`
+	MaxScore     int     `json:"max_score,omitempty"`
 }
 

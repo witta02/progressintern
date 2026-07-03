@@ -47,7 +47,6 @@ func GetMyTemplates(c *gin.Context) {
 		if err != nil {
 			continue
 		}
-		defer critRows.Close()
 
 		for critRows.Next() {
 			var crit models.EvaluationCriterion
@@ -55,6 +54,7 @@ func GetMyTemplates(c *gin.Context) {
 				templates[i].Criteria = append(templates[i].Criteria, crit)
 			}
 		}
+		critRows.Close() // explicit close instead of defer to avoid connection leak inside loop
 	}
 
 	c.JSON(http.StatusOK, templates)

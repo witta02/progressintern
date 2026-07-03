@@ -986,6 +986,7 @@ func CreateEvaluationHandler(c *gin.Context) {
 
 	// Check if evaluation already exists
 	var existingID int
+	var evalID int64
 	err := config.DB.QueryRow(
 		"SELECT id FROM evaluations WHERE internship_id = ? AND evaluator_id = ?",
 		input.InternshipID, evaluatorID,
@@ -997,19 +998,24 @@ func CreateEvaluationHandler(c *gin.Context) {
 			"UPDATE evaluations SET score = ?, feedback = ?, evaluation_type = ? WHERE id = ?",
 			input.Score, input.Feedback, input.EvaluationType, existingID,
 		)
+		evalID = int64(existingID)
 	} else if err == sql.ErrNoRows {
 		// Insert new
-		_, err = config.DB.Exec(
+		res, insertErr := config.DB.Exec(
 			"INSERT INTO evaluations (internship_id, evaluator_id, score, feedback, evaluation_type) VALUES (?, ?, ?, ?, ?)",
 			input.InternshipID, evaluatorID, input.Score, input.Feedback, input.EvaluationType,
 		)
+		if insertErr == nil {
+			evalID, _ = res.LastInsertId()
+		}
+		err = insertErr
 	}
 
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "บันทึกการประเมินไม่สำเร็จ: " + err.Error()})
 		return
 	}
-	c.JSON(201, gin.H{"status": 201, "message": "บันทึกการประเมินสำเร็จ"})
+	c.JSON(201, gin.H{"status": 201, "message": "บันทึกการประเมินสำเร็จ", "id": evalID})
 }
 
 // UpdateUserHandler updates user information with strict role and privilege validation

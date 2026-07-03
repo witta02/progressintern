@@ -287,7 +287,7 @@
             <div>
               <h3 class="text-2xl font-black text-amber-900 mb-2">บัญชีผู้ใช้กำลังรอการอนุมัติ</h3>
               <p class="text-lg text-amber-800 font-medium max-w-2xl leading-relaxed">
-                บัญชีของคุณกำลังอยู่ในระหว่างการตรวจสอบโดยอาจารย์ที่ปรึกษาของคุณที่ 
+                บัญชีของคุณกำลังอยู่ในระหว่างการตรวจสอบโดยอาจารย์ที่ดูแลของคุณที่ 
                 <span class="font-black text-amber-950 underline decoration-amber-500/50 underline-offset-4">{{ currentUser?.school }}</span> 
                 กรุณากลับมาตรวจสอบความคืบหน้าอีกครั้งในภายหลัง
               </p>
@@ -295,7 +295,7 @@
           </div>
           
           <div *ngIf="schoolAdvisors.length > 0" class="w-full mt-6 pt-6 border-t border-amber-200/50">
-            <h4 class="text-xs font-black text-amber-900 uppercase tracking-widest mb-3">อาจารย์ที่ปรึกษาในสถาบันของคุณ (ติดต่อเพื่อเร่งอนุมัติ):</h4>
+            <h4 class="text-xs font-black text-amber-900 uppercase tracking-widest mb-3">อาจารย์ที่ดูแลในสถาบันของคุณ (ติดต่อเพื่อเร่งอนุมัติ):</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div *ngFor="let adv of schoolAdvisors" class="bg-white/80 rounded-2xl p-4 border border-amber-100 flex flex-col justify-between">
                 <div>
@@ -1073,7 +1073,7 @@
                   class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all">
             <option value="my">👥 นักศึกษาในความดูแลของฉัน (My Group)</option>
             <option value="school_all">🏫 นักศึกษาทั้งหมดในสถาบัน (Same School)</option>
-            <option value="school_unassigned">❓ ยังไม่มีอาจารย์ที่ปรึกษา (Unassigned)</option>
+            <option value="school_unassigned">❓ ยังไม่มีอาจารย์ที่ดูแล (Unassigned)</option>
             <option value="other_schools">🌐 นักศึกษาต่างสถาบัน (Other Schools)</option>
           </select>
 
@@ -1125,7 +1125,7 @@
                             <!-- Has Advisor -->
                             <ng-container *ngIf="studentAdvisorName(internship.studentId) as advName; else noAdv">
                               <span class="inline-flex px-2 py-0.5 rounded bg-slate-100 text-[10px] text-slate-600 font-bold border border-slate-200">
-                                🎓 ที่ปรึกษา: {{ advName }}
+                                🎓 อาจารย์ที่ดูแล: {{ advName }}
                               </span>
                               <!-- Remove if it's me -->
                               <button *ngIf="isMyStudent(internship.studentId)" 
@@ -1138,7 +1138,7 @@
                             <!-- No Advisor -->
                             <ng-template #noAdv>
                               <span class="inline-flex px-2 py-0.5 rounded bg-amber-50 text-[10px] text-amber-600 font-bold border border-amber-200/60">
-                                ⚠️ ยังไม่มีอาจารย์ที่ปรึกษา
+                                ⚠️ ยังไม่มีอาจารย์ที่ดูแล
                               </span>
                             </ng-template>
                           </div>
@@ -1336,7 +1336,7 @@
                       <!-- Advisor details visible to all roles -->
                       <div class="col-span-2 mt-2" *ngIf="getStudentAdvisors(detailStudent?.advisorIds, detailStudent?.advisorId) as advs">
                         <div *ngIf="advs.length > 0">
-                          <div class="text-blue-300 text-[10px] font-black uppercase tracking-widest">อาจารย์ที่ปรึกษา (Advisors)</div>
+                          <div class="text-blue-300 text-[10px] font-black uppercase tracking-widest">อาจารย์ที่ดูแล (Advisors)</div>
                           <div class="font-black text-white text-base mt-0.5" *ngFor="let adv of advs">
                             🎓 {{ adv.name }} <span *ngIf="adv.phone" class="text-blue-200 text-xs font-bold ml-1.5">(โทร: {{ adv.phone }})</span>
                           </div>
@@ -2451,7 +2451,7 @@
                   <div class="text-xs text-slate-500">{{ s.email }}</div>
                   <div class="text-xs text-slate-500" *ngIf="s.school">สถาบัน: {{ s.school }}</div>
                   <div class="text-[10px] mt-1 font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full inline-block" *ngIf="hasAdvisor(s)">
-                    ที่ปรึกษา: {{ studentAdvisorName(s.id) }}
+                    อาจารย์ที่ดูแล: {{ studentAdvisorName(s.id) }}
                   </div>
                   <div class="text-[10px] mt-1 font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block" *ngIf="!hasAdvisor(s)">
                     ยังไม่มีผู้ดูแล
@@ -2706,7 +2706,7 @@
                       </div>
                       <h3 class="text-xl xl:text-2xl font-black text-white leading-tight">{{ selectedAssignment?.title }}</h3>
                       <p class="text-white/70 text-xs font-medium mt-1.5">
-                        สั่งโดย: {{ selectedAssignment?.creatorRole === 'advisor' ? 'อาจารย์ที่ปรึกษา' : 'พี่เลี้ยงสถานประกอบการ' }}
+                        สั่งโดย: {{ selectedAssignment?.creatorRole === 'advisor' ? 'อาจารย์ที่ดูแล' : 'พี่เลี้ยงสถานประกอบการ' }}
                       </p>
                     </div>
                     <div class="shrink-0 text-right">
@@ -3458,7 +3458,7 @@
                       class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all">
                 <option value="">ทุกบทบาท</option>
                 <option value="student">นักศึกษา</option>
-                <option value="advisor">อาจารย์ที่ปรึกษา</option>
+                <option value="advisor">อาจารย์ที่ดูแล</option>
                 <option value="company">บริษัท</option>
                 <option value="admin">ผู้ดูแลระบบ</option>
               </select>
@@ -3578,7 +3578,7 @@
               <select name="role" [(ngModel)]="adminCodeForm.role"
                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 <option value="student">นักศึกษา (Student)</option>
-                <option value="advisor">อาจารย์ที่ปรึกษา (Advisor)</option>
+                <option value="advisor">อาจารย์ที่ดูแล (Advisor)</option>
                 <option value="company">สถานประกอบการ (Company)</option>
               </select>
             </div>
@@ -4360,7 +4360,7 @@
       <td>{{ detailStudent?.field || '-' }}</td>
     </tr>
     <tr *ngIf="getStudentAdvisors(detailStudent?.advisorIds, detailStudent?.advisorId) as advs">
-      <th>อาจารย์ที่ปรึกษา</th>
+      <th>อาจารย์ที่ดูแล</th>
       <td>
         <div *ngFor="let adv of advs">
           {{ adv.name }} <span *ngIf="adv.phone">(โทร: {{ adv.phone }})</span>
@@ -4450,7 +4450,7 @@
         <td style="text-align: center;">100</td>
       </tr>
       <tr>
-        <td>คะแนนประเมินจากอาจารย์ที่ปรึกษา (Advisor Score)</td>
+        <td>คะแนนประเมินจากอาจารย์ที่ดูแล (Advisor Score)</td>
         <td style="text-align: center; font-weight: bold; color: #1e3a8a;">
           {{ ev.advisorScore !== null ? ev.advisorScore : '—' }}
         </td>
@@ -4478,7 +4478,7 @@
         <td style="width: 50%; border: none; text-align: center; padding-top: 30px;">
           <p>ลงชื่อ............................................................</p>
           <p style="margin-top: 8px;">(............................................................)</p>
-          <p style="margin-top: 4px; font-size: 9.5pt; color: #666;">อาจารย์ที่ปรึกษาการฝึกงาน</p>
+          <p style="margin-top: 4px; font-size: 9.5pt; color: #666;">อาจารย์ที่ดูแลการฝึกงาน</p>
         </td>
       </tr>
     </table>

@@ -27,7 +27,7 @@ export type ApiUser = {
   resume_url?: string | null;
   intro?: string | null;
   field?: string | null;
-  student_code?: string | null;
+  student_code?: number | null;
   year_level?: string | null;
   class_group?: string | null;
   advisor_id?: number | null;

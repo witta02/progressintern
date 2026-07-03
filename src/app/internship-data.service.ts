@@ -636,13 +636,13 @@ export class InternshipDataService {
     return { id: newT.id };
   }
 
-  async updateEvaluationTemplate(id: number, name: string): Promise<void> {
+  async updateEvaluationTemplate(id: number, name: string, criteria: EvaluationCriterion[]): Promise<void> {
     if (this.api.apiEnabled()) {
-      await firstValueFrom(this.api.updateEvaluationTemplate(id, name));
+      await firstValueFrom(this.api.updateEvaluationTemplate(id, name, criteria));
       await this.refreshFromApi();
       return;
     }
-    this.evaluationTemplates = this.evaluationTemplates.map(t => t.id === id ? { ...t, name } : t);
+    this.evaluationTemplates = this.evaluationTemplates.map(t => t.id === id ? { ...t, name, criteria } : t);
     this.persist();
   }
 

@@ -598,17 +598,34 @@ export class InternshipApiService {
 
   getEvaluationTemplates(): Observable<EvaluationTemplate[]> {
     return this.http.get<any>(`${this.base}/evaluation-templates`, this.authOptions()).pipe(
-      map(res => res || []),
+      map(res => (res || []).map((tmpl: any) => ({
+        ...tmpl,
+        criteria: (tmpl.criteria || []).map((c: any) => ({
+          id: c.id,
+          templateId: c.template_id,
+          label: c.label,
+          maxScore: c.max_score,
+          sortOrder: c.sort_order
+        }))
+      }))),
       catchError(() => of([]))
     );
   }
 
   createEvaluationTemplate(template: Omit<EvaluationTemplate, 'id'>): Observable<any> {
-    return this.http.post<any>(`${this.base}/evaluation-templates`, template, this.authOptions());
+    const payload = {
+      ...template,
+      criteria: (template.criteria || []).map(c => ({ label: c.label, max_score: c.maxScore }))
+    };
+    return this.http.post<any>(`${this.base}/evaluation-templates`, payload, this.authOptions());
   }
 
-  updateEvaluationTemplate(id: number, name: string): Observable<any> {
-    return this.http.put<any>(`${this.base}/evaluation-templates/${id}`, { name }, this.authOptions());
+  updateEvaluationTemplate(id: number, name: string, criteria: EvaluationCriterion[]): Observable<any> {
+    const payload = {
+      name,
+      criteria: (criteria || []).map(c => ({ id: c.id || 0, label: c.label, max_score: c.maxScore }))
+    };
+    return this.http.put<any>(`${this.base}/evaluation-templates/${id}`, payload, this.authOptions());
   }
 
   deleteEvaluationTemplate(id: number): Observable<any> {
@@ -616,12 +633,26 @@ export class InternshipApiService {
   }
 
   saveEvaluationScores(evalId: number, scores: EvaluationScore[]): Observable<any> {
-    return this.http.post<any>(`${this.base}/evaluation-scores`, { evaluation_id: evalId, scores }, this.authOptions());
+    const payload = {
+      evaluation_id: evalId,
+      scores: scores.map(s => ({
+        criterion_id: s.criterionId,
+        score: s.score
+      }))
+    };
+    return this.http.post<any>(`${this.base}/evaluation-scores`, payload, this.authOptions());
   }
 
   getEvaluationScores(evalId: number): Observable<EvaluationScore[]> {
     return this.http.get<any>(`${this.base}/evaluation-scores/${evalId}`, this.authOptions()).pipe(
-      map(res => res || []),
+      map(res => (res || []).map((s: any) => ({
+        id: s.id,
+        evaluationId: s.evaluation_id,
+        criterionId: s.criterion_id,
+        score: s.score,
+        label: s.label,
+        maxScore: s.max_score
+      }))),
       catchError(() => of([]))
     );
   }

@@ -28,7 +28,8 @@ import {
   Assignment,
   Submission,
   SubmissionStatus,
-  Evaluation
+  Evaluation,
+  EvaluationTemplate
 } from './internship.models';
 
 @Component({
@@ -604,7 +605,7 @@ export class App {
 
   protected get managedStudents(): User[] {
     if (this.currentUser?.role === 'admin') {
-      return this.users.filter((user) => user.role !== 'admin');
+      return this.users.filter((user) => user.role === 'student');
     }
 
     if (this.currentUser?.role !== 'advisor') {
@@ -3481,8 +3482,9 @@ export class App {
   protected getAllPickableStudents(): User[] {
     const user = this.currentUser;
     if (user?.role !== 'advisor') return [];
-    return this.users.filter(u => 
-      u.role === 'student' && 
+    return this.users.filter(u =>
+      u.role === 'student' &&
+      u.school === user.school &&
       !(u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id)
     );
   }
@@ -3924,9 +3926,19 @@ export class App {
       return;
     }
 
+    const totalMax = this.getEditingTemplateTotalMaxScore();
+    if (totalMax <= 0) {
+      this.notifications.warning('คะแนนเต็มรวมต้องมากกว่า 0 คะแนน กรุณากำหนดคะแนนเต็มให้กับแต่ละหัวข้อ', 'แบบประเมิน');
+      return;
+    }
+    if (totalMax > 100) {
+      this.notifications.warning(`คะแนนเต็มรวมทั้งหมดของเกณฑ์ (${totalMax} คะแนน) จะต้องไม่เกิน 100 คะแนน`, 'แบบประเมิน');
+      return;
+    }
+
     try {
       if (this.editingTemplate.id) {
-        await this.data.updateEvaluationTemplate(this.editingTemplate.id, this.editingTemplate.name);
+        await this.data.updateEvaluationTemplate(this.editingTemplate.id, this.editingTemplate.name, this.editingTemplate.criteria);
         this.notifications.success('อัปเดตแบบประเมินเรียบร้อย', 'แบบประเมิน');
       } else {
         await this.data.createEvaluationTemplate({
@@ -3941,6 +3953,19 @@ export class App {
     } catch (e: any) {
       this.notifications.error(`บันทึกแบบประเมินล้มเหลว: ${e.message || e}`, 'แบบประเมิน');
     }
+  }
+
+  protected editTemplate(tmpl: EvaluationTemplate): void {
+    this.editingTemplate = {
+      id: tmpl.id,
+      name: tmpl.name,
+      criteria: tmpl.criteria ? tmpl.criteria.map((c: any) => ({ ...c })) : []
+    };
+    this.showTemplateBuilder = true;
+  }
+
+  protected resetTemplateEditor(): void {
+    this.editingTemplate = { name: '', criteria: [] };
   }
 
   protected async deleteTemplate(id: number): Promise<void> {
@@ -3991,7 +4016,7 @@ export class App {
       const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(templateId));
       if (t) {
         t.criteria.forEach((c: any) => {
-          this.rubricScores[c.id] = c.maxScore;
+          this.rubricScores[c.id] = 0; // default to 0, not maxScore
         });
       }
     }
@@ -4045,23 +4070,26 @@ export class App {
     let scoresList: any[] = [];
     if (this.selectedTemplateId) {
       const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(this.selectedTemplateId));
-      if (t) {
-        for (const c of t.criteria) {
-          const val = Number(this.rubricScores[c.id]) || 0;
-          if (val > c.maxScore) {
-            this.notifications.warning(`คะแนนในหัวข้อ "${c.label}" (${val}) ต้องไม่เกินคะแนนเต็ม (${c.maxScore})`, 'ประเมินผล');
-            return;
-          }
-          if (val < 0) {
-            this.notifications.warning(`คะแนนในหัวข้อ "${c.label}" ต้องไม่น้อยกว่า 0`, 'ประเมินผล');
-            return;
-          }
-          totalScore += val;
-          scoresList.push({
-            criterionId: c.id,
-            score: val
-          });
+      if (!t) {
+        this.notifications.warning('ไม่พบแบบประเมินที่เลือก กรุณาเลือกใหม่อีกครั้ง', 'ประเมินผล');
+        return;
+      }
+      for (const c of t.criteria) {
+        const val = Number(this.rubricScores[c.id]) || 0;
+        if (val > c.maxScore) {
+          this.notifications.warning(`คะแนนในหัวข้อ "${c.label}" (${val}) ต้องไม่เกินคะแนนเต็ม (${c.maxScore})`, 'ประเมินผล');
+          return;
         }
+        if (val < 0) {
+          this.notifications.warning(`คะแนนในหัวข้อ "${c.label}" ต้องไม่น้อยกว่า 0`, 'ประเมินผล');
+          return;
+        }
+        totalScore += val;
+        scoresList.push({
+          criterionId: c.id,
+          score: val,
+          maxScore: c.maxScore  // carry maxScore so getEvaluationMaxScore() works
+        });
       }
     } else {
       totalScore = Number(this.evaluationScore) || 0;
@@ -4111,5 +4139,10 @@ export class App {
       return evaluation.scores.reduce((sum: number, s: any) => sum + (s.maxScore || 0), 0);
     }
     return 100;
+  }
+
+  protected getEditingTemplateTotalMaxScore(): number {
+    if (!this.editingTemplate.criteria) return 0;
+    return this.editingTemplate.criteria.reduce((sum: number, c: any) => sum + (Number(c.maxScore) || 0), 0);
   }
 }

@@ -2179,7 +2179,15 @@
               <!-- Template Builder panel -->
               <div *ngIf="showTemplateBuilder" class="p-6 bg-slate-50/50 border border-slate-200/80 rounded-3xl space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
                 <div class="flex items-center justify-between border-b border-slate-200/60 pb-3">
-                  <h4 class="font-black text-slate-800 text-sm uppercase tracking-wider">สร้าง/จัดการ เกณฑ์การประเมินผล (Rubric Builder)</h4>
+                  <div class="flex items-center gap-3">
+                    <h4 class="font-black text-slate-800 text-sm uppercase tracking-wider">
+                      {{ editingTemplate.id ? 'แก้ไขเกณฑ์การประเมินผล: ' + editingTemplate.name : 'สร้าง/จัดการ เกณฑ์การประเมินผล (Rubric Builder)' }}
+                    </h4>
+                    <button *ngIf="editingTemplate.id" type="button" (click)="resetTemplateEditor()" 
+                            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all">
+                      + สร้างเกณฑ์ใหม่
+                    </button>
+                  </div>
                   <button type="button" (click)="showTemplateBuilder = false" class="text-slate-400 hover:text-slate-600 text-xs font-bold">ปิดแผงควบคุม</button>
                 </div>
                 
@@ -2192,7 +2200,12 @@
 
                   <!-- Criteria Grid Builder -->
                   <div class="space-y-3">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายการหัวข้อการประเมิน</label>
+                    <div class="flex justify-between items-center ml-1">
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">รายการหัวข้อการประเมิน</label>
+                      <span class="text-xs font-bold" [class.text-rose-500]="getEditingTemplateTotalMaxScore() > 100" [class.text-indigo-600]="getEditingTemplateTotalMaxScore() <= 100">
+                        คะแนนเต็มรวม: {{ getEditingTemplateTotalMaxScore() }} / 100 คะแนน
+                      </span>
+                    </div>
                     <div class="space-y-2.5">
                       <div *ngFor="let c of editingTemplate.criteria; let idx = index" class="flex items-center gap-3 bg-white p-3 border border-slate-100 rounded-xl">
                         <span class="text-xs font-bold text-slate-400 w-6 text-center">#{{ idx + 1 }}</span>
@@ -2238,7 +2251,10 @@
                         <div class="text-xs font-black text-slate-800">{{ tmpl.name }}</div>
                         <div class="text-[9px] text-slate-400 font-bold mt-0.5">{{ tmpl.criteria.length }} หัวข้อ</div>
                       </div>
-                      <button type="button" (click)="deleteTemplate(tmpl.id)" class="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-1">ลบ</button>
+                      <div class="flex items-center gap-2">
+                        <button type="button" (click)="editTemplate(tmpl)" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold px-2 py-1">แก้ไข</button>
+                        <button type="button" (click)="deleteTemplate(tmpl.id)" class="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-1">ลบ</button>
+                      </div>
                     </div>
                   </div>
                 </div>

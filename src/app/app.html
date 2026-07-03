@@ -2456,7 +2456,7 @@
                             class="w-full px-5 py-4 pr-12 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold appearance-none cursor-pointer">
                       <option [value]="0">-- กรุณาเลือกนักศึกษา --</option>
                       <option *ngFor="let s of getAllPickableStudents()" [value]="s.id">
-                        {{ s.name }}{{ s.studentCode ? ' | เลขที่ ' + s.studentCode : '' }}{{ s.yearLevel ? ' | ' + s.yearLevel : '' }}{{ s.classGroup ? ' กลุ่ม ' + s.classGroup : '' }}
+                        {{ s.name }}{{ s.number ? ' | เลขที่ ' + s.number : '' }}{{ s.yearLevel ? ' | ' + s.yearLevel : '' }}{{ s.classGroup ? ' กลุ่ม ' + s.classGroup : '' }}
                       </option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
@@ -2471,7 +2471,7 @@
                   <div class="grid grid-cols-3 gap-2 mt-1">
                     <div class="text-xs text-slate-600 bg-white rounded-xl px-3 py-2 border border-slate-100">
                       <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">เลขที่</div>
-                      <div class="font-black">{{ s.studentCode || '-' }}</div>
+                      <div class="font-black">{{ s.number || '-' }}</div>
                     </div>
                     <div class="text-xs text-slate-600 bg-white rounded-xl px-3 py-2 border border-slate-100">
                       <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">ชั้นปี</div>
@@ -3127,7 +3127,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-5" *ngIf="currentUser?.role === 'student'">
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เลขที่</label>
-                  <input name="profileStudentCode" type="number" min="0" [(ngModel)]="profileDraft.studentCode" placeholder="เช่น 1, 42, 6501234"
+                  <input name="profileStudentCode" type="number" min="0" [(ngModel)]="profileDraft.number" placeholder="เช่น 1, 42, 6501234"
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
                 <div class="space-y-2">

@@ -197,7 +197,7 @@ export class InternshipApiService {
       resume_url: body.resumeUrl ?? null,
       intro: body.intro !== undefined ? body.intro : undefined,
       field: body.field !== undefined ? body.field : undefined,
-      student_code: body.studentCode !== undefined ? body.studentCode : undefined,
+      number: body.number !== undefined ? body.number : undefined,
       year_level: body.yearLevel !== undefined ? body.yearLevel : undefined,
       class_group: body.classGroup !== undefined ? body.classGroup : undefined,
       advisor_id: body.advisorId !== undefined ? body.advisorId : undefined,

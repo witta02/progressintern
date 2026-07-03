@@ -27,7 +27,7 @@ export type ApiUser = {
   resume_url?: string | null;
   intro?: string | null;
   field?: string | null;
-  student_code?: number | null;
+  number?: number | null;
   year_level?: string | null;
   class_group?: string | null;
   advisor_id?: number | null;
@@ -173,7 +173,7 @@ export function mapUser(dto: ApiUser): User {
     resumeUrl: dto.resume_url ?? undefined,
     intro: dto.intro ?? undefined,
     field: dto.field ?? undefined,
-    studentCode: dto.student_code ?? undefined,
+    number: dto.number ?? undefined,
     yearLevel: dto.year_level ?? undefined,
     classGroup: dto.class_group ?? undefined,
     advisorId: dto.advisor_id ?? undefined,

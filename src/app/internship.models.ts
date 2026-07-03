@@ -44,7 +44,7 @@ export interface User {
   intro?: string;
   field?: string;
   school?: string;
-  studentCode?: number;   // เลขที่
+  number?: number;        // เลขที่
   yearLevel?: string;     // ชั้นปี
   classGroup?: string;    // กลุ่ม
   profileImage?: string;

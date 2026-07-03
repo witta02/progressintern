@@ -2270,13 +2270,17 @@
               </div>
 
               <!-- Standard input scoring (if no template is selected) -->
-              <div *ngIf="!selectedTemplateId" class="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <div class="md:col-span-1 space-y-2">
+              <div *ngIf="!selectedTemplateId" class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
+                <div class="md:col-span-2 space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คะแนน (0-100)</label>
-                  <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore"
-                         class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                  <div class="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3">
+                    <input type="range" min="0" max="100" step="1" [(ngModel)]="evaluationScore" name="score_range"
+                           class="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-accent">
+                    <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore"
+                           class="w-20 px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold text-center">
+                  </div>
                 </div>
-                <div class="md:col-span-3 space-y-2">
+                <div class="md:col-span-2 space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ข้อเสนอแนะ / ความเห็นเพิ่มเติม</label>
                   <input name="evaluationFeedback" [(ngModel)]="evaluationFeedback" placeholder="ความรับผิดชอบดีมาก เรียนรู้เร็ว ควรพัฒนาทักษะภาษาอังกฤษเพิ่มเติม..."
                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
@@ -2314,7 +2318,7 @@
                   <td class="px-10 py-6 font-bold text-slate-700">{{ evaluatorLabel(evaluation) }}</td>
                   <td class="px-10 py-6">
                     <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">                      
-                      {{ evaluation.score }} / 100
+                      {{ evaluation.score }} / {{ getEvaluationMaxScore(evaluation) }}
                     </span>
                   </td>
                   <td class="px-10 py-6 font-medium text-slate-500 max-w-sm truncate" title="{{ evaluation.feedback }}">{{ evaluation.feedback }}</td>
@@ -4447,21 +4451,21 @@
         <td style="text-align: center; font-weight: bold; color: #1e3a8a;">
           {{ ev.mentorScore !== null ? ev.mentorScore : '—' }}
         </td>
-        <td style="text-align: center;">100</td>
+        <td style="text-align: center;">{{ ev.mentorMaxScore }}</td>
       </tr>
       <tr>
         <td>คะแนนประเมินจากอาจารย์ที่ดูแล (Advisor Score)</td>
         <td style="text-align: center; font-weight: bold; color: #1e3a8a;">
           {{ ev.advisorScore !== null ? ev.advisorScore : '—' }}
         </td>
-        <td style="text-align: center;">100</td>
+        <td style="text-align: center;">{{ ev.advisorMaxScore }}</td>
       </tr>
       <tr style="background-color: #f8fafc; font-weight: bold;">
         <td>คะแนนเฉลี่ยสะสม (Average Score)</td>
         <td style="text-align: center; font-weight: 800; color: #2563eb; font-size: 13pt;">
-          {{ ev.average !== null ? ev.average : '—' }}
+          {{ ev.average !== null ? ev.average + '%' : '—' }}
         </td>
-        <td style="text-align: center;">100</td>
+        <td style="text-align: center;">100%</td>
       </tr>
     </tbody>
   </table>

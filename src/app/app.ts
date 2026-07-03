@@ -27,7 +27,8 @@ import {
   LeaveRequest,
   Assignment,
   Submission,
-  SubmissionStatus
+  SubmissionStatus,
+  Evaluation
 } from './internship.models';
 
 @Component({
@@ -3327,16 +3328,31 @@ export class App {
   }
 
   protected getStudentEvaluation(internshipId: number): {
-    mentorScore: number | null; advisorScore: number | null; average: number | null;
+    mentorScore: number | null; 
+    mentorMaxScore: number;
+    advisorScore: number | null; 
+    advisorMaxScore: number;
+    average: number | null;
+    averageMaxScore: number;
   } {
     const evals = this.data.evaluations.filter(e => e.internshipId === internshipId);
     const mentor  = evals.find(e => e.evaluationType === 'mentor');
     const advisor = evals.find(e => e.evaluationType === 'advisor');
-    const scores  = [mentor?.score, advisor?.score].filter((s): s is number => s != null);
+    
+    const mMax = mentor ? this.getEvaluationMaxScore(mentor) : 100;
+    const aMax = advisor ? this.getEvaluationMaxScore(advisor) : 100;
+    
+    const mentorPct = mentor ? (mentor.score / mMax) * 100 : null;
+    const advisorPct = advisor ? (advisor.score / aMax) * 100 : null;
+    const percentages = [mentorPct, advisorPct].filter((p): p is number => p != null);
+    
     return {
       mentorScore:  mentor?.score  ?? null,
+      mentorMaxScore: mMax,
       advisorScore: advisor?.score ?? null,
-      average: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null
+      advisorMaxScore: aMax,
+      average: percentages.length ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length) : null,
+      averageMaxScore: 100
     };
   }
 
@@ -4030,17 +4046,33 @@ export class App {
     if (this.selectedTemplateId) {
       const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(this.selectedTemplateId));
       if (t) {
-        t.criteria.forEach((c: any) => {
+        for (const c of t.criteria) {
           const val = Number(this.rubricScores[c.id]) || 0;
+          if (val > c.maxScore) {
+            this.notifications.warning(`คะแนนในหัวข้อ "${c.label}" (${val}) ต้องไม่เกินคะแนนเต็ม (${c.maxScore})`, 'ประเมินผล');
+            return;
+          }
+          if (val < 0) {
+            this.notifications.warning(`คะแนนในหัวข้อ "${c.label}" ต้องไม่น้อยกว่า 0`, 'ประเมินผล');
+            return;
+          }
           totalScore += val;
           scoresList.push({
             criterionId: c.id,
             score: val
           });
-        });
+        }
       }
     } else {
       totalScore = Number(this.evaluationScore) || 0;
+      if (totalScore > 100) {
+        this.notifications.warning('คะแนนรวมดิบต้องไม่เกิน 100 คะแนน', 'ประเมินผล');
+        return;
+      }
+      if (totalScore < 0) {
+        this.notifications.warning('คะแนนรวมดิบต้องไม่น้อยกว่า 0 คะแนน', 'ประเมินผล');
+        return;
+      }
     }
 
     try {
@@ -4072,5 +4104,12 @@ export class App {
     if (!templateId) return [];
     const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(templateId));
     return t ? t.criteria : [];
+  }
+
+  protected getEvaluationMaxScore(evaluation: Evaluation): number {
+    if (evaluation.scores && evaluation.scores.length > 0) {
+      return evaluation.scores.reduce((sum: number, s: any) => sum + (s.maxScore || 0), 0);
+    }
+    return 100;
   }
 }

@@ -752,6 +752,7 @@ export class InternshipDataService {
 
   async addAdminCode(body: {
     schoolId?: number | null;
+    companyId?: number | null;
     role: 'student' | 'advisor' | 'company';
     code: string;
     maxUses?: number | null;
@@ -764,6 +765,7 @@ export class InternshipDataService {
       try {
         const payload = {
           school_id: body.schoolId,
+          company_id: body.companyId,
           role: body.role,
           code: body.code,
           max_uses: body.maxUses,
@@ -781,6 +783,11 @@ export class InternshipDataService {
     }
 
     const schoolName = this.schools.find(s => s.id === body.schoolId)?.name;
+    const matchedComp = this.companies.find(c => c.id === body.companyId);
+    const resolvedCompanyName = matchedComp?.companyName || body.companyName?.trim();
+    const resolvedCompanyAddress = matchedComp?.address || body.companyAddress?.trim();
+    const resolvedCompanyDescription = matchedComp?.description || body.companyDescription?.trim();
+
     const code: EnrollmentCode = {
       id: this.nextId(this.enrollmentCodes),
       schoolId: body.schoolId || undefined,
@@ -791,9 +798,10 @@ export class InternshipDataService {
       usedCount: 0,
       expiresAt: body.expiresAt || undefined,
       isActive: true,
-      companyName: body.companyName?.trim() || undefined,
-      companyAddress: body.companyAddress?.trim() || undefined,
-      companyDescription: body.companyDescription?.trim() || undefined
+      companyId: body.companyId || undefined,
+      companyName: resolvedCompanyName || undefined,
+      companyAddress: resolvedCompanyAddress || undefined,
+      companyDescription: resolvedCompanyDescription || undefined
     };
 
     this.enrollmentCodes = [...this.enrollmentCodes, code];

@@ -3412,21 +3412,32 @@
             <!-- Company preset (if company role) -->
             <div *ngIf="adminCodeForm.role === 'company'" class="space-y-5 pt-2 border-t border-slate-100">
               <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อสถานประกอบการ (Company Name) *</label>
-                <input name="adminCompanyName" type="text" [(ngModel)]="adminCodeForm.companyName" placeholder="เช่น บริษัท ABC จำกัด" required
-                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เลือกสถานประกอบการที่มีอยู่ (Select Existing Company)</label>
+                <select name="adminCompanyId" [(ngModel)]="adminCodeForm.companyId"
+                        class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                  <option [ngValue]="null">-- สร้างสถานประกอบการใหม่ --</option>
+                  <option *ngFor="let c of companies" [value]="c.id">{{ c.companyName }}</option>
+                </select>
               </div>
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ที่อยู่บริษัท (Address)</label>
-                <textarea name="adminCompanyAddress" [(ngModel)]="adminCodeForm.companyAddress" placeholder="ที่ตั้งของสำนักงาน..." rows="2"
-                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+
+              <div *ngIf="!adminCodeForm.companyId" class="space-y-5">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อสถานประกอบการ (Company Name) *</label>
+                  <input name="adminCompanyName" type="text" [(ngModel)]="adminCodeForm.companyName" placeholder="เช่น บริษัท ABC จำกัด" required
+                         class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ที่อยู่บริษัท (Address)</label>
+                  <textarea name="adminCompanyAddress" [(ngModel)]="adminCodeForm.companyAddress" placeholder="ที่ตั้งของสำนักงาน..." rows="2"
+                            class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คำอธิบายบริษัท (Description)</label>
+                  <textarea name="adminCompanyDescription" [(ngModel)]="adminCodeForm.companyDescription" placeholder="รายละเอียดของบริษัทและธุรกิจ..." rows="2"
+                            class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
+                </div>
               </div>
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คำอธิบายบริษัท (Description)</label>
-                <textarea name="adminCompanyDescription" [(ngModel)]="adminCodeForm.companyDescription" placeholder="รายละเอียดของบริษัทและธุรกิจ..." rows="2"
-                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300"></textarea>
-              </div>
-              <p class="text-[11px] font-bold text-slate-400">ผู้ใช้ที่สมัครด้วยรหัสนี้จะไม่ต้องกรอกข้อมูลบริษัทเอง</p>
+              <p class="text-[11px] font-bold text-slate-400">ผู้ใช้ที่สมัครด้วยรหัสนี้จะเชื่อมโยงกับสถานประกอบการที่กำหนดโดยตรง</p>
             </div>
 
             <!-- Max Uses -->

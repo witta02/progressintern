@@ -520,6 +520,7 @@ export class InternshipApiService {
 
   createAdminCode(body: {
     school_id?: number | null;
+    company_id?: number | null;
     role: 'student' | 'advisor' | 'company';
     code: string;
     max_uses?: number | null;

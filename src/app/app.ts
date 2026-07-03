@@ -225,6 +225,7 @@ export class App {
 
   protected adminCodeForm = {
     schoolId: null as number | null,
+    companyId: null as number | null,
     role: 'student' as 'student' | 'advisor' | 'company',
     code: '',
     maxUses: null as number | null,
@@ -2941,19 +2942,20 @@ export class App {
       this.notifications.warning('กรุณากรอกรหัสเชิญ', 'จัดการรหัสเชิญ');
       return;
     }
-    if (this.adminCodeForm.role === 'company' && !this.adminCodeForm.companyName.trim()) {
-      this.notifications.warning('กรุณาระบุชื่อสถานประกอบการ', 'จัดการรหัสเชิญ');
+    if (this.adminCodeForm.role === 'company' && !this.adminCodeForm.companyId && !this.adminCodeForm.companyName.trim()) {
+      this.notifications.warning('กรุณาระบุชื่อสถานประกอบการ หรือเลือกสถานประกอบการที่มีอยู่', 'จัดการรหัสเชิญ');
       return;
     }
     const body = {
       schoolId: this.adminCodeForm.role === 'company' ? null : (this.adminCodeForm.schoolId ? Number(this.adminCodeForm.schoolId) : null),
+      companyId: this.adminCodeForm.role === 'company' && this.adminCodeForm.companyId ? Number(this.adminCodeForm.companyId) : null,
       role: this.adminCodeForm.role,
       code: this.adminCodeForm.code.trim().toUpperCase(),
       maxUses: this.adminCodeForm.maxUses ? Number(this.adminCodeForm.maxUses) : null,
       expiresAt: this.adminCodeForm.expiresAt ? new Date(this.adminCodeForm.expiresAt).toISOString() : null,
-      companyName: this.adminCodeForm.role === 'company' ? this.adminCodeForm.companyName.trim() : undefined,
-      companyAddress: this.adminCodeForm.role === 'company' ? this.adminCodeForm.companyAddress.trim() || undefined : undefined,
-      companyDescription: this.adminCodeForm.role === 'company' ? this.adminCodeForm.companyDescription.trim() || undefined : undefined
+      companyName: this.adminCodeForm.role === 'company' && !this.adminCodeForm.companyId ? this.adminCodeForm.companyName.trim() : undefined,
+      companyAddress: this.adminCodeForm.role === 'company' && !this.adminCodeForm.companyId ? this.adminCodeForm.companyAddress.trim() || undefined : undefined,
+      companyDescription: this.adminCodeForm.role === 'company' && !this.adminCodeForm.companyId ? this.adminCodeForm.companyDescription.trim() || undefined : undefined
     };
     const res = await this.data.addAdminCode(body);
     if (res && res.error) {
@@ -2961,6 +2963,7 @@ export class App {
     } else {
       this.notifications.success(`สร้างรหัสเชิญ ${body.code} สำเร็จ`, 'จัดการรหัสเชิญ');
       this.adminCodeForm.code = '';
+      this.adminCodeForm.companyId = null;
       this.adminCodeForm.maxUses = null;
       this.adminCodeForm.expiresAt = null;
       this.adminCodeForm.companyName = '';

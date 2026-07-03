@@ -407,6 +407,7 @@ type CreateSchoolInput struct {
 
 type CreateCodeInput struct {
 	SchoolID           *int       `json:"school_id"`
+	CompanyID          *int       `json:"company_id"`
 	Role               string     `json:"role" binding:"required,oneof=student advisor company"`
 	Code               string     `json:"code" binding:"required,min=3,max=100"`
 	MaxUses            *int       `json:"max_uses"`

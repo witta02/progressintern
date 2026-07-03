@@ -174,7 +174,7 @@ func CreateCodeHandler(c *gin.Context) {
 	companyAddress := strings.TrimSpace(input.CompanyAddress)
 	companyDescription := strings.TrimSpace(input.CompanyDescription)
 
-	if input.Role == "company" && companyName == "" {
+	if input.Role == "company" && companyName == "" && (input.CompanyID == nil || *input.CompanyID == 0) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "กรุณาระบุชื่อสถานประกอบการสำหรับรหัสเชิญบริษัท"})
 		return
 	}
@@ -187,11 +187,18 @@ func CreateCodeHandler(c *gin.Context) {
 		schoolIDVal = nil
 	}
 
+	var companyIDVal interface{}
+	if input.Role == "company" && input.CompanyID != nil && *input.CompanyID > 0 {
+		companyIDVal = *input.CompanyID
+	} else {
+		companyIDVal = nil
+	}
+
 	result, err := config.DB.Exec(`
-		INSERT INTO enrollment_codes (school_id, role, code, max_uses, expires_at, company_name, company_address, company_description) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		INSERT INTO enrollment_codes (school_id, role, code, max_uses, expires_at, company_name, company_address, company_description, company_id) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		schoolIDVal, input.Role, code, input.MaxUses, input.ExpiresAt,
-		nullIfEmpty(companyName), nullIfEmpty(companyAddress), nullIfEmpty(companyDescription),
+		nullIfEmpty(companyName), nullIfEmpty(companyAddress), nullIfEmpty(companyDescription), companyIDVal,
 	)
 
 	if err != nil {
@@ -208,6 +215,7 @@ func CreateCodeHandler(c *gin.Context) {
 			"code":                code,
 			"role":                input.Role,
 			"school_id":           input.SchoolID,
+			"company_id":          input.CompanyID,
 			"max_uses":            input.MaxUses,
 			"expires_at":          input.ExpiresAt,
 			"is_active":           true,

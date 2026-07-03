@@ -81,6 +81,8 @@ func migrateDatabase(db *sql.DB) {
 	_, _ = db.Exec("ALTER TABLE users ADD CONSTRAINT fk_users_advisor_id FOREIGN KEY (advisor_id) REFERENCES users(id) ON DELETE SET NULL")
 	_, _ = db.Exec("ALTER TABLE users ADD COLUMN intern_start_date VARCHAR(10) NULL")
 	_, _ = db.Exec("ALTER TABLE users ADD COLUMN intern_end_date VARCHAR(10) NULL")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN intro TEXT NULL")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN field VARCHAR(255) NULL")
 
 	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS assignments (
 		id INT AUTO_INCREMENT PRIMARY KEY,

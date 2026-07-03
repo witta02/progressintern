@@ -9,6 +9,9 @@ import {
   AttendanceStatus,
   Company,
   Evaluation,
+  EvaluationTemplate,
+  EvaluationCriterion,
+  EvaluationScore,
   EvaluationType,
   Internship,
   JobPosting,
@@ -45,6 +48,8 @@ export class InternshipDataService {
   leaves: LeaveRequest[] = [];
   assignments: Assignment[] = [];
   submissions: Submission[] = [];
+  evaluationTemplates: EvaluationTemplate[] = [];
+  evaluationScores: EvaluationScore[] = [];
 
   /** Set after API load attempt */
   apiConnected = false;
@@ -541,8 +546,8 @@ export class InternshipDataService {
     await this.updateAttendance(attendance.id, { status });
   }
 
-  async addLogbook(logbook: Omit<Logbook, 'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'>): Promise<void> {
-    const payload = { ...logbook, status: 'pending' as LogbookStatus };
+  async addLogbook(logbook: Omit<Logbook, 'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'> & { workDate?: string }): Promise<void> {
+    const payload = { ...logbook, status: 'pending' as LogbookStatus, workDate: logbook.workDate };
 
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.createLogbook(payload));
@@ -569,15 +574,15 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async updateLogbook(id: number, title: string, content: string): Promise<void> {
+  async updateLogbook(id: number, title: string, content: string, workDate?: string): Promise<void> {
     if (this.api.apiEnabled()) {
-      await firstValueFrom(this.api.updateLogbook(id, { title, content }));
+      await firstValueFrom(this.api.updateLogbook(id, { title, content, workDate }));
       await this.refreshFromApi();
       return;
     }
 
     this.logbooks = this.logbooks.map((item) =>
-      item.id === id ? { ...item, title, content } : item
+      item.id === id ? { ...item, title, content, workDate } : item
     );
     this.persist();
   }
@@ -593,15 +598,87 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async addEvaluation(evaluation: Omit<Evaluation, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
+  async addEvaluation(evaluation: Omit<Evaluation, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
     if (this.api.apiEnabled()) {
-      await firstValueFrom(this.api.createEvaluation(evaluation));
+      const res = await firstValueFrom(this.api.createEvaluation(evaluation));
+      await this.refreshFromApi();
+      return res;
+    }
+
+    const newEval = { ...evaluation, id: this.nextId(this.evaluations), createdAt: new Date().toISOString() };
+    this.evaluations = [...this.evaluations, newEval];
+    this.persist();
+    return newEval;
+  }
+
+  async getEvaluationTemplates(): Promise<EvaluationTemplate[]> {
+    if (this.api.apiEnabled()) {
+      const list = await firstValueFrom(this.api.getEvaluationTemplates());
+      this.evaluationTemplates = list;
+      return list;
+    }
+    return this.evaluationTemplates;
+  }
+
+  async createEvaluationTemplate(template: Omit<EvaluationTemplate, 'id'>): Promise<any> {
+    if (this.api.apiEnabled()) {
+      const res = await firstValueFrom(this.api.createEvaluationTemplate(template));
+      await this.refreshFromApi();
+      return res;
+    }
+    const newT: EvaluationTemplate = {
+      ...template,
+      id: this.nextId(this.evaluationTemplates),
+      criteria: template.criteria.map((c, idx) => ({ ...c, id: this.nextId(this.evaluationTemplates) * 10 + idx }))
+    };
+    this.evaluationTemplates = [...this.evaluationTemplates, newT];
+    this.persist();
+    return { id: newT.id };
+  }
+
+  async updateEvaluationTemplate(id: number, name: string): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.updateEvaluationTemplate(id, name));
       await this.refreshFromApi();
       return;
     }
-
-    this.evaluations = [...this.evaluations, { ...evaluation, id: this.nextId(this.evaluations) }];
+    this.evaluationTemplates = this.evaluationTemplates.map(t => t.id === id ? { ...t, name } : t);
     this.persist();
+  }
+
+  async deleteEvaluationTemplate(id: number): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.deleteEvaluationTemplate(id));
+      await this.refreshFromApi();
+      return;
+    }
+    this.evaluationTemplates = this.evaluationTemplates.filter(t => t.id !== id);
+    this.persist();
+  }
+
+  async saveEvaluationScores(evalId: number, scores: EvaluationScore[]): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.saveEvaluationScores(evalId, scores));
+      await this.refreshFromApi();
+      return;
+    }
+    this.evaluationScores = this.evaluationScores.filter(s => s.evaluationId !== evalId);
+    const newScores = scores.map(s => ({
+      ...s,
+      id: this.nextId(this.evaluationScores),
+      evaluationId: evalId
+    }));
+    this.evaluationScores = [...this.evaluationScores, ...newScores];
+    const totalScore = scores.reduce((sum, s) => sum + s.score, 0);
+    this.evaluations = this.evaluations.map(e => e.id === evalId ? { ...e, score: totalScore, scores: newScores } : e);
+    this.persist();
+  }
+
+  async getEvaluationScores(evalId: number): Promise<EvaluationScore[]> {
+    if (this.api.apiEnabled()) {
+      return await firstValueFrom(this.api.getEvaluationScores(evalId));
+    }
+    return this.evaluationScores.filter(s => s.evaluationId === evalId);
   }
 
   async addLeave(leave: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>): Promise<void> {
@@ -915,8 +992,8 @@ export class InternshipDataService {
     };
   }
 
-  private nextId(items: { id: number }[]): number {
-    return Math.max(0, ...items.map((item) => item.id)) + 1;
+  private nextId(items: { id?: number }[]): number {
+    return Math.max(0, ...items.map((item) => item.id || 0)) + 1;
   }
 
   async deleteOtherApplications(studentId: number, keepAppId: number): Promise<void> {
@@ -950,7 +1027,9 @@ export class InternshipDataService {
         enrollmentCodes: this.enrollmentCodes,
         assignments: this.assignments,
         submissions: this.submissions,
-        tickets: this.tickets
+        tickets: this.tickets,
+        evaluationTemplates: this.evaluationTemplates,
+        evaluationScores: this.evaluationScores
       })
     );
   }
@@ -978,6 +1057,8 @@ export class InternshipDataService {
       this.leaves = Array.isArray(state.leaves) ? state.leaves : this.leaves;
       this.schools = Array.isArray(state.schools) ? state.schools : this.schools;
       this.enrollmentCodes = Array.isArray(state.enrollmentCodes) ? state.enrollmentCodes : this.enrollmentCodes;
+      this.evaluationTemplates = Array.isArray(state.evaluationTemplates) ? state.evaluationTemplates : this.evaluationTemplates;
+      this.evaluationScores = Array.isArray(state.evaluationScores) ? state.evaluationScores : this.evaluationScores;
       this.assignments = Array.isArray(state.assignments) ? state.assignments : this.assignments;
       this.submissions = Array.isArray(state.submissions) ? state.submissions : this.submissions;
       this.tickets = Array.isArray(state.tickets) ? state.tickets : this.tickets;

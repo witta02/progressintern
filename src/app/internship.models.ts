@@ -67,6 +67,7 @@ export interface Company {
   contactEmail?: string;
   latitude?: number;
   longitude?: number;
+  checkRadius?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -135,6 +136,7 @@ export interface Logbook {
   attachmentUrl?: string;
   mentorComment?: string;
   status: LogbookStatus;
+  workDate?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -146,6 +148,7 @@ export interface Evaluation {
   score: number;
   feedback: string;
   evaluationType: EvaluationType;
+  scores?: EvaluationScore[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -248,10 +251,36 @@ export interface Ticket {
 
 export interface TicketReply {
   id: number;
-  ticket_id: number;
-  user_id: number;
-  user_name?: string;
-  user_role?: string;
+  ticketId: number;
+  userId: number;
+  userName?: string;
+  userRole?: string;
   message: string;
-  created_at: string;
+  createdAt: string;
+}
+
+export interface EvaluationCriterion {
+  id?: number;
+  templateId?: number;
+  label: string;
+  maxScore: number;
+  sortOrder?: number;
+}
+
+export interface EvaluationTemplate {
+  id?: number;
+  createdBy?: number;
+  name: string;
+  isActive?: boolean;
+  createdAt?: string;
+  criteria: EvaluationCriterion[];
+}
+
+export interface EvaluationScore {
+  id?: number;
+  evaluationId?: number;
+  criterionId: number;
+  score: number;
+  label?: string;
+  maxScore?: number;
 }

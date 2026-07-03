@@ -46,6 +46,7 @@ export type ApiCompany = {
   contact_email?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  check_radius?: number | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -114,6 +115,7 @@ export type ApiLogbook = {
   attachment_url?: string | null;
   mentor_comment?: string | null;
   status: Logbook['status'];
+  work_date?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -125,6 +127,14 @@ export type ApiEvaluation = {
   score: number;
   feedback: string;
   evaluation_type: Evaluation['evaluationType'];
+  scores?: {
+    id: number;
+    evaluation_id: number;
+    criterion_id: number;
+    score: number;
+    label: string;
+    max_score: number;
+  }[] | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -180,6 +190,7 @@ export function mapCompany(dto: ApiCompany): Company {
     contactEmail: dto.contact_email ?? undefined,
     latitude: dto.latitude ?? undefined,
     longitude: dto.longitude ?? undefined,
+    checkRadius: dto.check_radius ?? undefined,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };
@@ -258,6 +269,7 @@ export function mapLogbook(dto: ApiLogbook): Logbook {
     attachmentUrl: dto.attachment_url ?? undefined,
     mentorComment: dto.mentor_comment ?? undefined,
     status: dto.status,
+    workDate: dto.work_date ?? undefined,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };
@@ -271,6 +283,14 @@ export function mapEvaluation(dto: ApiEvaluation): Evaluation {
     score: dto.score,
     feedback: dto.feedback,
     evaluationType: dto.evaluation_type,
+    scores: dto.scores ? dto.scores.map(s => ({
+      id: s.id,
+      evaluationId: s.evaluation_id,
+      criterionId: s.criterion_id,
+      score: s.score,
+      label: s.label,
+      maxScore: s.max_score
+    })) : undefined,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };

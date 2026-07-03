@@ -230,40 +230,6 @@
         <div class="w-9 h-9 sm:w-11 sm:h-11 bg-brand-accent rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black text-base sm:text-lg transition-all group-hover:bg-brand-accent-teal group-hover:rotate-3 shadow-glow-indigo">IM</div>
         <span class="text-base sm:text-xl font-black text-slate-900 tracking-tighter hidden sm:block">InternManager</span>
       </button>
-
-      <div class="hidden lg:flex items-center gap-2 h-full">
-        <button
-          type="button"
-          *ngFor="let view of availableViews"
-          class="px-5 flex flex-col items-center justify-center gap-1.5 h-full transition-all relative group"
-          [class.text-brand-accent]="activeView === view"
-          [class.text-slate-400]="activeView !== view"
-          (click)="setActiveView(view)"
-        >
-          <ng-container [ngSwitch]="view">
-            <svg *ngSwitchCase="'dashboard'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
-            <svg *ngSwitchCase="'admin_users'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            <svg *ngSwitchCase="'students'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            <svg *ngSwitchCase="'admin_schools'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
-            <svg *ngSwitchCase="'admin_codes'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            <svg *ngSwitchCase="'jobs'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="3" ry="3"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-            <svg *ngSwitchCase="'applications'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-            <svg *ngSwitchCase="'internships'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
-            <svg *ngSwitchCase="'company_employees'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            <svg *ngSwitchCase="'attendance'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <svg *ngSwitchCase="'logbooks'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-            <svg *ngSwitchCase="'leaves'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
-            <svg *ngSwitchCase="'evaluations'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            <svg *ngSwitchCase="'classwork'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-            <svg *ngSwitchCase="'edit'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <svg *ngSwitchCase="'schema'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
-            <svg *ngSwitchCase="'company_school'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><rect x="4" y="14" width="6" height="8" rx="1"></rect><rect x="14" y="14" width="6" height="8" rx="1"></rect></svg>
-            <svg *ngSwitchCase="'tickets'" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14h-2v-2h2zm0-4h-2V7h2z"></path></svg>
-          </ng-container>
-          <span class="text-[10px] font-black uppercase tracking-[0.1em] group-hover:text-brand-accent">{{ viewLabels[view] }}</span>
-          <div class="absolute bottom-0 left-4 right-4 h-1 bg-brand-accent shadow-glow-indigo rounded-t-full transition-all" [class.opacity-100]="activeView === view" [class.opacity-0]="activeView !== view"></div>
-        </button>
-      </div>
     </div>
 
       <div class="flex items-center gap-3 sm:gap-6">
@@ -289,7 +255,7 @@
           ออกจากระบบ
         </button>
 
-        <button type="button" class="lg:hidden p-2.5 bg-slate-100 rounded-xl text-slate-900" (click)="toggleSidebar()">
+        <button type="button" class="p-2.5 bg-slate-100 rounded-xl text-slate-900" (click)="toggleSidebar()">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
         </button>
       </div>
@@ -974,6 +940,22 @@
 
       <!-- APPLICATIONS -->
       <section *ngIf="activeView === 'applications'" class="space-y-6">
+        <!-- Applications Status Filter Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm">
+          <div>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">กรองรายการใบสมัคร</h3>
+            <p class="text-[10px] text-slate-500 font-bold mt-1">เลือกสถานะใบสมัครเพื่อคัดกรองข้อมูล</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <select name="appFilter" [(ngModel)]="applicationStatusFilter" 
+                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none font-bold text-xs text-slate-700">
+              <option value="all">แสดงทั้งหมด</option>
+              <option value="pending">รออนุมัติ (Pending)</option>
+              <option value="approved">ได้รับการอนุมัติ (Approved)</option>
+              <option value="rejected">ได้รับการปฏิเสธ (Rejected)</option>
+            </select>
+          </div>
+        </div>
         <!-- Processed Applications Clear Bar for Company -->
         <div class="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm animate-fade-in" *ngIf="currentUser?.role === 'company'">
           <div>
@@ -1834,10 +1816,17 @@
 
             <!-- Form -->
             <form class="space-y-5 w-full" (ngSubmit)="addLogbook()">
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อบันทึก / งานที่ทำ</label>
-                <input name="logbookTitle" [(ngModel)]="logbookTitle" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard"
-                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อบันทึก / งานที่ทำ</label>
+                  <input name="logbookTitle" [(ngModel)]="logbookTitle" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard"
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">วันที่ปฏิบัติงาน (WORK DATE)</label>
+                  <input name="logbookDate" type="date" [(ngModel)]="logbookDate"
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                </div>
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดการปฏิบัติงาน</label>
@@ -1868,10 +1857,17 @@
 
             <!-- Form -->
             <form class="space-y-5 w-full" (ngSubmit)="submitEditLogbook()">
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อบันทึก / งานที่ทำ</label>
-                <input name="editLogbookTitle" [(ngModel)]="editLogbookForm.title" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard"
-                       class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้อบันทึก / งานที่ทำ</label>
+                  <input name="editLogbookTitle" [(ngModel)]="editLogbookForm.title" placeholder="เช่น ศึกษาและพัฒนาหน้าจอระบบ Dashboard"
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">วันที่ปฏิบัติงาน (WORK DATE)</label>
+                  <input name="editLogbookDate" type="date" [(ngModel)]="editLogbookForm.workDate"
+                         class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                </div>
               </div>
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดการปฏิบัติงาน</label>
@@ -1890,12 +1886,30 @@
           </div>
         </article>
 
+        <!-- Logbooks Status Filter Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm">
+          <div>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">กรองบันทึกการฝึกงาน</h3>
+            <p class="text-[10px] text-slate-500 font-bold mt-1">เลือกสถานะบันทึกประจำวันเพื่อคัดกรองข้อมูล</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <select name="logbookFilter" [(ngModel)]="logbookStatusFilter" 
+                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none font-bold text-xs text-slate-700">
+              <option value="all">แสดงทั้งหมด</option>
+              <option value="pending">รออนุมัติ (Pending)</option>
+              <option value="approved">อนุมัติแล้ว (Approved)</option>
+              <option value="rejected">ปฏิเสธ (Rejected)</option>
+            </select>
+          </div>
+        </div>
+
         <div class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">นักศึกษา</th>
+                  <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">วันที่ปฏิบัติงาน</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">หัวข้อ</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">รายละเอียด</th>
                   <th class="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">สถานะ</th>
@@ -1905,6 +1919,9 @@
               <tbody class="divide-y divide-slate-100/60">
                 <tr *ngFor="let logbook of visibleLogbooks" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ logbookStudentName(logbook) }}</td>
+                  <td class="px-10 py-6 font-bold text-indigo-600 text-sm">
+                    {{ logbook.workDate ? (logbook.workDate | date:'dd MMM yyyy') : (logbook.createdAt | date:'dd MMM yyyy') }}
+                  </td>
                   <td class="px-10 py-6 font-bold text-slate-700">{{ logbook.title }}</td>
                   <td class="px-10 py-6 font-medium text-slate-500 max-w-xs truncate" title="{{ logbook.content }}">{{ logbook.content }}</td>
                   <td class="px-10 py-6">
@@ -1927,7 +1944,7 @@
                   </td>
                 </tr>
                 <tr *ngIf="visibleLogbooks.length === 0">
-                  <td colspan="5" class="px-10 py-8 text-center text-sm font-bold text-slate-400">ยังไม่มีบันทึกในขอบเขตสิทธิ์นี้</td>
+                  <td colspan="6" class="px-10 py-8 text-center text-sm font-bold text-slate-400">ยังไม่มีบันทึกในขอบเขตสิทธิ์นี้</td>
                 </tr>
               </tbody>
             </table>
@@ -2041,6 +2058,23 @@
           </div>
         </article>
 
+        <!-- Leaves Status Filter Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm">
+          <div>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">กรองคำขอลา</h3>
+            <p class="text-[10px] text-slate-500 font-bold mt-1">เลือกสถานะคำขอลาเพื่อคัดกรองข้อมูล</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <select name="leaveFilter" [(ngModel)]="leaveStatusFilter" 
+                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none font-bold text-xs text-slate-700">
+              <option value="all">แสดงทั้งหมด</option>
+              <option value="pending">รออนุมัติ (Pending)</option>
+              <option value="approved">อนุมัติแล้ว (Approved)</option>
+              <option value="rejected">ปฏิเสธ (Rejected)</option>
+            </select>
+          </div>
+        </div>
+
         <div class="glass-card rounded-[2.5rem] overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left">
@@ -2108,8 +2142,8 @@
             </div>
 
             <!-- Form -->
-            <form class="space-y-5 w-full" (ngSubmit)="addEvaluation()">
-              <div class="grid grid-cols-1 gap-5">
+            <form class="space-y-6 w-full" (ngSubmit)="submitRubricEvaluation()">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">นักศึกษาฝึกงาน</label>
                   <select name="evaluationInternship" [(ngModel)]="selectedEvaluationInternshipId"
@@ -2120,8 +2154,121 @@
                     </option>
                   </select>
                 </div>
+
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เกณฑ์การประเมิน (RUBRICS)</label>
+                  <div class="flex gap-3">
+                    <select name="evaluationTemplate" [ngModel]="selectedTemplateId" (ngModelChange)="selectTemplateForEvaluation($event)"
+                            class="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                      <option [ngValue]="null">คะแนนรวมดิบ (0-100)</option>
+                      <option *ngFor="let tmpl of evaluationTemplates" [ngValue]="tmpl.id">
+                        {{ tmpl.name }} ({{ tmpl.criteria.length }} หัวข้อ)
+                      </option>
+                    </select>
+                    <button type="button" (click)="showTemplateBuilder = !showTemplateBuilder"
+                            class="px-5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-black text-xs uppercase tracking-widest rounded-2xl transition-all border border-indigo-100/50 flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg>
+                      จัดการเกณฑ์
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+
+              <!-- Template Builder panel -->
+              <div *ngIf="showTemplateBuilder" class="p-6 bg-slate-50/50 border border-slate-200/80 rounded-3xl space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div class="flex items-center justify-between border-b border-slate-200/60 pb-3">
+                  <h4 class="font-black text-slate-800 text-sm uppercase tracking-wider">สร้าง/จัดการ เกณฑ์การประเมินผล (Rubric Builder)</h4>
+                  <button type="button" (click)="showTemplateBuilder = false" class="text-slate-400 hover:text-slate-600 text-xs font-bold">ปิดแผงควบคุม</button>
+                </div>
+                
+                <div class="space-y-4">
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ชื่อเกณฑ์การประเมิน</label>
+                    <input name="tmplName" [(ngModel)]="editingTemplate.name" placeholder="เช่น การแต่งกายและบุคลิกภาพ, ความสามารถทางเทคนิค"
+                           class="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all">
+                  </div>
+
+                  <!-- Criteria Grid Builder -->
+                  <div class="space-y-3">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายการหัวข้อการประเมิน</label>
+                    <div class="space-y-2.5">
+                      <div *ngFor="let c of editingTemplate.criteria; let idx = index" class="flex items-center gap-3 bg-white p-3 border border-slate-100 rounded-xl">
+                        <span class="text-xs font-bold text-slate-400 w-6 text-center">#{{ idx + 1 }}</span>
+                        <span class="flex-1 text-sm font-black text-slate-700">{{ c.label }}</span>
+                        <span class="px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg text-xs font-black text-indigo-600">{{ c.maxScore }} คะแนน</span>
+                        <button type="button" (click)="removeCriterionRow(idx)" class="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-1">ลบ</button>
+                      </div>
+                    </div>
+
+                    <!-- Add Criterion Form -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-4 border border-slate-100 rounded-xl">
+                      <input name="newCritLabel" [(ngModel)]="newCriterionLabel" placeholder="ชื่อหัวข้อ (เช่น การแต่งกาย, บุคลิกภาพ)"
+                             class="sm:col-span-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none">
+                      <div class="flex gap-2">
+                        <input name="newCritMax" type="number" [(ngModel)]="newCriterionMax" placeholder="คะแนนเต็ม" min="1" max="100"
+                               class="w-20 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 text-center outline-none">
+                        <button type="button" (click)="addCriterionRow()"
+                               class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-lg transition-all">
+                          + เพิ่มแถว
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex gap-3 pt-3 border-t border-slate-200/60">
+                  <button type="button" (click)="saveTemplate()"
+                          class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-md">
+                    บันทึกเกณฑ์นี้
+                  </button>
+                  <button type="button" (click)="showTemplateBuilder = false"
+                          class="px-6 py-3 bg-white border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all">
+                    ยกเลิก
+                  </button>
+                </div>
+
+                <!-- Existing templates -->
+                <div class="pt-4 border-t border-slate-200/60 space-y-3" *ngIf="evaluationTemplates.length > 0">
+                  <h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">เกณฑ์ที่มีอยู่แล้วในระบบ</h5>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div *ngFor="let tmpl of evaluationTemplates" class="flex justify-between items-center bg-white p-3 border border-slate-200/60 rounded-xl">
+                      <div>
+                        <div class="text-xs font-black text-slate-800">{{ tmpl.name }}</div>
+                        <div class="text-[9px] text-slate-400 font-bold mt-0.5">{{ tmpl.criteria.length }} หัวข้อ</div>
+                      </div>
+                      <button type="button" (click)="deleteTemplate(tmpl.id)" class="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-1">ลบ</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Criteria scoring inputs (if template is selected) -->
+              <div *ngIf="selectedTemplateId" class="p-6 bg-slate-50 border border-slate-100 rounded-3xl space-y-4 animate-in fade-in duration-200">
+                <h4 class="font-black text-slate-800 text-xs uppercase tracking-wider mb-2">ให้คะแนนตามรายหัวข้อ</h4>
+                
+                <div *ngFor="let c of getTemplateCriteria(selectedTemplateId)" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white border border-slate-100 rounded-xl">
+                  <div>
+                    <span class="text-sm font-black text-slate-700">{{ c.label }}</span>
+                    <span class="text-xs text-slate-400 font-bold ml-2">(คะแนนเต็ม {{ c.maxScore }} คะแนน)</span>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <input type="range" min="0" [max]="c.maxScore" step="1"
+                           [(ngModel)]="rubricScores[c.id]" [name]="'score_' + c.id"
+                           class="w-40 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    <input type="number" min="0" [max]="c.maxScore"
+                           [(ngModel)]="rubricScores[c.id]" [name]="'score_num_' + c.id"
+                           class="w-16 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 text-center outline-none">
+                  </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-indigo-50 border border-indigo-100 rounded-xl p-4 mt-3">
+                  <span class="text-xs font-black text-indigo-700 uppercase tracking-widest">คำนวณคะแนนรวมสุทธิ:</span>
+                  <span class="text-lg font-black text-indigo-700">{{ getTotalScore() }} / {{ getMaxTotalScore() }} คะแนน</span>
+                </div>
+              </div>
+
+              <!-- Standard input scoring (if no template is selected) -->
+              <div *ngIf="!selectedTemplateId" class="grid grid-cols-1 md:grid-cols-4 gap-5">
                 <div class="md:col-span-1 space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คะแนน (0-100)</label>
                   <input name="score" type="number" min="0" max="100" [(ngModel)]="evaluationScore"
@@ -2133,6 +2280,13 @@
                          class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
                 </div>
               </div>
+
+              <div *ngIf="selectedTemplateId" class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">ข้อเสนอแนะ / ความเห็นเพิ่มเติม</label>
+                <input name="evaluationFeedback" [(ngModel)]="evaluationFeedback" placeholder="ความรับผิดชอบดีมาก เรียนรู้เร็ว ควรพัฒนาทักษะภาษาอังกฤษเพิ่มเติม..."
+                       class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold placeholder:text-slate-300">
+              </div>
+
               <button type="submit" [disabled]="!selectedEvaluationInternshipId"
                       class="w-full py-5 bg-slate-900 hover:bg-blue-600 disabled:opacity-50 text-white rounded-2xl font-black text-lg transition-all shadow-xl shadow-slate-200">
                 บันทึกผลการประเมิน
@@ -2398,7 +2552,7 @@
 
                 <div class="space-y-2">
                   <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">กำหนดส่งงาน (DUE DATE)</label>
-                  <input name="assDueDate" type="datetime-local" [(ngModel)]="newAssignment.dueDate"
+                  <input name="assDueDate" type="date" [(ngModel)]="newAssignment.dueDate"
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-8 focus:ring-indigo-500/15 focus:border-indigo-500 outline-none font-bold transition-all text-slate-900">
                 </div>
               </div>
@@ -2958,22 +3112,40 @@
                          class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
                 </div>
 
+                <!-- Map Picker container -->
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">แผนที่ปักหมุดตำแหน่ง (DRAG PIN OR CLICK MAP TO SET LOCATION)</label>
+                  <div id="company-location-map" class="w-full h-[250px] sm:h-[320px] rounded-2xl border border-slate-200 z-10"></div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">พิกัดละติจูด (Latitude)</label>
-                    <input name="profileLatitude" [(ngModel)]="profileDraft.latitude" placeholder="เช่น 13.7563" 
-                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                    <input name="profileLatitude" [(ngModel)]="profileDraft.latitude" placeholder="เช่น 13.7563" readonly
+                           class="w-full px-6 py-4 bg-slate-100 border border-slate-200 rounded-2xl outline-none text-slate-500 font-bold cursor-not-allowed">
                   </div>
                   <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">พิกัดลองจิจูด (Longitude)</label>
-                    <input name="profileLongitude" [(ngModel)]="profileDraft.longitude" placeholder="เช่น 100.5018" 
-                           class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent transition-all outline-none text-slate-900 font-bold">
+                    <input name="profileLongitude" [(ngModel)]="profileDraft.longitude" placeholder="เช่น 100.5018" readonly
+                           class="w-full px-6 py-4 bg-slate-100 border border-slate-200 rounded-2xl outline-none text-slate-500 font-bold cursor-not-allowed">
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center ml-1">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">รัศมีตรวจเช็คการเข้างาน: {{ profileDraft.checkRadius }} เมตร</label>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <input name="checkRadius" type="range" min="50" max="1000" step="10" 
+                           [ngModel]="profileDraft.checkRadius" 
+                           (ngModelChange)="updateMapRadius($event)"
+                           class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-accent">
                   </div>
                 </div>
 
                 <div class="pt-2">
                   <button type="button" (click)="pinProfileCoordinates()" 
-                          class="w-full h-[38px] -mt-px py-4.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-[11px] font-black text-sm transition-all shadow-lg shadow-blue-200 hover:scale-[1.01] cursor-pointer flex items-center justify-center gap-2">
+                          class="w-full h-[44px] py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-200 hover:scale-[1.01] cursor-pointer flex items-center justify-center gap-2">
                     📍 ปักหมุดตำแหน่งปัจจุบันของบริษัท (Pin Current Geolocation)
                   </button>
                 </div>
@@ -4086,16 +4258,16 @@
   </div>
 
   <!-- Mobile Nav Overlay -->
-  <aside id="app-sidebar" *ngIf="sidebarOpen" class="fixed inset-0 z-50 lg:hidden">
+  <aside id="app-sidebar" *ngIf="sidebarOpen" class="fixed inset-0 z-50">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md" (click)="closeSidebar()"></div>
     <div class="absolute inset-y-0 right-0 w-72 sm:w-80 bg-white shadow-2xl flex flex-col">
       <!-- Sidebar header with user info -->
       <div class="flex items-center justify-between p-6 border-b border-slate-100">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-sm">{{ currentUser?.name?.charAt(0) }}</div>
+          <div class="w-10 h-10 bg-brand-accent rounded-xl flex items-center justify-center text-white font-black text-sm shadow-glow-indigo">{{ currentUser?.name?.charAt(0) }}</div>
           <div>
             <div class="text-sm font-black text-slate-900 leading-none mb-0.5">{{ currentUser?.name }}</div>
-            <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest">{{ roleLabel }}</div>
+            <div class="text-[10px] font-black text-brand-accent uppercase tracking-widest">{{ roleLabel }}</div>
           </div>
         </div>
         <button class="p-2 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all" (click)="closeSidebar()">
@@ -4104,9 +4276,29 @@
       </div>
       <nav class="space-y-1 flex-1 overflow-y-auto p-4">
         <button *ngFor="let view of availableViews" (click)="setActiveView(view); closeSidebar()" 
-                class="w-full px-5 py-4 flex items-center gap-3 rounded-2xl font-black text-sm transition-all"
+                class="w-full px-5 py-4 flex items-center gap-4 rounded-2xl font-black text-sm transition-all"
                 [class.bg-blue-50]="activeView === view" [class.text-brand-accent]="activeView === view"
                 [class.text-slate-500]="activeView !== view" [class.hover:bg-slate-50]="activeView !== view">
+          <ng-container [ngSwitch]="view">
+            <svg *ngSwitchCase="'dashboard'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
+            <svg *ngSwitchCase="'admin_users'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <svg *ngSwitchCase="'students'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <svg *ngSwitchCase="'admin_schools'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
+            <svg *ngSwitchCase="'admin_codes'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <svg *ngSwitchCase="'jobs'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="3" ry="3"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            <svg *ngSwitchCase="'applications'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <svg *ngSwitchCase="'internships'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
+            <svg *ngSwitchCase="'company_employees'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <svg *ngSwitchCase="'attendance'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <svg *ngSwitchCase="'logbooks'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <svg *ngSwitchCase="'leaves'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
+            <svg *ngSwitchCase="'evaluations'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <svg *ngSwitchCase="'classwork'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <svg *ngSwitchCase="'edit'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <svg *ngSwitchCase="'schema'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
+            <svg *ngSwitchCase="'company_school'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><rect x="4" y="14" width="6" height="8" rx="1"></rect><rect x="14" y="14" width="6" height="8" rx="1"></rect></svg>
+            <svg *ngSwitchCase="'tickets'" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14h-2v-2h2zm0-4h-2V7h2z"></path></svg>
+          </ng-container>
           <span>{{ viewLabels[view] }}</span>
         </button>
       </nav>

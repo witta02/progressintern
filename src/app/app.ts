@@ -127,6 +127,29 @@ export class App {
   }
   protected sidebarOpen = false;
   protected activeView = 'dashboard';
+
+  // Feature 3: Logbook work date
+  protected logbookDate = this.today();
+
+  // Feature 4: Map picker & Radius
+  private leafletMap: any;
+  private leafletMarker: any;
+  private leafletCircle: any;
+
+  // Feature 5: Status Filters
+  protected applicationStatusFilter = 'all';
+  protected internshipStatusFilter = 'all';
+  protected logbookStatusFilter = 'all';
+  protected leaveStatusFilter = 'all';
+
+  // Feature 6: Custom Evaluation Rubrics
+  protected evaluationTemplates: any[] = [];
+  protected selectedTemplateId: number | null = null;
+  protected rubricScores: { [criterionId: number]: number } = {};
+  protected showTemplateBuilder = false;
+  protected editingTemplate: any = { name: '', criteria: [] };
+  protected newCriterionLabel = '';
+  protected newCriterionMax = 10;
   protected authMode: 'login' | 'register' = 'login';
   protected loginError = '';
   protected loginLoading = false;
@@ -184,7 +207,8 @@ export class App {
     description: '',
     address: '',
     latitude: '' as string | number,
-    longitude: '' as string | number
+    longitude: '' as string | number,
+    checkRadius: 200 as string | number
   };
 
   protected leaveForm = {
@@ -210,7 +234,7 @@ export class App {
   protected logbookText = '';
 
   protected editingLogbook: Logbook | null = null;
-  protected editLogbookForm = { title: '', content: '' };
+  protected editLogbookForm = { title: '', content: '', workDate: '' };
 
   protected editingLeave: LeaveRequest | null = null;
   protected editLeaveForm = { leaveType: 'sick' as 'sick' | 'personal', startDate: '', endDate: '', reason: '' };
@@ -915,20 +939,18 @@ export class App {
 
   protected get visibleApplications(): Application[] {
     const user = this.currentUser;
+    let list: Application[] = [];
+
     if (user?.role === 'admin') {
-      return this.applications;
-    }
-
-    if (user?.role === 'student') {
-      return this.applications.filter((application) => application.studentId === user.id);
-    }
-
-    if (user?.role === 'company' && this.currentCompanyId) {
+      list = this.applications;
+    } else if (user?.role === 'student') {
+      list = this.applications.filter((application) => application.studentId === user.id);
+    } else if (user?.role === 'company' && this.currentCompanyId) {
       const companyJobIds = this.jobPostings
         .filter((job) => job.companyId === this.currentCompanyId)
         .map((job) => job.id);
 
-      const list = this.applications.filter((application) =>
+      const rawList = this.applications.filter((application) =>
         companyJobIds.includes(application.jobPostingId)
       );
 
@@ -949,29 +971,26 @@ export class App {
       const oneDayMs = 24 * 60 * 60 * 1000;
       const now = new Date().getTime();
 
-      return list.filter((app) => {
-        // If manually dismissed
-        if (dismissedIds.includes(app.id)) {
-          return false;
-        }
-
-        // If approved/rejected more than 1 day ago
+      list = rawList.filter((app) => {
+        if (dismissedIds.includes(app.id)) return false;
         if (app.status === 'approved' || app.status === 'rejected') {
           const dateStr = app.updatedAt || app.appliedAt;
           if (dateStr) {
             const lastUpdated = new Date(dateStr).getTime();
-            if (now - lastUpdated > oneDayMs) {
-              return false;
-            }
+            if (now - lastUpdated > oneDayMs) return false;
           }
         }
-
         return true;
       });
+    } else {
+      const studentIds = this.managedStudents.map((student) => student.id);
+      list = this.applications.filter((application) => studentIds.includes(application.studentId));
     }
 
-    const studentIds = this.managedStudents.map((student) => student.id);
-    return this.applications.filter((application) => studentIds.includes(application.studentId));
+    if (this.applicationStatusFilter && this.applicationStatusFilter !== 'all') {
+      list = list.filter((app) => app.status === this.applicationStatusFilter);
+    }
+    return list;
   }
 
   protected get visibleInternships(): Internship[] {
@@ -979,7 +998,7 @@ export class App {
     let list = this.internships;
 
     if (user?.role === 'admin') {
-      return this.internships;
+      list = this.internships;
     } else if (user?.role === 'student') {
       list = this.internships.filter((internship) => internship.studentId === user.id);
     } else if (user?.role === 'company' && this.currentCompanyId) {
@@ -1006,7 +1025,7 @@ export class App {
     const oneDayMs = 24 * 60 * 60 * 1000;
     const now = new Date().getTime();
 
-    return list.filter((internship) => {
+    list = list.filter((internship) => {
       if (dismissedIds.includes(internship.id)) {
         return false;
       }
@@ -1023,6 +1042,11 @@ export class App {
 
       return true;
     });
+
+    if (this.internshipStatusFilter && this.internshipStatusFilter !== 'all') {
+      list = list.filter((i) => i.status === this.internshipStatusFilter);
+    }
+    return list;
   }
 
   protected attendanceStudentFilterId: number | null = null;
@@ -1055,12 +1079,20 @@ export class App {
 
   protected get visibleLogbooks(): Logbook[] {
     const internshipIds = this.visibleInternships.map((internship) => internship.id);
-    return this.data.logbooks.filter((logbook) => internshipIds.includes(logbook.internshipId));
+    let list = this.data.logbooks.filter((logbook) => internshipIds.includes(logbook.internshipId));
+    if (this.logbookStatusFilter && this.logbookStatusFilter !== 'all') {
+      list = list.filter((l) => l.status === this.logbookStatusFilter);
+    }
+    return list;
   }
 
   protected get visibleLeaves(): LeaveRequest[] {
     const internshipIds = this.visibleInternships.map((internship) => internship.id);
-    return this.data.leaves.filter((leave) => internshipIds.includes(leave.internshipId));
+    let list = this.data.leaves.filter((leave) => internshipIds.includes(leave.internshipId));
+    if (this.leaveStatusFilter && this.leaveStatusFilter !== 'all') {
+      list = list.filter((l) => l.status === this.leaveStatusFilter);
+    }
+    return list;
   }
 
   protected get visibleEvaluations() {
@@ -1323,6 +1355,7 @@ export class App {
 
   protected setActiveView(view: string): void {
     const user = this.currentUser;
+    this.destroyCompanyMap();
     this.activeView = this.availableViews.includes(view) ? view : 'dashboard';
     this.notificationPanelOpen = false;
 
@@ -1345,6 +1378,7 @@ export class App {
     if (this.activeView === 'evaluations') {
       this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
       this.evaluationType = user?.role === 'advisor' ? 'advisor' : 'mentor';
+      void this.loadEvaluationTemplates();
     }
     
     if (this.activeView === 'edit' && user) {
@@ -1363,8 +1397,12 @@ export class App {
         description: comp?.description ?? '',
         address: comp?.address ?? '',
         latitude: comp?.latitude ?? '',
-        longitude: comp?.longitude ?? ''
+        longitude: comp?.longitude ?? '',
+        checkRadius: comp?.checkRadius ?? 200
       };
+      if (user.role === 'company') {
+        this.initCompanyMap();
+      }
     }
 
     if (this.activeView === 'attendance' && user?.role === 'student') {
@@ -1679,6 +1717,7 @@ export class App {
         const lng = parseFloat(String(this.profileDraft.longitude));
         payload.latitude = isNaN(lat) ? null : lat;
         payload.longitude = isNaN(lng) ? null : lng;
+        payload.check_radius = Number(this.profileDraft.checkRadius) || 200;
       }
 
       await this.data.updateUser(user.id, payload);
@@ -1702,8 +1741,14 @@ export class App {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           Swal.close();
-          this.profileDraft.latitude = position.coords.latitude;
-          this.profileDraft.longitude = position.coords.longitude;
+          this.profileDraft.latitude = position.coords.latitude.toFixed(6);
+          this.profileDraft.longitude = position.coords.longitude.toFixed(6);
+          if (this.leafletMap && this.leafletMarker && this.leafletCircle) {
+            const latlng = [position.coords.latitude, position.coords.longitude];
+            this.leafletMarker.setLatLng(latlng);
+            this.leafletCircle.setLatLng(latlng);
+            this.leafletMap.setView(latlng, 15);
+          }
           this.notifications.success('ปักหมุดพิกัดปัจจุบันเรียบร้อยแล้ว', 'ตำแหน่ง');
         },
         (error) => {
@@ -2479,7 +2524,8 @@ export class App {
       await this.data.addLogbook({
         internshipId: this.activeInternship.id,
         title: this.logbookTitle.trim(),
-        content: this.logbookText.trim()
+        content: this.logbookText.trim(),
+        workDate: this.logbookDate
       });
       this.logbookTitle = '';
       this.logbookText = '';
@@ -2494,6 +2540,7 @@ export class App {
     this.editingLogbook = log;
     this.editLogbookForm.title = log.title;
     this.editLogbookForm.content = log.content;
+    this.editLogbookForm.workDate = log.workDate ?? '';
   }
 
   protected cancelEditLogbook(): void {
@@ -2511,7 +2558,8 @@ export class App {
       await this.data.updateLogbook(
         this.editingLogbook.id,
         this.editLogbookForm.title.trim(),
-        this.editLogbookForm.content.trim()
+        this.editLogbookForm.content.trim(),
+        this.editLogbookForm.workDate
       );
       this.editingLogbook = null;
       this.notifications.success('แก้ไขบันทึกเรียบร้อยแล้ว', 'บันทึก');
@@ -2755,7 +2803,8 @@ export class App {
       description: comp?.description ?? '',
       address: comp?.address ?? '',
       latitude: comp?.latitude ?? '',
-      longitude: comp?.longitude ?? ''
+      longitude: comp?.longitude ?? '',
+      checkRadius: comp?.checkRadius ?? 200
     };
     this.evaluationType = user.role === 'advisor' ? 'advisor' : 'mentor';
 
@@ -3633,5 +3682,267 @@ export class App {
       this.selectedTicket.status = status;
       this.notifications.success(`อัปเดตสถานะเป็น: ${status === 'resolved' ? 'แก้ไขแล้ว' : status === 'closed' ? 'ปิดแล้ว' : 'เปิดใหม่'} เรียบร้อยแล้ว`, 'ปรับปรุงสำเร็จ');
     }
+  }
+
+  // --- Feature 4: Map Picker & Radius Circle ---
+  protected initCompanyMap(): void {
+    if (typeof window === 'undefined' || !(window as any).L) return;
+    this.destroyCompanyMap();
+
+    setTimeout(() => {
+      const mapContainer = document.getElementById('company-location-map');
+      if (!mapContainer) return;
+
+      const L = (window as any).L;
+      let lat = parseFloat(String(this.profileDraft.latitude));
+      let lng = parseFloat(String(this.profileDraft.longitude));
+      const hasCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+
+      if (!hasCoords) {
+        lat = 13.7563;
+        lng = 100.5018;
+      }
+
+      this.leafletMap = L.map('company-location-map').setView([lat, lng], 15);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(this.leafletMap);
+
+      this.leafletMarker = L.marker([lat, lng], { draggable: true }).addTo(this.leafletMap);
+
+      const radius = Number(this.profileDraft.checkRadius) || 200;
+      this.leafletCircle = L.circle([lat, lng], {
+        color: '#6366f1',
+        fillColor: '#6366f1',
+        fillOpacity: 0.15,
+        radius: radius
+      }).addTo(this.leafletMap);
+
+      this.leafletMarker.on('dragend', () => {
+        const position = this.leafletMarker.getLatLng();
+        this.profileDraft.latitude = position.lat.toFixed(6);
+        this.profileDraft.longitude = position.lng.toFixed(6);
+        this.leafletCircle.setLatLng(position);
+        this.cdr.markForCheck();
+      });
+
+      this.leafletMap.on('click', (e: any) => {
+        const position = e.latlng;
+        this.leafletMarker.setLatLng(position);
+        this.profileDraft.latitude = position.lat.toFixed(6);
+        this.profileDraft.longitude = position.lng.toFixed(6);
+        this.leafletCircle.setLatLng(position);
+        this.cdr.markForCheck();
+      });
+
+      setTimeout(() => {
+        if (this.leafletMap) this.leafletMap.invalidateSize();
+      }, 200);
+
+    }, 150);
+  }
+
+  protected updateMapRadius(radius: number): void {
+    this.profileDraft.checkRadius = radius;
+    if (this.leafletCircle) {
+      this.leafletCircle.setRadius(radius);
+    }
+  }
+
+  protected destroyCompanyMap(): void {
+    if (this.leafletMap) {
+      try {
+        this.leafletMap.remove();
+      } catch (e) {}
+      this.leafletMap = null;
+      this.leafletMarker = null;
+      this.leafletCircle = null;
+    }
+  }
+
+  // --- Feature 6: Custom Evaluation Rubrics ---
+  protected async loadEvaluationTemplates(): Promise<void> {
+    try {
+      this.evaluationTemplates = await this.data.getEvaluationTemplates();
+    } catch (e) {
+      console.error('Failed to load evaluation templates:', e);
+    }
+  }
+
+  protected async saveTemplate(): Promise<void> {
+    if (!this.editingTemplate.name.trim()) {
+      this.notifications.warning('กรุณากรอกชื่อแบบประเมิน', 'แบบประเมิน');
+      return;
+    }
+    if (this.editingTemplate.criteria.length === 0) {
+      this.notifications.warning('กรุณาเพิ่มหัวข้อประเมินอย่างน้อย 1 รายการ', 'แบบประเมิน');
+      return;
+    }
+
+    try {
+      if (this.editingTemplate.id) {
+        await this.data.updateEvaluationTemplate(this.editingTemplate.id, this.editingTemplate.name);
+        this.notifications.success('อัปเดตแบบประเมินเรียบร้อย', 'แบบประเมิน');
+      } else {
+        await this.data.createEvaluationTemplate({
+          name: this.editingTemplate.name,
+          criteria: this.editingTemplate.criteria
+        });
+        this.notifications.success('สร้างแบบประเมินเรียบร้อย', 'แบบประเมิน');
+      }
+      this.showTemplateBuilder = false;
+      this.editingTemplate = { name: '', criteria: [] };
+      await this.loadEvaluationTemplates();
+    } catch (e: any) {
+      this.notifications.error(`บันทึกแบบประเมินล้มเหลว: ${e.message || e}`, 'แบบประเมิน');
+    }
+  }
+
+  protected async deleteTemplate(id: number): Promise<void> {
+    const confirm = await Swal.fire({
+      title: 'ยืนยันการลบ?',
+      text: 'คุณแน่ใจว่าต้องการลบแบบประเมินนี้?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'ลบ',
+      cancelButtonText: 'ยกเลิก'
+    });
+    if (!confirm.isConfirmed) return;
+
+    try {
+      await this.data.deleteEvaluationTemplate(id);
+      this.notifications.success('ลบแบบประเมินเรียบร้อย', 'แบบประเมิน');
+      await this.loadEvaluationTemplates();
+      if (this.selectedTemplateId === id) {
+        this.selectedTemplateId = null;
+        this.rubricScores = {};
+      }
+    } catch (e: any) {
+      this.notifications.error(`ลบแบบประเมินล้มเหลว: ${e.message || e}`, 'แบบประเมิน');
+    }
+  }
+
+  protected addCriterionRow(): void {
+    if (!this.newCriterionLabel.trim()) return;
+    if (!this.editingTemplate.criteria) {
+      this.editingTemplate.criteria = [];
+    }
+    this.editingTemplate.criteria.push({
+      label: this.newCriterionLabel.trim(),
+      maxScore: Number(this.newCriterionMax) || 10
+    });
+    this.newCriterionLabel = '';
+    this.newCriterionMax = 10;
+  }
+
+  protected removeCriterionRow(index: number): void {
+    this.editingTemplate.criteria.splice(index, 1);
+  }
+
+  protected selectTemplateForEvaluation(templateId: number | null): void {
+    this.selectedTemplateId = templateId;
+    this.rubricScores = {};
+    if (templateId) {
+      const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(templateId));
+      if (t) {
+        t.criteria.forEach((c: any) => {
+          this.rubricScores[c.id] = c.maxScore;
+        });
+      }
+    }
+  }
+
+  protected getTotalScore(): number {
+    let sum = 0;
+    if (this.selectedTemplateId) {
+      const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(this.selectedTemplateId));
+      if (t) {
+        t.criteria.forEach((c: any) => {
+          sum += Number(this.rubricScores[c.id]) || 0;
+        });
+      }
+    } else {
+      sum = Number(this.evaluationScore) || 0;
+    }
+    return sum;
+  }
+
+  protected getMaxTotalScore(): number {
+    let sum = 0;
+    if (this.selectedTemplateId) {
+      const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(this.selectedTemplateId));
+      if (t) {
+        t.criteria.forEach((c: any) => {
+          sum += c.maxScore;
+        });
+      }
+    } else {
+      sum = 100;
+    }
+    return sum;
+  }
+
+  protected async submitRubricEvaluation(): Promise<void> {
+    const user = this.currentUser;
+    if (!user || !this.selectedEvaluationInternship) {
+      this.notifications.warning('กรุณาเลือกนักศึกษาที่ต้องการประเมิน', 'ประเมินผล');
+      return;
+    }
+
+    if (!this.evaluationFeedback.trim()) {
+      this.notifications.warning('กรุณากรอกข้อเสนอแนะ', 'ประเมินผล');
+      return;
+    }
+
+    const student = this.userName(this.selectedEvaluationInternship.studentId);
+    
+    let totalScore = 0;
+    let scoresList: any[] = [];
+    if (this.selectedTemplateId) {
+      const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(this.selectedTemplateId));
+      if (t) {
+        t.criteria.forEach((c: any) => {
+          const val = Number(this.rubricScores[c.id]) || 0;
+          totalScore += val;
+          scoresList.push({
+            criterionId: c.id,
+            score: val
+          });
+        });
+      }
+    } else {
+      totalScore = Number(this.evaluationScore) || 0;
+    }
+
+    try {
+      const res = await this.data.addEvaluation({
+        internshipId: this.selectedEvaluationInternship.id,
+        evaluatorId: user.id,
+        score: totalScore,
+        feedback: this.evaluationFeedback.trim(),
+        evaluationType: this.evaluationType
+      });
+
+      const evalId = res?.id;
+      if (evalId && this.selectedTemplateId && scoresList.length > 0) {
+        await this.data.saveEvaluationScores(evalId, scoresList);
+      }
+
+      this.evaluationFeedback = '';
+      this.evaluationScore = 85;
+      this.selectedTemplateId = null;
+      this.rubricScores = {};
+      this.notifications.success(`บันทึกการประเมิน ${student} คะแนน ${totalScore}`, 'ประเมินผล');
+      window.location.reload();
+    } catch (err: any) {
+      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ประเมินผล');
+    }
+  }
+
+  protected getTemplateCriteria(templateId: any): any[] {
+    if (!templateId) return [];
+    const t = this.evaluationTemplates.find(tmpl => tmpl.id === Number(templateId));
+    return t ? t.criteria : [];
   }
 }

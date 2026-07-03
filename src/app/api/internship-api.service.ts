@@ -37,6 +37,9 @@ import {
   AttendanceStatus,
   Company,
   Evaluation,
+  EvaluationTemplate,
+  EvaluationCriterion,
+  EvaluationScore,
   Internship,
   JobPosting,
   Logbook,
@@ -285,13 +288,14 @@ export class InternshipApiService {
     }, mapAttendance);
   }
 
-  createLogbook(body: Omit<Logbook, 'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'> & { status?: Logbook['status'] }): Observable<Logbook | null> {
+  createLogbook(body: Omit<Logbook, 'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'> & { status?: Logbook['status']; workDate?: string }): Observable<Logbook | null> {
     return this.postOneRequired<ApiLogbook, Logbook>('logbooks', {
       internship_id: body.internshipId,
       title: body.title,
       content: body.content,
       attachment_url: body.attachmentUrl ?? null,
-      status: body.status ?? 'pending'
+      status: body.status ?? 'pending',
+      work_date: body.workDate ?? null
     }, mapLogbook);
   }
 
@@ -303,10 +307,11 @@ export class InternshipApiService {
     }, mapLogbook);
   }
 
-  updateLogbook(id: number, body: { title: string; content: string }): Observable<Logbook | null> {
+  updateLogbook(id: number, body: { title: string; content: string; workDate?: string }): Observable<Logbook | null> {
     return this.putOneRequired<ApiLogbook, Logbook>(`logbooks/${id}`, {
       title: body.title,
-      content: body.content
+      content: body.content,
+      work_date: body.workDate ?? null
     }, mapLogbook);
   }
 
@@ -587,6 +592,36 @@ export class InternshipApiService {
   getCompanyCodes(): Observable<any[]> {
     return this.http.get<any>(`${this.base}/company/employees/codes`, this.authOptions()).pipe(
       map((res) => res?.data || []),
+      catchError(() => of([]))
+    );
+  }
+
+  getEvaluationTemplates(): Observable<EvaluationTemplate[]> {
+    return this.http.get<any>(`${this.base}/evaluation-templates`, this.authOptions()).pipe(
+      map(res => res || []),
+      catchError(() => of([]))
+    );
+  }
+
+  createEvaluationTemplate(template: Omit<EvaluationTemplate, 'id'>): Observable<any> {
+    return this.http.post<any>(`${this.base}/evaluation-templates`, template, this.authOptions());
+  }
+
+  updateEvaluationTemplate(id: number, name: string): Observable<any> {
+    return this.http.put<any>(`${this.base}/evaluation-templates/${id}`, { name }, this.authOptions());
+  }
+
+  deleteEvaluationTemplate(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.base}/evaluation-templates/${id}`, this.authOptions());
+  }
+
+  saveEvaluationScores(evalId: number, scores: EvaluationScore[]): Observable<any> {
+    return this.http.post<any>(`${this.base}/evaluation-scores`, { evaluation_id: evalId, scores }, this.authOptions());
+  }
+
+  getEvaluationScores(evalId: number): Observable<EvaluationScore[]> {
+    return this.http.get<any>(`${this.base}/evaluation-scores/${evalId}`, this.authOptions()).pipe(
+      map(res => res || []),
       catchError(() => of([]))
     );
   }

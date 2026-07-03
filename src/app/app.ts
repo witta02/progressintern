@@ -3668,7 +3668,7 @@ export class App {
           this.selectedTicketReplies = res.replies || [];
         }
       } catch (err) {
-        this.notifications.error('ดึงข้อมูลคำตอบของตั๋วช่วยเหลือล้มเหลว', 'เกิดข้อผิดพลาด');
+        this.notifications.error('ดึงข้อมูลคำตอบของคำร้องช่วยเหลือล้มเหลว', 'เกิดข้อผิดพลาด');
       } finally {
         this.ticketDetailLoading = false;
       }
@@ -3700,7 +3700,7 @@ export class App {
     this.isSubmittingTicket = false;
     
     if (res && res.error) {
-      this.notifications.error(res.error, 'สร้างตั๋วช่วยเหลือล้มเหลว');
+      this.notifications.error(res.error, 'สร้างคำร้องช่วยเหลือล้มเหลว');
     } else {
       this.notifications.success('ส่งเรื่องแจ้งปัญหาเรียบร้อยแล้ว', 'ส่งสำเร็จ');
       this.newTicketTitle = '';
@@ -3752,7 +3752,7 @@ export class App {
     
     const res = await this.data.updateTicketStatus(this.selectedTicket.id, status);
     if (res && res.error) {
-      this.notifications.error(res.error, 'ปรับปรุงสถานะตั๋วช่วยเหลือล้มเหลว');
+      this.notifications.error(res.error, 'ปรับปรุงสถานะคำร้องช่วยเหลือล้มเหลว');
     } else {
       this.selectedTicket.status = status;
       this.notifications.success(`อัปเดตสถานะเป็น: ${status === 'resolved' ? 'แก้ไขแล้ว' : status === 'closed' ? 'ปิดแล้ว' : 'เปิดใหม่'} เรียบร้อยแล้ว`, 'ปรับปรุงสำเร็จ');

@@ -4143,7 +4143,7 @@
             </div>
 
             <div *ngIf="selectedTicketReplies.length === 0 && !ticketDetailLoading" class="text-center py-6 text-slate-400 font-bold text-xs">
-              ยังไม่มีการตอบกลับในตั๋วช่วยเหลือนี้
+              ยังไม่มีการตอบกลับในคำร้องช่วยเหลือนี้
             </div>
           </div>
 
@@ -4195,7 +4195,7 @@
           <article class="glass-card rounded-[2.5rem] overflow-hidden" [class.lg:col-span-2]="currentUser?.role !== 'admin'" [class.lg:col-span-3]="currentUser?.role === 'admin'">
             <div class="p-10 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <h3 class="text-xl font-black text-slate-800">{{ currentUser?.role === 'admin' ? 'ตั๋วคำขอรับบริการช่วยเหลือทั้งหมด' : 'ประวัติการขอรับบริการของฉัน' }}</h3>
+                <h3 class="text-xl font-black text-slate-800">{{ currentUser?.role === 'admin' ? 'คำร้องขอรับบริการช่วยเหลือทั้งหมด' : 'ประวัติการขอรับบริการของฉัน' }}</h3>
                 <p class="text-slate-400 font-bold text-xs mt-1">คัดกรอง ค้นหา และตอบรับการช่วยเหลือ</p>
               </div>
               
@@ -4206,10 +4206,10 @@
                   <option value="all">ทั้งหมด</option>
                   <option value="open">กำลังดำเนินการ (Open)</option>
                   <option value="resolved">แก้ไขแล้ว (Resolved)</option>
-                  <option value="closed">ปิดตั๋วแล้ว (Closed)</option>
+                  <option value="closed">ปิดคำร้องแล้ว (Closed)</option>
                 </select>
                 
-                <input type="text" [(ngModel)]="ticketSearchQuery" placeholder="ค้นหาตั๋ว..."
+                <input type="text" [(ngModel)]="ticketSearchQuery" placeholder="ค้นหาคำร้อง..."
                        class="pl-4 pr-8 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-xs font-bold text-slate-600 placeholder:text-slate-300 w-44">
               </div>
             </div>
@@ -4240,7 +4240,7 @@
               </div>
 
               <div *ngIf="getFilteredTickets().length === 0" class="text-center py-20 text-slate-400 font-bold text-sm">
-                ไม่พบตั๋วความช่วยเหลือในประวัติ
+                ไม่พบคำร้องความช่วยเหลือในประวัติ
               </div>
             </div>
           </article>

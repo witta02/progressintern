@@ -1,5 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600;700&display=swap');
 
+/* Redefine Tailwind font-weight helper classes to scale down Mitr's thickness for maximum readability */
+.font-black {
+  font-weight: 600 !important;
+}
+.font-extrabold {
+  font-weight: 600 !important;
+}
+.font-bold {
+  font-weight: 500 !important;
+}
+.font-semibold {
+  font-weight: 500 !important;
+}
+.font-medium {
+  font-weight: 400 !important;
+}
+
 /* ============================================================
    Global Typography – Mitr font
    ============================================================ */
@@ -27,7 +44,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Mitr', 'Kanit', sans-serif !important;
   line-height: 1.3;
   letter-spacing: 0.005em;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* Inputs, buttons, labels inherit Mitr */

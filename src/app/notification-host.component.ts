@@ -33,7 +33,7 @@ import { NotificationService } from './notification.service';
           <div class="flex items-center gap-3">
             <h3 class="text-xl font-black text-slate-900">การแจ้งเตือน</h3>
             <span *ngIf="unreadCount > 0" class="px-2.5 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded-full shadow-sm animate-pulse">
-              {{ unreadCount }} ใหม่
+              {{ unreadCount }} รายการใหม่
             </span>
           </div>
           

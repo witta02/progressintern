@@ -698,10 +698,10 @@
                 </div>
                 <div class="flex gap-2 shrink-0">
                   <button type="button" (click)="approveStudent(u)" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm">
-                    Approve
+                    อนุมัติ
                   </button>
                   <button type="button" (click)="rejectStudent(u)" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer">
-                    Reject
+                    ปฏิเสธ
                   </button>
                 </div>
               </div>
@@ -779,68 +779,68 @@
 
             <!-- Create Form -->
             <form *ngIf="!selectedJobToEdit" class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full" (ngSubmit)="addJob()">
-              <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
-              <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="jobTitle" [(ngModel)]="newJob.title" placeholder="ชื่อตำแหน่งงาน" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="jobSlots" type="number" min="1" [(ngModel)]="newJob.slots" placeholder="จำนวนรับ (คน)" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
               
               <div class="grid grid-cols-4 gap-3 md:col-span-2">
                 <div class="space-y-1">
-                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Work Days</label>
-                  <input name="jobWorkDays" [(ngModel)]="newJob.workDays" placeholder="Mon-Fri" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">วันทำงาน</label>
+                  <input name="jobWorkDays" [(ngModel)]="newJob.workDays" placeholder="เช่น จันทร์-ศุกร์" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
                 </div>
                 <div class="space-y-1">
-                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-in</label>
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">เวลาเข้างาน</label>
                   <input name="jobCheckin" type="time" [(ngModel)]="newJob.checkinTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
                 <div class="space-y-1">
-                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-out</label>
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">เวลาออกงาน</label>
                   <input name="jobCheckout" type="time" [(ngModel)]="newJob.checkoutTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
                 <div class="space-y-1">
-                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Late After</label>
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">สายหลังเวลา</label>
                   <input name="jobLated" type="time" [(ngModel)]="newJob.latedTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
               </div>
 
               <textarea name="jobDescription" [(ngModel)]="newJob.description" rows="2" placeholder="สรุปย่อ / รายละเอียดงาน" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required></textarea>
-              <textarea name="jobRequirements" [(ngModel)]="newJob.requirements" rows="2" placeholder="Job Requirements (เช่น ทักษะที่ต้องการ, คุณสมบัติ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
-              <textarea name="jobBenefits" [(ngModel)]="newJob.benefits" rows="2" placeholder="Benefits (เช่น เบี้ยเลี้ยง, สวัสดิการ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="jobRequirements" [(ngModel)]="newJob.requirements" rows="2" placeholder="คุณสมบัติและทักษะที่ต้องการ (เช่น ความรู้ HTML/CSS)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="jobBenefits" [(ngModel)]="newJob.benefits" rows="2" placeholder="สวัสดิการ (เช่น เบี้ยเลี้ยง, ที่พัก)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
 
               <button type="submit" class="md:col-span-2 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/30">
-                Create Posting
+                สร้างประกาศตำแหน่งงาน
               </button>
             </form>
 
             <!-- Edit Form -->
             <form *ngIf="selectedJobToEdit" class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full" (ngSubmit)="updateJob()">
-              <input name="editJobTitle" [(ngModel)]="editJobForm.title" placeholder="Job Title" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
-              <input name="editJobSlots" type="number" min="1" [(ngModel)]="editJobForm.slots" placeholder="Capacity" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="editJobTitle" [(ngModel)]="editJobForm.title" placeholder="ชื่อตำแหน่งงาน" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
+              <input name="editJobSlots" type="number" min="1" [(ngModel)]="editJobForm.slots" placeholder="จำนวนรับ (คน)" class="px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required>
               
               <div class="grid grid-cols-4 gap-3 md:col-span-2">
                 <div class="space-y-1">
-                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Work Days</label>
-                  <input name="editJobWorkDays" [(ngModel)]="editJobForm.workDays" placeholder="Mon-Fri" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">วันทำงาน</label>
+                  <input name="editJobWorkDays" [(ngModel)]="editJobForm.workDays" placeholder="เช่น จันทร์-ศุกร์" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
                 </div>
                 <div class="space-y-1">
-                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-in</label>
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">เวลาเข้างาน</label>
                   <input name="editJobCheckin" type="time" [(ngModel)]="editJobForm.checkinTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
                 <div class="space-y-1">
-                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Check-out</label>
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">เวลาออกงาน</label>
                   <input name="editJobCheckout" type="time" [(ngModel)]="editJobForm.checkoutTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
                 <div class="space-y-1">
-                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">Late After</label>
+                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-2">สายหลังเวลา</label>
                   <input name="editJobLated" type="time" [(ngModel)]="editJobForm.latedTime" class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:border-brand-accent focus:ring-8 focus:ring-brand-accent/15 outline-none font-bold transition-all text-slate-900">
                 </div>
               </div>
 
               <textarea name="editJobDescription" [(ngModel)]="editJobForm.description" rows="2" placeholder="สรุปย่อ / รายละเอียดงาน" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400" required></textarea>
-              <textarea name="editJobRequirements" [(ngModel)]="editJobForm.requirements" rows="2" placeholder="Job Requirements (เช่น ทักษะที่ต้องการ, คุณสมบัติ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
-              <textarea name="editJobBenefits" [(ngModel)]="editJobForm.benefits" rows="2" placeholder="Benefits (เช่น เบี้ยเลี้ยง, สวัสดิการ)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="editJobRequirements" [(ngModel)]="editJobForm.requirements" rows="2" placeholder="คุณสมบัติและทักษะที่ต้องการ (เช่น ความรู้ HTML/CSS)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
+              <textarea name="editJobBenefits" [(ngModel)]="editJobForm.benefits" rows="2" placeholder="สวัสดิการ (เช่น เบี้ยเลี้ยง, ที่พัก)" class="md:col-span-2 px-6 py-5 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-brand-accent/15 focus:border-brand-accent outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400"></textarea>
 
               <div class="md:col-span-2 flex gap-4">
                 <button type="submit" class="flex-1 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-blue-500/20">
-                  Save Changes
+                  บันทึกการแก้ไข
                 </button>
                 <button type="button" (click)="cancelEditJob()" class="px-8 py-5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-xl transition-all">
                   ยกเลิก
@@ -1934,8 +1934,8 @@
                   </td>
                   <td class="px-10 py-6">
                     <div class="flex gap-2" *ngIf="currentUser?.role === 'company' && logbook.status === 'pending'">
-                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="reviewLogbook(logbook, 'approved')">Approve</button>
-                      <button class="px-5 py-2.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="reviewLogbook(logbook, 'rejected')">Reject</button>
+                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="reviewLogbook(logbook, 'approved')">อนุมัติ</button>
+                      <button class="px-5 py-2.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="reviewLogbook(logbook, 'rejected')">ปฏิเสธ</button>
                     </div>
                     <div class="flex gap-2" *ngIf="currentUser?.role === 'student' && logbook.status !== 'approved'">
                       <button class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-200 transition-all" (click)="startEditLogbook(logbook)">แก้ไข</button>
@@ -2106,8 +2106,8 @@
                   </td>
                   <td class="px-10 py-6">
                     <div class="flex gap-2" *ngIf="currentUser?.role === 'company' && leave.status === 'pending'">
-                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="setLeaveStatus(leave, 'approved')">Approve</button>
-                      <button class="px-5 py-2.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="setLeaveStatus(leave, 'rejected')">Reject</button>
+                      <button class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 transition-all" (click)="setLeaveStatus(leave, 'approved')">อนุมัติ</button>
+                      <button class="px-5 py-2.5 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" (click)="setLeaveStatus(leave, 'rejected')">ปฏิเสธ</button>
                     </div>
                     <div class="flex gap-2" *ngIf="currentUser?.role === 'student' && leave.status !== 'approved'">
                       <button class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-200 transition-all" (click)="startEditLeave(leave)">แก้ไข</button>

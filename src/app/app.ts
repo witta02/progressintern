@@ -1245,7 +1245,7 @@ export class App {
     this.loginError = '';
     this.notificationPanelOpen = false;
     this.selectedEvaluationInternshipId = null;
-    this.notifications.info('คุณออกจากระบบแล้ว', 'ออกจากระบบ');
+    this.notifications.info('คุณได้ออกจากระบบเรียบร้อยแล้ว', 'ออกจากระบบ');
     this.cdr.detectChanges();
   }
 
@@ -2774,8 +2774,8 @@ export class App {
 
     if (showNotification) {
       this.notifications.success(
-        `เข้าสู่ระบบเป็น ${this.roleName(user.role)}`,
-        `ยินดีต้อนรับ ${user.name}`
+        `เข้าสู่ระบบในฐานะ${this.roleName(user.role)}เรียบร้อยแล้ว`,
+        `ยินดีต้อนรับ คุณ${user.name}`
       );
     }
 

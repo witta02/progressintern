@@ -128,6 +128,12 @@ import { NotificationService } from './notification.service';
     .text-rose-655 { color: #dc2626; }
     .text-amber-655 { color: #d97706; }
     .text-blue-605 { color: #2563eb; }
+    .font-black, .font-extrabold, .font-bold, .font-semibold, .font-medium, .font-normal {
+      font-weight: 400 !important;
+    }
+    h3, h4, h5, button, span, p {
+      font-weight: 400 !important;
+    }
     `
   ]
 })

@@ -34,11 +34,19 @@
             'glow-teal': 'var(--shadow-glow-teal, 0 0 20px rgba(14, 165, 233, 0.15))',
             'glow-indigo': 'var(--shadow-glow-indigo, 0 0 20px rgba(99, 102, 241, 0.15))',
             glass: '0 8px 32px 0 rgba(31, 38, 135, 0.05)',
-          }
         }
       }
     }
   </script>
+  <style>
+    /* Force regular Mitr font weight globally across all tags and Tailwind helpers */
+    .font-black, .font-extrabold, .font-bold, .font-semibold, .font-medium, .font-normal {
+      font-weight: 400 !important;
+    }
+    h1, h2, h3, h4, h5, h6, th, td, button, select, input, textarea, label, span, p, a, div {
+      font-weight: 400 !important;
+    }
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans antialiased" style="font-family: 'Mitr', 'Kanit', sans-serif;">
   <app-root></app-root>

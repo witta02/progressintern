@@ -4251,7 +4251,7 @@
   </div>
 
   <!-- Debug Info (Bottom Left) -->
-  <div *ngIf="initialized" class="fixed bottom-4 left-4 z-[100] px-3 py-1.5 bg-slate-900/80 backdrop-blur text-[8px] font-mono text-white rounded-lg flex items-center gap-4 opacity-50 hover:opacity-100 transition-opacity">
+  <div *ngIf="initialized && currentUser?.role === 'admin'" class="fixed bottom-4 left-4 z-[100] px-3 py-1.5 bg-slate-900/80 backdrop-blur text-[8px] font-mono text-white rounded-lg flex items-center gap-4 opacity-50 hover:opacity-100 transition-opacity">
     <span>API: {{ data.apiConnected ? 'OK' : 'FAIL' }}</span>
     <span>USER: {{ currentUser ? currentUser.role : 'NONE' }}</span>
     <span>COUNT: {{ availableViews.length }}</span>

@@ -200,6 +200,11 @@ func migrateDatabase(db *sql.DB) {
 		FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
 		FOREIGN KEY (criterion_id) REFERENCES evaluation_criteria(id) ON DELETE CASCADE
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+
+	// --- STUDENT EXTRA FIELDS ---
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN student_code VARCHAR(50) NOT NULL DEFAULT ''")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN year_level VARCHAR(20) NOT NULL DEFAULT ''")
+	_, _ = db.Exec("ALTER TABLE users ADD COLUMN class_group VARCHAR(50) NOT NULL DEFAULT ''")
 }
 
 

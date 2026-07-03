@@ -44,6 +44,9 @@ export interface User {
   intro?: string;
   field?: string;
   school?: string;
+  studentCode?: string;   // เลขที่
+  yearLevel?: string;     // ชั้นปี
+  classGroup?: string;    // กลุ่ม
   profileImage?: string;
   resumeUrl?: string;
   createdAt?: string;

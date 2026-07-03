@@ -249,6 +249,7 @@ export class App {
   protected evaluationScore = 85;
   protected evaluationType: EvaluationType = 'mentor';
   protected selectedEvaluationInternshipId: number | null = null;
+  protected expandedEvaluationId: number | null = null;
 
   protected adminSchoolInput = {
     name: ''
@@ -4156,5 +4157,9 @@ export class App {
   protected getEditingTemplateTotalMaxScore(): number {
     if (!this.editingTemplate.criteria) return 0;
     return this.editingTemplate.criteria.reduce((sum: number, c: any) => sum + (Number(c.maxScore) || 0), 0);
+  }
+
+  protected toggleEvaluationDetails(id: number): void {
+    this.expandedEvaluationId = this.expandedEvaluationId === id ? null : id;
   }
 }

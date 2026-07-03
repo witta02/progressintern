@@ -2329,16 +2329,39 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100/60">
-                <tr *ngFor="let evaluation of visibleEvaluations" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
-                  <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ evaluationStudentName(evaluation) }}</td>
-                  <td class="px-10 py-6 font-bold text-slate-700">{{ evaluatorLabel(evaluation) }}</td>
-                  <td class="px-10 py-6">
-                    <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">                      
-                      {{ evaluation.score }} / {{ getEvaluationMaxScore(evaluation) }}
-                    </span>
-                  </td>
-                  <td class="px-10 py-6 font-medium text-slate-500 max-w-sm truncate" title="{{ evaluation.feedback }}">{{ evaluation.feedback }}</td>
-                </tr>
+                <ng-container *ngFor="let evaluation of visibleEvaluations">
+                  <tr (click)="toggleEvaluationDetails(evaluation.id)" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60 cursor-pointer">
+                    <td class="px-10 py-6 font-black text-slate-900 text-lg flex items-center gap-3">
+                      <span class="text-slate-400 transition-transform duration-200" [class.rotate-90]="expandedEvaluationId === evaluation.id">▶</span>
+                      {{ evaluationStudentName(evaluation) }}
+                    </td>
+                    <td class="px-10 py-6 font-bold text-slate-700">{{ evaluatorLabel(evaluation) }}</td>
+                    <td class="px-10 py-6">
+                      <span class="inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">                      
+                        {{ evaluation.score }} / {{ getEvaluationMaxScore(evaluation) }}
+                      </span>
+                    </td>
+                    <td class="px-10 py-6 font-medium text-slate-500 max-w-sm truncate" title="{{ evaluation.feedback }}">{{ evaluation.feedback }}</td>
+                  </tr>
+                  <tr *ngIf="expandedEvaluationId === evaluation.id" class="bg-slate-50/50">
+                    <td colspan="4" class="px-10 py-6">
+                      <div class="space-y-4">
+                        <div class="text-xs font-black text-slate-400 uppercase tracking-widest">รายละเอียดคะแนนตามเกณฑ์ประเมิน (Rubrics Breakdown)</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" *ngIf="evaluation.scores && evaluation.scores.length > 0; else noScores">
+                          <div *ngFor="let s of evaluation.scores" class="bg-white rounded-xl p-4 border border-slate-100 flex justify-between items-center shadow-sm">
+                            <span class="font-bold text-slate-800 text-sm">{{ s.label }}</span>
+                            <span class="inline-flex px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-black rounded-lg border border-indigo-100">
+                              {{ s.score }} / {{ s.maxScore || 10 }}
+                            </span>
+                          </div>
+                        </div>
+                        <ng-template #noScores>
+                          <div class="text-sm font-medium text-slate-400">เป็นการประเมินแบบคะแนนดิบรวม (ไม่มีเกณฑ์ประเมินปลีกย่อย)</div>
+                        </ng-template>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
                 <tr *ngIf="visibleEvaluations.length === 0">
                   <td colspan="4" class="px-10 py-8 text-center text-sm font-bold text-slate-400">ยังไม่มีผลการประเมิน</td>
                 </tr>

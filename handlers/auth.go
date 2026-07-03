@@ -6,7 +6,6 @@ import (
 	"internship-backend/config"
 	"internship-backend/models"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -374,20 +373,8 @@ func LoginHandler(c *gin.Context) {
 
 // validatePassword checks complexity criteria
 func validatePassword(password string) error {
-	if len(password) < 8 {
-		return fmt.Errorf("ต้องมีความยาวอย่างน้อย 8 ตัวอักษร")
-	}
-	if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
-		return fmt.Errorf("ต้องมีตัวอักษรพิมพ์ใหญ่อย่างน้อย 1 ตัว")
-	}
-	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
-		return fmt.Errorf("ต้องมีตัวอักษรพิมพ์เล็กอย่างน้อย 1 ตัว")
-	}
-	if !regexp.MustCompile(`[0-9]`).MatchString(password) {
-		return fmt.Errorf("ต้องมีตัวเลขอย่างน้อย 1 ตัว")
-	}
-	if !regexp.MustCompile(`[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};':",\./<>\?~` + "`" + `|]`).MatchString(password) {
-		return fmt.Errorf("ต้องมีอักขระพิเศษอย่างน้อย 1 ตัว")
+	if len(password) < 6 {
+		return fmt.Errorf("ต้องมีความยาวอย่างน้อย 6 ตัวอักษร")
 	}
 	return nil
 }

@@ -25,7 +25,7 @@ type User struct {
 	ProfileImage string    `json:"profile_image" db:"profile_image"`
 	AdvisorID    *int      `json:"advisor_id,omitempty" db:"advisor_id"`
 	AdvisorIDs   []int     `json:"advisor_ids,omitempty"`
-	StudentCode  string    `json:"student_code" db:"student_code"`
+	StudentCode  int       `json:"student_code" db:"student_code"`
 	YearLevel    string    `json:"year_level" db:"year_level"`
 	ClassGroup   string    `json:"class_group" db:"class_group"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`

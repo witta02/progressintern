@@ -619,7 +619,7 @@ export class App {
     }
     if (filter === 'school_unassigned') {
       return this.users.filter(
-        (u) => u.role === 'student' && u.school === user.school && !u.advisorId
+        (u) => u.role === 'student' && u.school === user.school && !u.advisorId && (!u.advisorIds || u.advisorIds.length === 0)
       );
     }
     if (filter === 'other_schools') {
@@ -630,12 +630,14 @@ export class App {
 
     // Default is 'my' (My Students)
     return this.users.filter(
-      (u) => u.role === 'student' && u.advisorId === user.id
+      (u) => u.role === 'student' && (u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id)
     );
   }
   
   protected get advisorStudents(): User[] {
-    return this.users.filter(u => u.role === 'student' && u.advisorId === this.currentUser?.id);
+    const user = this.currentUser;
+    if (!user) return [];
+    return this.users.filter(u => u.role === 'student' && (u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id));
   }
 
   protected get companyStudents(): User[] {
@@ -813,7 +815,7 @@ export class App {
     const query = this.pickStudentSearchQuery.trim().toLowerCase();
     return this.users.filter(u => 
       u.role === 'student' && 
-      u.advisorId !== user.id &&
+      !(u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id) &&
       (u.name.toLowerCase().includes(query) || 
        u.email.toLowerCase().includes(query) || 
        (u.school && u.school.toLowerCase().includes(query)))
@@ -3370,14 +3372,21 @@ export class App {
 
   protected studentAdvisorName(studentId: number): string | null {
     const student = this.users.find(u => u.id === studentId);
-    if (!student || !student.advisorId) return null;
-    const adv = this.users.find(u => u.id === student.advisorId && u.role === 'advisor');
-    return adv ? adv.name : 'มีอาจารย์ดูแลแล้ว';
+    if (!student) return null;
+    const ids = student.advisorIds || (student.advisorId ? [student.advisorId] : []);
+    if (ids.length === 0) return null;
+    const advNames = this.users
+      .filter(u => ids.includes(u.id) && u.role === 'advisor')
+      .map(u => u.name);
+    return advNames.length > 0 ? advNames.join(', ') : 'มีอาจารย์ดูแลแล้ว';
   }
 
   protected isMyStudent(studentId: number): boolean {
     const student = this.users.find(u => u.id === studentId);
-    return student?.advisorId === this.currentUser?.id;
+    if (!student || !this.currentUser) return false;
+    return student.advisorIds 
+      ? student.advisorIds.includes(this.currentUser.id) 
+      : student.advisorId === this.currentUser.id;
   }
 
   protected assignStudentToAdvisor(studentId: number): void {
@@ -3386,8 +3395,9 @@ export class App {
     const student = this.users.find(u => u.id === studentId);
     if (!student) return;
     
-    const msg = student.advisorId 
-      ? `คุณแน่ใจหรือไม่ที่จะย้ายนักศึกษา "${student.name}" มาอยู่ในการดูแลของคุณ?`
+    const hasOtherAdvisor = student.advisorIds ? student.advisorIds.length > 0 : !!student.advisorId;
+    const msg = hasOtherAdvisor 
+      ? `คุณต้องการเข้าร่วมเป็นอาจารย์ที่ปรึกษาของนักศึกษา "${student.name}" ร่วมกับอาจารย์ท่านอื่นหรือไม่?`
       : `คุณต้องการรับนักศึกษา "${student.name}" เข้าอยู่ในการดูแลของคุณหรือไม่?`;
       
     if (confirm(msg)) {
@@ -3403,7 +3413,13 @@ export class App {
           }
         });
       } else {
-        student.advisorId = advisorId;
+        if (!student.advisorIds) {
+          student.advisorIds = student.advisorId ? [student.advisorId] : [];
+        }
+        if (!student.advisorIds.includes(advisorId)) {
+          student.advisorIds.push(advisorId);
+        }
+        student.advisorId = student.advisorIds[0];
         this.data.persist();
         this.notifications.success(`รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว (Mock)`, "สำเร็จ");
         this.showAddStudentModal = false;
@@ -3427,11 +3443,22 @@ export class App {
           }
         });
       } else {
-        delete student.advisorId;
+        if (student.advisorIds) {
+          student.advisorIds = student.advisorIds.filter(id => id !== this.currentUser?.id);
+        } else if (student.advisorId === this.currentUser?.id) {
+          delete student.advisorId;
+        }
+        student.advisorId = student.advisorIds && student.advisorIds.length > 0 ? student.advisorIds[0] : undefined;
         this.data.persist();
         this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว`, "สำเร็จ");
       }
     }
+  }
+
+  protected getStudentAdvisors(advisorIds: number[] | undefined, fallbackAdvisorId: number | undefined): User[] {
+    const ids = advisorIds || (fallbackAdvisorId ? [fallbackAdvisorId] : []);
+    if (ids.length === 0) return [];
+    return this.users.filter(u => ids.includes(u.id) && u.role === 'advisor');
   }
 
   protected async completeInternship(internshipId: number): Promise<void> {

@@ -1158,7 +1158,7 @@
                                 [class.text-blue-700]="studentAdvisorName(internship.studentId)"
                                 [class.border-blue-200]="studentAdvisorName(internship.studentId)"
                                 class="inline-flex items-center gap-1 px-3 py-1.5 border text-xs font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-sm cursor-pointer">
-                          {{ studentAdvisorName(internship.studentId) ? 'ย้ายมาดูแล' : '+ รับดูแล' }}
+                          {{ studentAdvisorName(internship.studentId) ? '+ ร่วมดูแล' : '+ รับดูแล' }}
                         </button>
                       </div>
                     </div>
@@ -1334,10 +1334,12 @@
                       </div>
                       
                       <!-- Advisor details visible to all roles -->
-                      <div class="col-span-2 mt-2" *ngIf="getStudentAdvisor(detailStudent?.advisorId) as adv">
-                        <div class="text-blue-300 text-[10px] font-black uppercase tracking-widest">อาจารย์ที่ปรึกษา (Advisor)</div>
-                        <div class="font-black text-white text-base mt-0.5">
-                          🎓 {{ adv.name }} <span *ngIf="adv.phone" class="text-blue-200 text-xs font-bold ml-1.5">(โทร: {{ adv.phone }})</span>
+                      <div class="col-span-2 mt-2" *ngIf="getStudentAdvisors(detailStudent?.advisorIds, detailStudent?.advisorId) as advs">
+                        <div *ngIf="advs.length > 0">
+                          <div class="text-blue-300 text-[10px] font-black uppercase tracking-widest">อาจารย์ที่ปรึกษา (Advisors)</div>
+                          <div class="font-black text-white text-base mt-0.5" *ngFor="let adv of advs">
+                            🎓 {{ adv.name }} <span *ngIf="adv.phone" class="text-blue-200 text-xs font-bold ml-1.5">(โทร: {{ adv.phone }})</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -4347,9 +4349,14 @@
       <th>สาขาวิชา</th>
       <td>{{ detailStudent?.field || '-' }}</td>
     </tr>
-    <tr *ngIf="getStudentAdvisor(detailStudent?.advisorId) as adv">
+    <tr *ngIf="getStudentAdvisors(detailStudent?.advisorIds, detailStudent?.advisorId) as advs">
       <th>อาจารย์ที่ปรึกษา</th>
-      <td>{{ adv.name }} <span *ngIf="adv.phone">(โทร: {{ adv.phone }})</span></td>
+      <td>
+        <div *ngFor="let adv of advs">
+          {{ adv.name }} <span *ngIf="adv.phone">(โทร: {{ adv.phone }})</span>
+        </div>
+        <span *ngIf="advs.length === 0">-</span>
+      </td>
     </tr>
   </table>
 

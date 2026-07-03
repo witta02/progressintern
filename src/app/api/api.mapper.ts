@@ -28,6 +28,7 @@ export type ApiUser = {
   intro?: string | null;
   field?: string | null;
   advisor_id?: number | null;
+  advisor_ids?: number[] | null;
   company_id?: number | null;
   company_role?: string | null;
   intern_start_date?: string | null;
@@ -170,6 +171,7 @@ export function mapUser(dto: ApiUser): User {
     intro: dto.intro ?? undefined,
     field: dto.field ?? undefined,
     advisorId: dto.advisor_id ?? undefined,
+    advisorIds: dto.advisor_ids ?? undefined,
     companyId: dto.company_id ?? undefined,
     companyRole: (dto.company_role as 'admin' | 'employee' | undefined) ?? undefined,
     internStartDate: dto.intern_start_date ?? undefined,

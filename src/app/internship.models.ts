@@ -55,6 +55,7 @@ export interface User {
   companyRole?: 'admin' | 'employee';
   /** Mock-only: link student → advisor until backend adds this relation */
   advisorId?: number;
+  advisorIds?: number[];
 }
 
 export interface Company {

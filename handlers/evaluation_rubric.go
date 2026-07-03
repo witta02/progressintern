@@ -120,7 +120,7 @@ func CreateTemplate(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Template created successfully", "id": templateID})
 }
 
-// UpdateTemplate updates a template's name
+// UpdateTemplate updates a template's name and its criteria
 func UpdateTemplate(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -131,20 +131,103 @@ func UpdateTemplate(c *gin.Context) {
 	templateIDStr := c.Param("id")
 	templateID, _ := strconv.Atoi(templateIDStr)
 
-	var input struct {
-		Name string `json:"name" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+	// Verify template ownership
+	var count int
+	err := config.DB.QueryRow(
+		"SELECT COUNT(*) FROM evaluation_templates WHERE id = ? AND created_by = ?",
+		templateID, userID,
+	).Scan(&count)
+	if err != nil || count == 0 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		return
 	}
 
-	_, err := config.DB.Exec(
-		"UPDATE evaluation_templates SET name = ? WHERE id = ? AND created_by = ?",
-		input.Name, templateID, userID,
+	var input struct {
+		Name     string                       `json:"name" binding:"required"`
+		Criteria []models.EvaluationCriterion `json:"criteria"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+		return
+	}
+
+	tx, err := config.DB.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction: " + err.Error()})
+		return
+	}
+
+	// 1. Update template name
+	_, err = tx.Exec(
+		"UPDATE evaluation_templates SET name = ? WHERE id = ?",
+		input.Name, templateID,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update template: " + err.Error()})
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update template name: " + err.Error()})
+		return
+	}
+
+	// Keep track of criteria IDs that are kept
+	var keptIDs []interface{}
+
+	// 2. Process criteria
+	for i, crit := range input.Criteria {
+		if crit.ID > 0 {
+			// Update existing criterion
+			_, err = tx.Exec(
+				"UPDATE evaluation_criteria SET label = ?, max_score = ?, sort_order = ? WHERE id = ? AND template_id = ?",
+				crit.Label, crit.MaxScore, i, crit.ID, templateID,
+			)
+			if err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update criterion: " + err.Error()})
+				return
+			}
+			keptIDs = append(keptIDs, crit.ID)
+		} else {
+			// Insert new criterion
+			res, err := tx.Exec(
+				"INSERT INTO evaluation_criteria (template_id, label, max_score, sort_order) VALUES (?, ?, ?, ?)",
+				templateID, crit.Label, crit.MaxScore, i,
+			)
+			if err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert criterion: " + err.Error()})
+				return
+			}
+			newID, err := res.LastInsertId()
+			if err == nil {
+				keptIDs = append(keptIDs, newID)
+			}
+		}
+	}
+
+	// 3. Delete criteria that were removed
+	if len(keptIDs) > 0 {
+		query := "DELETE FROM evaluation_criteria WHERE template_id = ? AND id NOT IN ("
+		args := []interface{}{templateID}
+		for i, id := range keptIDs {
+			if i > 0 {
+				query += ","
+			}
+			query += "?"
+			args = append(args, id)
+		}
+		query += ")"
+		_, err = tx.Exec(query, args...)
+	} else {
+		_, err = tx.Exec("DELETE FROM evaluation_criteria WHERE template_id = ?", templateID)
+	}
+
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clean up criteria: " + err.Error()})
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction: " + err.Error()})
 		return
 	}
 

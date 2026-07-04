@@ -607,7 +607,8 @@ func GetAllAttendancesHandler(c *gin.Context) {
 			`SELECT id, internship_id, student_id, check_in_time, check_out_time, 
 			        COALESCE(latitude, 0), COALESCE(longitude, 0), 
 			        COALESCE(checkout_latitude, 0), COALESCE(checkout_longitude, 0),
-			        status, created_at, verification_status 
+			        status, created_at, verification_status,
+			        COALESCE(notes, ''), COALESCE(is_wfh, false)
 			 FROM attendances ORDER BY created_at DESC`,
 		)
 	} else if roleStr == "advisor" {
@@ -616,9 +617,12 @@ func GetAllAttendancesHandler(c *gin.Context) {
 
 		rows, err = config.DB.Query(
 			`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
-			        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), 
-			        COALESCE(a.checkout_latitude, 0), COALESCE(a.checkout_longitude, 0),
-			        a.status, a.created_at, a.verification_status 
+			        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.latitude, 0) END,
+			        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.longitude, 0) END, 
+			        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.checkout_latitude, 0) END,
+			        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.checkout_longitude, 0) END,
+			        a.status, a.created_at, a.verification_status,
+			        COALESCE(a.notes, ''), COALESCE(a.is_wfh, false)
 			 FROM attendances a
 			 LEFT JOIN users u ON a.student_id = u.id
 			 WHERE u.school = ? AND u.school <> ''
@@ -632,9 +636,12 @@ func GetAllAttendancesHandler(c *gin.Context) {
 		if userCompanyID.Valid {
 			rows, err = config.DB.Query(
 				`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
-				        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), 
-				        COALESCE(a.checkout_latitude, 0), COALESCE(a.checkout_longitude, 0),
-				        a.status, a.created_at, a.verification_status 
+				        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.latitude, 0) END,
+				        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.longitude, 0) END, 
+				        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.checkout_latitude, 0) END,
+				        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.checkout_longitude, 0) END,
+				        a.status, a.created_at, a.verification_status,
+				        COALESCE(a.notes, ''), COALESCE(a.is_wfh, false)
 				 FROM attendances a
 				 LEFT JOIN internships i ON a.internship_id = i.id
 				 WHERE i.company_id = ?
@@ -644,9 +651,12 @@ func GetAllAttendancesHandler(c *gin.Context) {
 		} else {
 			rows, err = config.DB.Query(
 				`SELECT a.id, a.internship_id, a.student_id, a.check_in_time, a.check_out_time, 
-				        COALESCE(a.latitude, 0), COALESCE(a.longitude, 0), 
-				        COALESCE(a.checkout_latitude, 0), COALESCE(a.checkout_longitude, 0),
-				        a.status, a.created_at, a.verification_status 
+				        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.latitude, 0) END,
+				        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.longitude, 0) END, 
+				        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.checkout_latitude, 0) END,
+				        CASE WHEN a.is_wfh = 1 THEN 0 ELSE COALESCE(a.checkout_longitude, 0) END,
+				        a.status, a.created_at, a.verification_status,
+				        COALESCE(a.notes, ''), COALESCE(a.is_wfh, false)
 				 FROM attendances a
 				 LEFT JOIN internships i ON a.internship_id = i.id
 				 LEFT JOIN companies c ON i.company_id = c.id
@@ -660,7 +670,8 @@ func GetAllAttendancesHandler(c *gin.Context) {
 			`SELECT id, internship_id, student_id, check_in_time, check_out_time, 
 			        COALESCE(latitude, 0), COALESCE(longitude, 0), 
 			        COALESCE(checkout_latitude, 0), COALESCE(checkout_longitude, 0),
-			        status, created_at, verification_status 
+			        status, created_at, verification_status,
+			        COALESCE(notes, ''), COALESCE(is_wfh, false)
 			 FROM attendances 
 			 WHERE student_id = ?
 			 ORDER BY created_at DESC`,
@@ -680,7 +691,9 @@ func GetAllAttendancesHandler(c *gin.Context) {
 		var lat, lng, outLat, outLng float64
 		var status, verificationStatus string
 		var checkIn, checkOut, createdAt interface{}
-		rows.Scan(&id, &intID, &stuID, &checkIn, &checkOut, &lat, &lng, &outLat, &outLng, &status, &createdAt, &verificationStatus)
+		var notes string
+		var isWfh bool
+		rows.Scan(&id, &intID, &stuID, &checkIn, &checkOut, &lat, &lng, &outLat, &outLng, &status, &createdAt, &verificationStatus, &notes, &isWfh)
 		list = append(list, gin.H{
 			"id":                  id,
 			"internship_id":       intID,
@@ -694,6 +707,8 @@ func GetAllAttendancesHandler(c *gin.Context) {
 			"status":              status,
 			"created_at":          createdAt,
 			"verification_status": verificationStatus,
+			"notes":               notes,
+			"is_wfh":              isWfh,
 		})
 	}
 	if list == nil {

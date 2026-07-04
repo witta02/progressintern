@@ -4,10 +4,27 @@ import (
 	"database/sql"
 	"fmt"
 	"internship-backend/config"
+	"math"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+// Helper function to calculate distance using Haversine formula
+func distance(lat1, lon1, lat2, lon2 float64) float64 {
+	const R = 6371000 // Earth radius in meters
+	phi1 := lat1 * math.Pi / 180
+	phi2 := lat2 * math.Pi / 180
+	deltaPhi := (lat2 - lat1) * math.Pi / 180
+	deltaLambda := (lon2 - lon1) * math.Pi / 180
+
+	a := math.Sin(deltaPhi/2)*math.Sin(deltaPhi/2) +
+		math.Cos(phi1)*math.Cos(phi2)*
+			math.Sin(deltaLambda/2)*math.Sin(deltaLambda/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return R * c // in meters
+}
 
 // ========================================================
 // [POST] นักศึกษาเช็คอินเข้างานประจำวัน
@@ -26,6 +43,7 @@ func CheckInHandler(c *gin.Context) {
 		StudentID    int     `json:"student_id" binding:"required"`
 		Latitude     float64 `json:"latitude"`
 		Longitude    float64 `json:"longitude"`
+		IsWFH        bool    `json:"is_wfh"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง"})
@@ -90,10 +108,42 @@ func CheckInHandler(c *gin.Context) {
 		}
 	}
 
+	// GPS radius check if it is not a WFH check-in
+	if !input.IsWFH {
+		var compLat, compLng *float64
+		var checkRadius *int
+		err = config.DB.QueryRow(
+			`SELECT c.latitude, c.longitude, c.check_radius 
+			 FROM internships i 
+			 JOIN companies c ON i.company_id = c.id 
+			 WHERE i.id = ?`, input.InternshipID,
+		).Scan(&compLat, &compLng, &checkRadius)
+		
+		if err == nil && compLat != nil && compLng != nil {
+			radius := 200
+			if checkRadius != nil {
+				radius = *checkRadius
+			}
+			dist := distance(input.Latitude, input.Longitude, *compLat, *compLng)
+			if dist > float64(radius) {
+				c.JSON(400, gin.H{
+					"status": 400, 
+					"error": fmt.Sprintf("คุณอยู่นอกพื้นที่เช็คอินที่บริษัทกำหนด (ระยะห่างปัจจุบัน %.0f เมตร เกินระยะ %d เมตร) กรุณาเลือกเช็คอินแบบ WFH", dist, radius),
+				})
+				return
+			}
+		}
+	}
+
+	notes := ""
+	if input.IsWFH {
+		notes = "WFH"
+	}
+
 	_, err = config.DB.Exec(
-		"INSERT INTO attendances (internship_id, student_id, check_in_time, latitude, longitude, status) "+
-			"VALUES (?, ?, ?, ?, ?, ?)",
-		input.InternshipID, input.StudentID, now, input.Latitude, input.Longitude, status,
+		"INSERT INTO attendances (internship_id, student_id, check_in_time, latitude, longitude, status, notes, is_wfh) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		input.InternshipID, input.StudentID, now, input.Latitude, input.Longitude, status, notes, input.IsWFH,
 	)
 	if err != nil {
 		c.JSON(500, gin.H{"status": 500, "error": "ลงเวลาเข้างานไม่สำเร็จ: " + err.Error()})

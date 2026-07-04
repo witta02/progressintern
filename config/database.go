@@ -173,6 +173,7 @@ func migrateDatabase(db *sql.DB) {
 	// --- LOGBOOK WORK DATE, COMPANY RADIUS, AND EVALUATION RUBRICS ---
 	_, _ = db.Exec("ALTER TABLE logbooks ADD COLUMN work_date DATE NULL")
 	_, _ = db.Exec("ALTER TABLE companies ADD COLUMN check_radius INT DEFAULT 200")
+	_, _ = db.Exec("ALTER TABLE attendances ADD COLUMN is_wfh BOOLEAN DEFAULT FALSE")
 
 	_, _ = db.Exec(`CREATE TABLE IF NOT EXISTS evaluation_templates (
 		id INT AUTO_INCREMENT PRIMARY KEY,

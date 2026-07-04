@@ -109,6 +109,8 @@ export type ApiAttendance = {
   status: Attendance['status'];
   verification_status: Attendance['verificationStatus'];
   created_at?: string;
+  notes?: string | null;
+  is_wfh?: boolean | null;
 };
 
 export type ApiLogbook = {
@@ -264,7 +266,9 @@ export function mapAttendance(dto: ApiAttendance): Attendance {
     checkoutLongitude: dto.checkout_longitude ?? undefined,
     status: dto.status,
     verificationStatus: dto.verification_status,
-    createdAt: dto.created_at
+    createdAt: dto.created_at,
+    notes: dto.notes ?? undefined,
+    isWfh: dto.is_wfh ?? undefined
   };
 }
 

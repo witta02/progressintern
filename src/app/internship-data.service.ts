@@ -508,14 +508,14 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'>): Promise<void> {
+  async addAttendance(attendance: Omit<Attendance, 'id' | 'createdAt'> & { isWfh?: boolean }): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.createAttendance(attendance));
       await this.refreshFromApi();
       return;
     }
 
-    this.attendances = [...this.attendances, { ...attendance, id: this.nextId(this.attendances) }];
+    this.attendances = [...this.attendances, { ...attendance, id: this.nextId(this.attendances), isWfh: attendance.isWfh, notes: attendance.isWfh ? 'WFH' : '' }];
     this.persist();
   }
 

@@ -267,7 +267,7 @@ export class InternshipApiService {
     return this.putOne<ApiInternship, Internship>(`internships/${id}/status`, { status }, mapInternship);
   }
 
-  createAttendance(body: Omit<Attendance, 'id' | 'createdAt'>): Observable<Attendance | null> {
+  createAttendance(body: Omit<Attendance, 'id' | 'createdAt'> & { isWfh?: boolean }): Observable<Attendance | null> {
     return this.postOne<ApiAttendance, Attendance>('attendance/check-in', {
       internship_id: body.internshipId,
       student_id: body.studentId,
@@ -275,7 +275,8 @@ export class InternshipApiService {
       check_out_time: body.checkOutTime ?? null,
       latitude: body.latitude ?? null,
       longitude: body.longitude ?? null,
-      status: body.status
+      status: body.status,
+      is_wfh: body.isWfh ?? false
     }, mapAttendance);
   }
 

@@ -130,6 +130,8 @@ export interface Attendance {
   status: AttendanceStatus;
   verificationStatus: VerificationStatus;
   createdAt?: string;
+  notes?: string;
+  isWfh?: boolean;
 }
 
 export interface Logbook {

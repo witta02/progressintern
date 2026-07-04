@@ -1874,7 +1874,11 @@ export class App {
     }
   }
 
-  protected checkIn(): void {
+  protected get companyCheckRadius(): number {
+    return this.studentCompany?.checkRadius ?? 200;
+  }
+
+  protected checkIn(isWfh: boolean = false): void {
     const user = this.currentUser;
     if (!user || !this.activeInternship) {
       this.notifications.warning('ยังไม่มีฝึกงานที่ active', 'ลงเวลา');
@@ -1911,7 +1915,7 @@ export class App {
           Swal.close();
           const lat = position.coords.latitude;
           const lon = position.coords.longitude;
-          this.executeCheckIn(lat, lon);
+          this.executeCheckIn(lat, lon, isWfh);
         },
         (error) => {
           Swal.close();
@@ -1919,7 +1923,7 @@ export class App {
           // PC fallback: use IP-based geolocation
           this.getIpLocation().then(coords => {
             if (coords) {
-              this.executeCheckIn(coords.lat, coords.lon);
+              this.executeCheckIn(coords.lat, coords.lon, isWfh);
             } else {
               Swal.fire({
                 title: 'ไม่สามารถดึงตำแหน่งได้',
@@ -1929,7 +1933,7 @@ export class App {
                 confirmButtonText: 'ลงเวลาต่อ',
                 cancelButtonText: 'ยกเลิก'
               }).then((result) => {
-                if (result.isConfirmed) this.executeCheckIn();
+                if (result.isConfirmed) this.executeCheckIn(undefined, undefined, isWfh);
               });
             }
           });
@@ -1937,13 +1941,27 @@ export class App {
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
-      this.executeCheckIn();
+      this.executeCheckIn(undefined, undefined, isWfh);
     }
   }
 
-  private executeCheckIn(lat?: number, lon?: number): void {
+  private executeCheckIn(lat?: number, lon?: number, isWfh: boolean = false): void {
     const user = this.currentUser;
     if (!user || !this.activeInternship) return;
+
+    // Check radius if it's NOT WFH
+    if (!isWfh) {
+      if (this.companyDistance !== null && this.companyDistance > this.companyCheckRadius) {
+        Swal.fire({
+          title: 'อยู่นอกพื้นที่เช็คอิน',
+          text: `คุณอยู่ห่างจากสถานที่ทำงาน ${Math.round(this.companyDistance)} เมตร (เกินระยะที่กำหนด ${this.companyCheckRadius} เมตร) หากทำงานที่บ้านกรุณาเช็คอินแบบ WFH`,
+          icon: 'warning',
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#3b82f6'
+        });
+        return;
+      }
+    }
 
     const now = new Date();
     const job = this.jobPostings.find(j => j.id === this.activeInternship?.jobPostingId);
@@ -1969,10 +1987,11 @@ export class App {
       status,
       verificationStatus: 'pending',
       latitude: lat,
-      longitude: lon
+      longitude: lon,
+      isWfh: isWfh
     });
     this.notifications.success(
-      `Check in แล้ว (${this.attendanceStatusLabel(status)})` + (lat ? ' พร้อมพิกัด GPS' : ''),
+      `Check in ${isWfh ? 'WFH' : ''} แล้ว (${this.attendanceStatusLabel(status)})` + (lat ? ' พร้อมพิกัด GPS' : ''),
       'ลงเวลา'
     );
   }

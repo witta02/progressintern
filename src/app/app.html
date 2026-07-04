@@ -361,15 +361,20 @@
                   <!-- GPS Warning Badge -->
                   <div *ngIf="currentLatitude && currentLongitude" class="text-[10px] font-black text-blue-200/80 bg-white/5 border border-white/10 rounded-xl p-3">
                     📍 พิกัดลงเวลาปัจจุบัน: {{ currentLatitude | number:'1.4-4' }}, {{ currentLongitude | number:'1.4-4' }}
-                    <span *ngIf="companyDistance !== null" class="block mt-1 font-bold" [class.text-rose-300]="companyDistance > 200" [class.text-emerald-300]="companyDistance <= 200">
+                    <span *ngIf="companyDistance !== null" class="block mt-1 font-bold" [class.text-rose-300]="companyDistance > companyCheckRadius" [class.text-emerald-300]="companyDistance <= companyCheckRadius">
                       ระยะห่างจากบริษัท: {{ companyDistance | number:'1.0-0' }} เมตร
-                      <span *ngIf="companyDistance > 200">⚠️ (เกินระยะ 200ม.)</span>
-                      <span *ngIf="companyDistance <= 200">✓ (อยู่ในขอบเขตบริษัท)</span>
+                      <span *ngIf="companyDistance > companyCheckRadius">⚠️ (เกินระยะ {{ companyCheckRadius }}ม.)</span>
+                      <span *ngIf="companyDistance <= companyCheckRadius">✓ (อยู่ในขอบเขตบริษัท)</span>
                     </span>
                   </div>
-                  <button type="button" (click)="checkIn()" class="w-full py-5 bg-white text-blue-600 hover:bg-slate-50 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
-                    ลงเวลาเข้างาน (Check In)
-                  </button>
+                  <div class="flex flex-col sm:flex-row gap-3">
+                    <button type="button" (click)="checkIn(false)" class="flex-grow py-5 bg-white text-blue-600 hover:bg-slate-50 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                      ลงเวลาเข้างาน (Check In)
+                    </button>
+                    <button type="button" (click)="checkIn(true)" class="py-5 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer min-w-[100px]">
+                      WFH
+                    </button>
+                  </div>
                   <p class="text-center text-[10px] text-blue-200/60 font-bold uppercase tracking-widest">พิกัด GPS จะถูกตรวจสอบโดยผู้ควบคุมงาน</p>
                 </div>
 
@@ -1510,13 +1515,18 @@
                           <td class="px-5 py-3 font-bold text-slate-700">{{ formatDateTime(a.checkInTime) }}</td>
                           <td class="px-5 py-3 font-bold text-slate-500">{{ a.checkOutTime ? formatDateTime(a.checkOutTime) : '—' }}</td>
                           <td class="px-5 py-3">
-                            <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
-                                  [class.bg-amber-50]="a.status === 'late'" [class.text-amber-600]="a.status === 'late'" [class.border-amber-100]="a.status === 'late'"
-                                  [class.bg-red-50]="a.status === 'absent'" [class.text-red-600]="a.status === 'absent'" [class.border-red-100]="a.status === 'absent'"
-                                  [class.bg-emerald-50]="a.status === 'present'" [class.text-emerald-600]="a.status === 'present'" [class.border-emerald-100]="a.status === 'present'"
-                                  [class.bg-slate-50]="a.status === 'early_leave'" [class.text-slate-500]="a.status === 'early_leave'" [class.border-slate-200]="a.status === 'early_leave'">
-                              {{ attendanceStatusLabel(a.status) }}
-                            </span>
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1.5">
+                              <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border"
+                                    [class.bg-amber-50]="a.status === 'late'" [class.text-amber-600]="a.status === 'late'" [class.border-amber-100]="a.status === 'late'"
+                                    [class.bg-red-50]="a.status === 'absent'" [class.text-red-600]="a.status === 'absent'" [class.border-red-100]="a.status === 'absent'"
+                                    [class.bg-emerald-50]="a.status === 'present'" [class.text-emerald-600]="a.status === 'present'" [class.border-emerald-100]="a.status === 'present'"
+                                    [class.bg-slate-50]="a.status === 'early_leave'" [class.text-slate-500]="a.status === 'early_leave'" [class.border-slate-200]="a.status === 'early_leave'">
+                                {{ attendanceStatusLabel(a.status) }}
+                              </span>
+                              <span *ngIf="a.isWfh" class="inline-flex px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase tracking-widest border border-indigo-100 shadow-sm">
+                                WFH
+                              </span>
+                            </div>
                           </td>
                           <td class="px-5 py-3 font-bold text-slate-400 text-[10px]">
                             <span *ngIf="a.latitude">GPS ✓</span>
@@ -1733,7 +1743,7 @@
                   <td class="px-5 sm:px-10 py-5 sm:py-8 font-bold text-slate-400 text-sm">{{ att.checkOutTime ? formatDateTime(att.checkOutTime) : '—' }}</td>
                   <td class="px-5 sm:px-10 py-5 sm:py-8">
                     <div class="flex flex-col gap-2">
-                      <span *ngIf="att.latitude && att.longitude">
+                      <span *ngIf="att.latitude && att.longitude && !att.isWfh">
                         <ng-container *ngIf="currentUser?.role !== 'student' && att.latitude">
                           <button type="button"
                                   (click)="showMap(att.latitude, att.longitude, 'พิกัดเข้างาน (Check-In)')" 
@@ -1747,7 +1757,7 @@
                           </span>
                         </ng-container>
                       </span>
-                      <span *ngIf="att.checkoutLatitude && att.checkoutLongitude">
+                      <span *ngIf="att.checkoutLatitude && att.checkoutLongitude && !att.isWfh">
                         <ng-container *ngIf="currentUser?.role !== 'student' && att.checkoutLatitude">
                           <button type="button"
                                   (click)="showMap(att.checkoutLatitude, att.checkoutLongitude, 'พิกัดออกงาน (Check-Out)')" 
@@ -1761,17 +1771,22 @@
                           </span>
                         </ng-container>
                       </span>
-                      <span *ngIf="!att.latitude && !att.longitude && !att.checkoutLatitude && !att.checkoutLongitude" class="text-slate-300 font-bold">—</span>
+                      <span *ngIf="(!att.latitude && !att.longitude && !att.checkoutLatitude && !att.checkoutLongitude) || att.isWfh" class="text-slate-300 font-bold">—</span>
                     </div>
                   </td>
                   <td class="px-5 sm:px-10 py-5 sm:py-8">
-                    <span class="inline-flex px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm"
-                          [class.bg-emerald-500]="att.status === 'present'" [class.text-white]="att.status === 'present'"
-                          [class.bg-amber-500]="att.status === 'late'" [class.text-white]="att.status === 'late'"
-                          [class.bg-rose-500]="att.status === 'absent'" [class.text-white]="att.status === 'absent'"
-                          [class.bg-blue-400]="att.status === 'early_leave'" [class.text-white]="att.status === 'early_leave'">
-                      {{ attendanceStatusLabel(att.status) }}
-                    </span>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                      <span class="inline-flex px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm"
+                            [class.bg-emerald-500]="att.status === 'present'" [class.text-white]="att.status === 'present'"
+                            [class.bg-amber-500]="att.status === 'late'" [class.text-white]="att.status === 'late'"
+                            [class.bg-rose-500]="att.status === 'absent'" [class.text-white]="att.status === 'absent'"
+                            [class.bg-blue-400]="att.status === 'early_leave'" [class.text-white]="att.status === 'early_leave'">
+                        {{ attendanceStatusLabel(att.status) }}
+                      </span>
+                      <span *ngIf="att.isWfh" class="inline-flex px-2.5 py-1.5 rounded-xl bg-indigo-500 text-white text-[9px] font-black uppercase tracking-widest shadow-sm">
+                        WFH
+                      </span>
+                    </div>
                   </td>
                   <td class="px-5 sm:px-10 py-5 sm:py-8">
                     <div *ngIf="att.verificationStatus === 'pending' && currentUser?.role === 'company'" 

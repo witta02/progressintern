@@ -1945,7 +1945,7 @@ export class App {
     }
   }
 
-  private executeCheckIn(lat?: number, lon?: number, isWfh: boolean = false): void {
+  private async executeCheckIn(lat?: number, lon?: number, isWfh: boolean = false): Promise<void> {
     const user = this.currentUser;
     if (!user || !this.activeInternship) return;
 
@@ -1980,20 +1980,25 @@ export class App {
       }
     }
 
-    this.data.addAttendance({
-      internshipId: this.activeInternship.id,
-      studentId: user.id,
-      checkInTime: now.toISOString(),
-      status,
-      verificationStatus: 'pending',
-      latitude: lat,
-      longitude: lon,
-      isWfh: isWfh
-    });
-    this.notifications.success(
-      `Check in ${isWfh ? 'WFH' : ''} แล้ว (${this.attendanceStatusLabel(status)})` + (lat ? ' พร้อมพิกัด GPS' : ''),
-      'ลงเวลา'
-    );
+    try {
+      await this.data.addAttendance({
+        internshipId: this.activeInternship.id,
+        studentId: user.id,
+        checkInTime: now.toISOString(),
+        status,
+        verificationStatus: 'pending',
+        latitude: lat,
+        longitude: lon,
+        isWfh: isWfh
+      });
+      this.notifications.success(
+        `Check in ${isWfh ? 'WFH' : ''} แล้ว (${this.attendanceStatusLabel(status)})` + (lat ? ' พร้อมพิกัด GPS' : ''),
+        'ลงเวลา'
+      );
+    } catch (err: any) {
+      console.error('[CheckIn] Error during check-in:', err);
+      this.notifications.error(`ลงเวลาเข้างานไม่สำเร็จ: ${err.message || err}`, 'ลงเวลา');
+    }
   }
 
   protected checkOut(): void {

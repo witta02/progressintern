@@ -204,7 +204,8 @@ export class InternshipApiService {
       intern_start_date: body.internStartDate !== undefined ? body.internStartDate : undefined,
       intern_end_date: body.internEndDate !== undefined ? body.internEndDate : undefined,
       company_role: body.companyRole !== undefined ? body.companyRole : undefined,
-      remove_company: (body as any).removeCompany !== undefined ? (body as any).removeCompany : undefined
+      remove_company: (body as any).removeCompany !== undefined ? (body as any).removeCompany : undefined,
+      online_status: body.onlineStatus !== undefined ? body.onlineStatus : undefined
     } as any, mapUser);
   }
 

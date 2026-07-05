@@ -354,7 +354,7 @@ export class App {
 
   // Teacher/Advisor Class Groups and Rooms toggle menu
   protected showClassGroupsMenu = true;
-  protected selectedClassGroupFilter = 'my_students';
+  protected selectedClassGroupFilter = 'all_students';
   protected advisorStudentSearch = '';
   
   // Custom Class Groups created by the advisor
@@ -640,17 +640,17 @@ export class App {
 
     if (filter === 'school_all') {
       return this.users.filter(
-        (u) => u.role === 'student' && u.school === user.school
+        (u) => u.role === 'student' && this.isSameSchool(u.school, user.school)
       );
     }
     if (filter === 'school_unassigned') {
       return this.users.filter(
-        (u) => u.role === 'student' && u.school === user.school && !u.advisorId && (!u.advisorIds || u.advisorIds.length === 0)
+        (u) => u.role === 'student' && this.isSameSchool(u.school, user.school) && !u.advisorId && (!u.advisorIds || u.advisorIds.length === 0)
       );
     }
     if (filter === 'other_schools') {
       return this.users.filter(
-        (u) => u.role === 'student' && u.school !== user.school
+        (u) => u.role === 'student' && !this.isSameSchool(u.school, user.school)
       );
     }
 
@@ -851,7 +851,7 @@ export class App {
   protected get pendingStudents(): User[] {
     const user = this.currentUser;
     if (!user || user.role !== 'advisor') return [];
-    return this.users.filter(u => u.role === 'student' && u.school === user.school && u.status === 'pending');
+    return this.users.filter(u => u.role === 'student' && this.isSameSchool(u.school, user.school) && u.status === 'pending');
   }
 
   protected get pendingLogbooks(): Logbook[] {
@@ -2407,7 +2407,7 @@ export class App {
   protected getSchoolAdvisors(): User[] {
     const user = this.currentUser;
     if (!user || !user.school) return [];
-    return this.users.filter(u => u.role === 'advisor' && u.school === user.school && u.status === 'active');
+    return this.users.filter(u => u.role === 'advisor' && this.isSameSchool(u.school, user.school) && u.status === 'active');
   }
 
   /** Template-friendly getter alias for getSchoolAdvisors() */
@@ -3459,6 +3459,10 @@ export class App {
     return advNames.length > 0 ? advNames.join(', ') : 'มีอาจารย์ดูแลแล้ว';
   }
 
+  protected isSameSchool(s1?: string, s2?: string): boolean {
+    return (s1 || '').trim().toLowerCase() === (s2 || '').trim().toLowerCase();
+  }
+
   protected isMyStudent(studentId: number): boolean {
     const student = this.users.find(u => u.id === studentId);
     if (!student || !this.currentUser) return false;
@@ -3596,7 +3600,7 @@ export class App {
     const user = this.currentUser;
     if (!user || user.role !== 'advisor') return [];
     
-    const sameSchoolStudents = this.users.filter(u => u.role === 'student' && u.school === user.school);
+    const sameSchoolStudents = this.users.filter(u => u.role === 'student' && this.isSameSchool(u.school, user.school));
     const groupsMap = new Map<string, User[]>();
     for (const student of sameSchoolStudents) {
       const year = student.yearLevel || '';
@@ -3627,20 +3631,20 @@ export class App {
   protected get schoolStudentsCount(): number {
     const user = this.currentUser;
     if (!user) return 0;
-    return this.users.filter(u => u.role === 'student' && u.school === user.school).length;
+    return this.users.filter(u => u.role === 'student' && this.isSameSchool(u.school, user.school)).length;
   }
 
   protected get onlineStudentsCount(): number {
     const user = this.currentUser;
     if (!user) return 0;
-    return this.users.filter(u => u.role === 'student' && u.school === user.school && u.onlineStatus === 'online').length;
+    return this.users.filter(u => u.role === 'student' && this.isSameSchool(u.school, user.school) && u.onlineStatus === 'online').length;
   }
   
   protected get displayedAdvisorStudents(): User[] {
     const user = this.currentUser;
     if (!user) return [];
     
-    const sameSchoolStudents = this.users.filter(u => u.role === 'student' && u.school === user.school);
+    const sameSchoolStudents = this.users.filter(u => u.role === 'student' && this.isSameSchool(u.school, user.school));
     const myStudents = this.users.filter(u => u.role === 'student' && (u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id));
     
     let base: User[];
@@ -3738,7 +3742,7 @@ export class App {
     if (user?.role !== 'advisor') return [];
     return this.users.filter(u =>
       u.role === 'student' &&
-      u.school === user.school &&
+      this.isSameSchool(u.school, user.school) &&
       !(u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id)
     );
   }

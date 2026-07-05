@@ -150,6 +150,8 @@ func CheckInHandler(c *gin.Context) {
 		return
 	}
 
+	_, _ = config.DB.Exec("UPDATE users SET online_status = 'online' WHERE id = ?", input.StudentID)
+
 	msg := "เช็คอินเข้างานเรียบร้อย ขอให้เป็นวันที่ดี!"
 	if status == "late" {
 		msg = "เช็คอินเรียบร้อย (สาย)"
@@ -298,6 +300,10 @@ func CheckOutHandler(c *gin.Context) {
 	if rowsAffected == 0 {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบรายการเช็คอินวันนี้ หรือเช็คเอาท์ไปแล้ว"})
 		return
+	}
+
+	if !isVerificationRequest {
+		_, _ = config.DB.Exec("UPDATE users SET online_status = 'offline' WHERE id = ?", input.StudentID)
 	}
 
 	c.JSON(200, gin.H{"status": 200, "message": "อัปเดตการลงเวลาเรียบร้อย!"})

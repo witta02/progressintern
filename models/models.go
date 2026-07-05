@@ -28,6 +28,7 @@ type User struct {
 	Number       int       `json:"number" db:"number"`
 	YearLevel    string    `json:"year_level" db:"year_level"`
 	ClassGroup   string    `json:"class_group" db:"class_group"`
+	OnlineStatus string    `json:"online_status" db:"online_status"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }

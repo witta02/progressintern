@@ -26,13 +26,13 @@ func GetAllUsersHandler(c *gin.Context) {
 	userIDInt := reqUserID.(int)
 
 	if roleStr == "admin" {
-		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,''), COALESCE(number,0), COALESCE(year_level,''), COALESCE(class_group,'') FROM users")
+		rows, err = config.DB.Query("SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,''), COALESCE(number,0), COALESCE(year_level,''), COALESCE(class_group,''), COALESCE(online_status,'offline') FROM users")
 	} else if roleStr == "advisor" {
 		var school string
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,''), COALESCE(number,0), COALESCE(year_level,''), COALESCE(class_group,'')
+			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,''), COALESCE(number,0), COALESCE(year_level,''), COALESCE(class_group,''), COALESCE(online_status,'offline')
 			 FROM users 
 			 WHERE id = ? 
 			    OR (school = ? AND school <> '' AND role IN ('student', 'advisor')) 
@@ -52,7 +52,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		}
 
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.company_role,''), COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,''), COALESCE(u.number,0), COALESCE(u.year_level,''), COALESCE(u.class_group,'')
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.company_role,''), COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,''), COALESCE(u.number,0), COALESCE(u.year_level,''), COALESCE(u.class_group,''), COALESCE(u.online_status,'offline')
 			 FROM users u
 			 LEFT JOIN job_postings j ON j.company_id = ?
 			 LEFT JOIN applications a ON a.job_posting_id = j.id AND a.student_id = u.id
@@ -74,7 +74,7 @@ func GetAllUsersHandler(c *gin.Context) {
 		config.DB.QueryRow("SELECT COALESCE(school,'') FROM users WHERE id = ?", userIDInt).Scan(&school)
 
 		rows, err = config.DB.Query(
-			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.company_role,''), COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,''), COALESCE(u.number,0), COALESCE(u.year_level,''), COALESCE(u.class_group,'')
+			`SELECT DISTINCT u.id, u.name, u.email, u.role, COALESCE(u.phone,''), COALESCE(u.profile_image,''), COALESCE(u.school,''), u.status, COALESCE(u.resume_url,''), COALESCE(u.intro,''), COALESCE(u.field,''), u.advisor_id, u.company_id, COALESCE(u.company_role,''), COALESCE(u.intern_start_date,''), COALESCE(u.intern_end_date,''), COALESCE(u.number,0), COALESCE(u.year_level,''), COALESCE(u.class_group,''), COALESCE(u.online_status,'offline')
 			 FROM users u
 			 LEFT JOIN companies c ON c.id = u.company_id
 			 LEFT JOIN job_postings j ON j.company_id = c.id
@@ -110,10 +110,10 @@ func GetAllUsersHandler(c *gin.Context) {
 	var list []gin.H
 	for rows.Next() {
 		var id int
-		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, companyRole, internStartDate, internEndDate, yearLevel, classGroup string
+		var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, companyRole, internStartDate, internEndDate, yearLevel, classGroup, onlineStatus string
 		var number int
 		var advisorID, companyID sql.NullInt64
-		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &companyRole, &internStartDate, &internEndDate, &number, &yearLevel, &classGroup)
+		rows.Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &companyRole, &internStartDate, &internEndDate, &number, &yearLevel, &classGroup, &onlineStatus)
 
 		var advIDs []int = studentAdvisors[id]
 		if advIDs == nil {
@@ -154,6 +154,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			"number":       number,
 			"year_level":    yearLevel,
 			"class_group":   classGroup,
+			"online_status": onlineStatus,
 		})
 	}
 	if list == nil {
@@ -248,12 +249,12 @@ func GetUserByIDHandler(c *gin.Context) {
 	}
 
 	var id int
-	var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, companyRole, internStartDate, internEndDate string
+	var name, email, role, phone, profileImage, school, status, resumeURL, intro, field, companyRole, internStartDate, internEndDate, onlineStatus string
 	var advisorID, companyID sql.NullInt64
 	err := config.DB.QueryRow(
-		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,'') FROM users WHERE id = ?",
+		"SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,''), COALESCE(online_status,'offline') FROM users WHERE id = ?",
 		targetUserIDInt,
-	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &companyRole, &internStartDate, &internEndDate)
+	).Scan(&id, &name, &email, &role, &phone, &profileImage, &school, &status, &resumeURL, &intro, &field, &advisorID, &companyID, &companyRole, &internStartDate, &internEndDate, &onlineStatus)
 	if err != nil {
 		c.JSON(404, gin.H{"status": 404, "error": "ไม่พบผู้ใช้"})
 		return
@@ -298,6 +299,7 @@ func GetUserByIDHandler(c *gin.Context) {
 			"company_role": companyRole,
 			"intern_start_date": internStartDate,
 			"intern_end_date":   internEndDate,
+			"online_status":     onlineStatus,
 		},
 	})
 }
@@ -1060,6 +1062,7 @@ func UpdateUserHandler(c *gin.Context) {
 		CheckRadius     *int     `json:"check_radius"`
 		CompanyRole     *string  `json:"company_role"`
 		RemoveCompany   *bool    `json:"remove_company"`
+		OnlineStatus    string   `json:"online_status"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
@@ -1217,9 +1220,10 @@ func UpdateUserHandler(c *gin.Context) {
 				year_level = ?,
 				class_group = ?,
 				intern_start_date = ?,
-				intern_end_date = ?
+				intern_end_date = ?,
+				online_status = COALESCE(NULLIF(?,''), online_status)
 			 WHERE id = ?`,
-			input.Name, input.Email, input.Phone, input.School, input.ResumeURL, input.Intro, input.Field, input.Number, input.YearLevel, input.ClassGroup, input.InternStartDate, input.InternEndDate, userIDInt,
+			input.Name, input.Email, input.Phone, input.School, input.ResumeURL, input.Intro, input.Field, input.Number, input.YearLevel, input.ClassGroup, input.InternStartDate, input.InternEndDate, input.OnlineStatus, userIDInt,
 		)
 
 		if err == nil && targetRole == "company" {
@@ -1278,9 +1282,10 @@ func UpdateUserHandler(c *gin.Context) {
 				field = ?,
 				advisor_id = ?,
 				intern_start_date = ?,
-				intern_end_date = ?
+				intern_end_date = ?,
+				online_status = COALESCE(NULLIF(?,''), online_status)
 			 WHERE id = ?`
-			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, advVal, input.InternStartDate, input.InternEndDate, targetUserIDInt}
+			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, advVal, input.InternStartDate, input.InternEndDate, input.OnlineStatus, targetUserIDInt}
 		} else {
 			query = `UPDATE users SET 
 				name = COALESCE(NULLIF(?,''), name), 
@@ -1292,9 +1297,10 @@ func UpdateUserHandler(c *gin.Context) {
 				intro = ?,
 				field = ?,
 				intern_start_date = ?,
-				intern_end_date = ?
+				intern_end_date = ?,
+				online_status = COALESCE(NULLIF(?,''), online_status)
 			 WHERE id = ?`
-			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, input.InternStartDate, input.InternEndDate, targetUserIDInt}
+			args = []interface{}{input.Name, input.Email, input.Phone, input.School, input.Status, input.ResumeURL, input.Intro, input.Field, input.InternStartDate, input.InternEndDate, input.OnlineStatus, targetUserIDInt}
 		}
 
 		_, err = config.DB.Exec(query, args...)

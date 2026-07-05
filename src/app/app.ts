@@ -157,6 +157,8 @@ export class App {
   protected authMode: 'login' | 'register' = 'login';
   protected loginError = '';
   protected loginLoading = false;
+  protected showLoginPassword = false;
+  protected showRegisterPassword = false;
   protected registerError = '';
   protected registerLoading = false;
   protected notificationPanelOpen = false;

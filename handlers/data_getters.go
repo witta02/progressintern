@@ -35,7 +35,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			`SELECT id, name, email, role, COALESCE(phone,''), COALESCE(profile_image,''), COALESCE(school,''), status, COALESCE(resume_url,''), COALESCE(intro,''), COALESCE(field,''), advisor_id, company_id, COALESCE(company_role,''), COALESCE(intern_start_date,''), COALESCE(intern_end_date,''), COALESCE(number,0), COALESCE(year_level,''), COALESCE(class_group,''), COALESCE(online_status,'offline')
 			 FROM users 
 			 WHERE id = ? 
-			    OR (school = ? AND school <> '' AND role IN ('student', 'advisor')) 
+			    OR (TRIM(school) = TRIM(?) AND school <> '' AND role IN ('student', 'advisor')) 
 			    OR role = 'company' 
 			    OR role = 'admin'`,
 			userIDInt, school,
@@ -82,7 +82,7 @@ func GetAllUsersHandler(c *gin.Context) {
 			 LEFT JOIN internships i ON i.company_id = c.id AND i.student_id = ?
 			 WHERE u.id = ?
 			    OR u.role = 'admin'
-			    OR (u.role = 'advisor' AND u.school = ? AND u.school <> '')
+			    OR (u.role = 'advisor' AND TRIM(u.school) = TRIM(?) AND u.school <> '')
 			    OR (u.role = 'company' AND (a.id IS NOT NULL OR i.id IS NOT NULL))`,
 			userIDInt, userIDInt, userIDInt, school,
 		)

@@ -350,6 +350,22 @@ export class App {
   protected pickStudentSearchQuery = '';
   protected selectedStudentToAssignId = 0;
 
+  // Teacher/Advisor Class Groups and Rooms toggle menu
+  protected showClassGroupsMenu = true;
+  protected selectedClassGroupFilter = 'my_students';
+  
+  // Custom Class Groups created by the advisor
+  protected advisorCustomClassGroups: { yearLevel: string, classGroup: string }[] = [];
+  protected newGroupYearLevel = '';
+  protected newGroupClassGroup = '';
+  
+  // Selected student for details popup
+  protected selectedStudentForDetail: User | null = null;
+  protected studentDetailInternship: Internship | null = null;
+  protected studentDetailAttendances: Attendance[] = [];
+  protected studentDetailLogbooks: Logbook[] = [];
+  protected studentDetailLeaves: LeaveRequest[] = [];
+
   // Company & School management view variables
   protected newSchoolName = '';
   protected newCompanyName = '';
@@ -2814,6 +2830,10 @@ export class App {
     // Await a fresh full data snapshot so all views are populated instantly
     await this.data.refreshFromApi();
 
+    if (user.role === 'advisor') {
+      this.loadCustomClassGroups();
+    }
+
     if (showNotification) {
       this.notifications.success(
         `เข้าสู่ระบบในฐานะ${this.roleName(user.role)}เรียบร้อยแล้ว`,
@@ -3508,6 +3528,182 @@ export class App {
         this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว`, "สำเร็จ");
       }
     }
+  }
+
+  // Class / Group Filtering and Selection
+  protected toggleClassGroupsMenu(): void {
+    this.showClassGroupsMenu = !this.showClassGroupsMenu;
+  }
+  
+  protected selectClassGroupFilter(filter: string): void {
+    this.selectedClassGroupFilter = filter;
+  }
+  
+  protected loadCustomClassGroups(): void {
+    if (!this.currentUserId) return;
+    const saved = localStorage.getItem(`advisor_custom_groups_${this.currentUserId}`);
+    if (saved) {
+      try {
+        this.advisorCustomClassGroups = JSON.parse(saved);
+      } catch {
+        this.advisorCustomClassGroups = [];
+      }
+    } else {
+      this.advisorCustomClassGroups = [];
+    }
+  }
+  
+  protected saveCustomClassGroups(): void {
+    if (!this.currentUserId) return;
+    localStorage.setItem(`advisor_custom_groups_${this.currentUserId}`, JSON.stringify(this.advisorCustomClassGroups));
+  }
+  
+  protected addCustomClassGroup(): void {
+    const yl = this.newGroupYearLevel.trim();
+    const cg = this.newGroupClassGroup.trim();
+    if (!yl || !cg) {
+      this.notifications.warning('กรุณากรอกชั้นปีและกลุ่ม/ห้องเรียน', 'เพิ่มกลุ่ม');
+      return;
+    }
+    
+    const exists = this.advisorCustomClassGroups.some(g => g.yearLevel === yl && g.classGroup === cg);
+    if (exists) {
+      this.notifications.warning('มีกลุ่ม/ห้องเรียนนี้อยู่แล้ว', 'เพิ่มกลุ่ม');
+      return;
+    }
+    
+    this.advisorCustomClassGroups.push({ yearLevel: yl, classGroup: cg });
+    this.saveCustomClassGroups();
+    this.newGroupYearLevel = '';
+    this.newGroupClassGroup = '';
+    this.notifications.success(`เพิ่มกลุ่ม/ห้องเรียน ${yl}${cg} สำเร็จ`, 'เพิ่มกลุ่ม');
+  }
+  
+  protected removeCustomClassGroup(g: { yearLevel: string, classGroup: string }): void {
+    this.advisorCustomClassGroups = this.advisorCustomClassGroups.filter(item => !(item.yearLevel === g.yearLevel && item.classGroup === g.classGroup));
+    this.saveCustomClassGroups();
+    if (this.selectedClassGroupFilter === `custom:${g.yearLevel}|${g.classGroup}`) {
+      this.selectedClassGroupFilter = 'my_students';
+    }
+    this.notifications.success('ลบกลุ่ม/ห้องเรียนสำเร็จ', 'ลบกลุ่ม');
+  }
+
+  protected get autoClassGroups(): { label: string, yearLevel: string, classGroup: string, students: User[] }[] {
+    const user = this.currentUser;
+    if (!user || user.role !== 'advisor') return [];
+    
+    const sameSchoolStudents = this.users.filter(u => u.role === 'student' && u.school === user.school);
+    const groupsMap = new Map<string, User[]>();
+    for (const student of sameSchoolStudents) {
+      const year = student.yearLevel || '';
+      const grp = student.classGroup || '';
+      if (!year && !grp) continue;
+      
+      const key = `${year}${grp}`;
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, []);
+      }
+      groupsMap.get(key)!.push(student);
+    }
+    
+    const result: { label: string, yearLevel: string, classGroup: string, students: User[] }[] = [];
+    groupsMap.forEach((students, key) => {
+      const firstStu = students[0];
+      result.push({
+        label: key,
+        yearLevel: firstStu.yearLevel || '',
+        classGroup: firstStu.classGroup || '',
+        students
+      });
+    });
+    
+    return result.sort((a, b) => a.label.localeCompare(b.label));
+  }
+  
+  protected get schoolStudentsCount(): number {
+    const user = this.currentUser;
+    if (!user) return 0;
+    return this.users.filter(u => u.role === 'student' && u.school === user.school).length;
+  }
+  
+  protected get displayedAdvisorStudents(): User[] {
+    const user = this.currentUser;
+    if (!user) return [];
+    
+    const sameSchoolStudents = this.users.filter(u => u.role === 'student' && u.school === user.school);
+    const myStudents = this.users.filter(u => u.role === 'student' && (u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id));
+    
+    if (this.selectedClassGroupFilter === 'my_students') {
+      return myStudents;
+    } else if (this.selectedClassGroupFilter === 'all_students') {
+      return sameSchoolStudents;
+    } else if (this.selectedClassGroupFilter.startsWith('custom:')) {
+      const parts = this.selectedClassGroupFilter.substring(7).split('|');
+      const yl = parts[0];
+      const cg = parts[1];
+      return sameSchoolStudents.filter(s => (s.yearLevel || '') === yl && (s.classGroup || '') === cg);
+    } else {
+      return sameSchoolStudents.filter(s => `${s.yearLevel || ''}${s.classGroup || ''}` === this.selectedClassGroupFilter);
+    }
+  }
+  
+  // Student online status helpers and actions
+  protected userOnlineStatus(userId: number): string | undefined {
+    const user = this.users.find((u) => u.id === userId);
+    if (!user || user.role !== 'student') {
+      return undefined;
+    }
+    return user.onlineStatus || 'offline';
+  }
+  
+  protected async setOnlineStatus(status: string): Promise<void> {
+    if (!this.currentUserId) return;
+    try {
+      await this.data.updateUser(this.currentUserId, { onlineStatus: status } as any);
+      this.notifications.success(`เปลี่ยนสถานะเป็น ${status === 'online' ? 'Online' : status === 'AFK' ? 'AFK' : 'Offline'} สำเร็จ`, 'สถานะออนไลน์');
+    } catch (err: any) {
+      console.error('[App] Error setting online status:', err);
+      this.notifications.error('ไม่สามารถเปลี่ยนสถานะได้', 'สถานะออนไลน์');
+    }
+  }
+  
+  // Student detail modal helpers
+  protected showStudentDetail(student: User): void {
+    this.selectedStudentForDetail = student;
+    this.studentDetailInternship = this.internships.find(i => i.studentId === student.id && i.status === 'active') || null;
+    this.studentDetailAttendances = this.attendances.filter(a => a.studentId === student.id);
+    const studentInternshipIds = this.internships.filter(i => i.studentId === student.id).map(i => i.id);
+    this.studentDetailLogbooks = this.data.logbooks.filter(l => studentInternshipIds.includes(l.internshipId));
+    this.studentDetailLeaves = this.data.leaves.filter((lr: LeaveRequest) => studentInternshipIds.includes(lr.internshipId));
+  }
+  
+  protected closeStudentDetail(): void {
+    this.selectedStudentForDetail = null;
+    this.studentDetailInternship = null;
+    this.studentDetailAttendances = [];
+    this.studentDetailLogbooks = [];
+    this.studentDetailLeaves = [];
+  }
+  
+  protected getStudentPresentDaysCount(studentId: number): number {
+    return this.attendances.filter(a => a.studentId === studentId && (a.status === 'present' || a.status === 'late' || a.status === 'early_leave')).length;
+  }
+
+  protected getStudentLateDaysCount(studentId: number): number {
+    return this.attendances.filter(a => a.studentId === studentId && a.status === 'late').length;
+  }
+
+  protected getStudentAbsentDaysCount(studentId: number): number {
+    return this.attendances.filter(a => a.studentId === studentId && a.status === 'absent').length;
+  }
+
+  protected getStudentTotalHours(studentId: number): number {
+    return this.getStudentPresentDaysCount(studentId) * 8;
+  }
+  
+  protected getCompanyName(companyId?: number): string {
+    if (!companyId) return '—';
+    return this.companies.find(c => c.id === companyId)?.companyName ?? '—';
   }
 
   protected getStudentAdvisors(advisorIds: number[] | undefined, fallbackAdvisorId: number | undefined): User[] {

@@ -36,6 +36,7 @@ export type ApiUser = {
   company_role?: string | null;
   intern_start_date?: string | null;
   intern_end_date?: string | null;
+  online_status?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -184,6 +185,7 @@ export function mapUser(dto: ApiUser): User {
     companyRole: (dto.company_role as 'admin' | 'employee' | undefined) ?? undefined,
     internStartDate: dto.intern_start_date ?? undefined,
     internEndDate: dto.intern_end_date ?? undefined,
+    onlineStatus: dto.online_status ?? undefined,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at
   };

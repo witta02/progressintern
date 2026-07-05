@@ -49,6 +49,7 @@ export interface User {
   classGroup?: string;    // กลุ่ม
   profileImage?: string;
   resumeUrl?: string;
+  onlineStatus?: string;
   createdAt?: string;
   updatedAt?: string;
   internStartDate?: string;

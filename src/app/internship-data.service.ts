@@ -516,6 +516,7 @@ export class InternshipDataService {
     }
 
     this.attendances = [...this.attendances, { ...attendance, id: this.nextId(this.attendances), isWfh: attendance.isWfh, notes: attendance.isWfh ? 'WFH' : '' }];
+    this.users = this.users.map(u => u.id === attendance.studentId ? { ...u, onlineStatus: 'online' } : u);
     this.persist();
   }
 
@@ -539,6 +540,12 @@ export class InternshipDataService {
     }
 
     this.attendances = this.attendances.map((a) => (a.id === attendanceId ? { ...a, ...updates } : a));
+    if (updates.checkOutTime) {
+      const att = this.attendances.find(a => a.id === attendanceId);
+      if (att) {
+        this.users = this.users.map(u => u.id === att.studentId ? { ...u, onlineStatus: 'offline' } : u);
+      }
+    }
     this.persist();
   }
 

@@ -2512,7 +2512,13 @@
           <aside *ngIf="showClassGroupsMenu" class="lg:col-span-3 space-y-6 animate-in slide-in-from-left duration-300">
             <!-- Sidebar Card -->
             <div class="bg-white rounded-[2rem] p-6 border border-slate-200/60 shadow-xl shadow-slate-200/20">
-              <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">เลือกห้องเรียน / กลุ่ม</h4>
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">เลือกห้องเรียน / กลุ่ม</h4>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-full" title="นักศึกษาออนไลน์ตอนนี้">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span class="text-[10px] font-black text-emerald-700">{{ onlineStudentsCount }} ออนไลน์</span>
+                </span>
+              </div>
               
               <div class="space-y-1">
                 <!-- My Assigned Students Option -->
@@ -2612,14 +2618,20 @@
           <!-- RIGHT COLUMN: STUDENT LIST TABLE -->
           <div [ngClass]="showClassGroupsMenu ? 'lg:col-span-9' : 'lg:col-span-12'" class="space-y-4 w-full">
             <article class="glass-card rounded-[2.5rem] overflow-hidden">
-              <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h4 class="text-lg font-black text-slate-800">
                   {{ selectedClassGroupFilter === 'my_students' ? 'นักศึกษาในความดูแลของฉัน' : 
                      (selectedClassGroupFilter === 'all_students' ? 'นักศึกษาทั้งหมดในสถาบัน' : 
                       selectedClassGroupFilter.startsWith('custom:') ? 'นักศึกษาในห้อง ' + selectedClassGroupFilter.substring(7).replace('|', '') : 
                       'นักศึกษาในห้อง ' + selectedClassGroupFilter) }} 
-                  ({{ displayedAdvisorStudents.length }} คน)
+                  <span class="text-slate-400 font-bold">({{ displayedAdvisorStudents.length }} คน)</span>
                 </h4>
+                <!-- Search bar -->
+                <div class="relative w-full sm:w-64">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>
+                  <input type="text" [(ngModel)]="advisorStudentSearch" placeholder="ค้นหาชื่อ, อีเมล, ห้อง..."
+                         class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all placeholder:font-medium placeholder:text-slate-400">
+                </div>
               </div>
               <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0">
                 <table class="w-full text-left">
@@ -2646,6 +2658,7 @@
                           <div>
                             <div class="font-black text-slate-900 text-sm leading-tight flex items-center gap-1.5">
                               <span class="inline-block w-2.5 h-2.5 rounded-full" 
+                                    [title]="userOnlineStatus(s.id) === 'online' ? 'Online' : (userOnlineStatus(s.id) === 'AFK' ? 'AFK (ไม่อยู่หน้าจอ)' : 'Offline')"
                                     [class.bg-emerald-500]="userOnlineStatus(s.id) === 'online'"
                                     [class.bg-orange-500]="userOnlineStatus(s.id) === 'AFK'"
                                     [class.bg-slate-400]="userOnlineStatus(s.id) === 'offline' || !userOnlineStatus(s.id)"></span>
@@ -4687,8 +4700,8 @@
 ></app-notification-host>
 
   <!-- Student Detail Modal Dialog (For Teacher/Advisor and Company) -->
-  <div *ngIf="selectedStudentForDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200">
+  <div *ngIf="selectedStudentForDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto" (click)="closeStudentDetail()">
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
       
       <!-- Close Button -->
       <button type="button" (click)="closeStudentDetail()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors z-10">

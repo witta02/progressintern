@@ -353,6 +353,7 @@ export class App {
   // Teacher/Advisor Class Groups and Rooms toggle menu
   protected showClassGroupsMenu = true;
   protected selectedClassGroupFilter = 'my_students';
+  protected advisorStudentSearch = '';
   
   // Custom Class Groups created by the advisor
   protected advisorCustomClassGroups: { yearLevel: string, classGroup: string }[] = [];
@@ -3537,6 +3538,7 @@ export class App {
   
   protected selectClassGroupFilter(filter: string): void {
     this.selectedClassGroupFilter = filter;
+    this.advisorStudentSearch = ''; // clear search when switching groups
   }
   
   protected loadCustomClassGroups(): void {
@@ -3625,6 +3627,12 @@ export class App {
     if (!user) return 0;
     return this.users.filter(u => u.role === 'student' && u.school === user.school).length;
   }
+
+  protected get onlineStudentsCount(): number {
+    const user = this.currentUser;
+    if (!user) return 0;
+    return this.users.filter(u => u.role === 'student' && u.school === user.school && u.onlineStatus === 'online').length;
+  }
   
   protected get displayedAdvisorStudents(): User[] {
     const user = this.currentUser;
@@ -3633,18 +3641,29 @@ export class App {
     const sameSchoolStudents = this.users.filter(u => u.role === 'student' && u.school === user.school);
     const myStudents = this.users.filter(u => u.role === 'student' && (u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id));
     
+    let base: User[];
     if (this.selectedClassGroupFilter === 'my_students') {
-      return myStudents;
+      base = myStudents;
     } else if (this.selectedClassGroupFilter === 'all_students') {
-      return sameSchoolStudents;
+      base = sameSchoolStudents;
     } else if (this.selectedClassGroupFilter.startsWith('custom:')) {
       const parts = this.selectedClassGroupFilter.substring(7).split('|');
       const yl = parts[0];
       const cg = parts[1];
-      return sameSchoolStudents.filter(s => (s.yearLevel || '') === yl && (s.classGroup || '') === cg);
+      base = sameSchoolStudents.filter(s => (s.yearLevel || '') === yl && (s.classGroup || '') === cg);
     } else {
-      return sameSchoolStudents.filter(s => `${s.yearLevel || ''}${s.classGroup || ''}` === this.selectedClassGroupFilter);
+      base = sameSchoolStudents.filter(s => `${s.yearLevel || ''}${s.classGroup || ''}` === this.selectedClassGroupFilter);
     }
+
+    const q = this.advisorStudentSearch.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.email.toLowerCase().includes(q) ||
+      (s.number && String(s.number).includes(q)) ||
+      (s.yearLevel && s.yearLevel.toLowerCase().includes(q)) ||
+      (s.classGroup && s.classGroup.toLowerCase().includes(q))
+    );
   }
   
   // Student online status helpers and actions

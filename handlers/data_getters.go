@@ -1063,10 +1063,16 @@ func UpdateUserHandler(c *gin.Context) {
 		CompanyRole     *string  `json:"company_role"`
 		RemoveCompany   *bool    `json:"remove_company"`
 		OnlineStatus    string   `json:"online_status"`
+		OnlineStatusAlt string   `json:"onlineStatus"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
 		return
+	}
+
+	statusVal := input.OnlineStatus
+	if statusVal == "" {
+		statusVal = input.OnlineStatusAlt
 	}
 
 	reqRole, _ := c.Get("role")
@@ -1223,7 +1229,7 @@ func UpdateUserHandler(c *gin.Context) {
 				intern_end_date = ?,
 				online_status = COALESCE(NULLIF(?,''), online_status)
 			 WHERE id = ?`,
-			input.Name, input.Email, input.Phone, input.School, input.ResumeURL, input.Intro, input.Field, input.Number, input.YearLevel, input.ClassGroup, input.InternStartDate, input.InternEndDate, input.OnlineStatus, userIDInt,
+			input.Name, input.Email, input.Phone, input.School, input.ResumeURL, input.Intro, input.Field, input.Number, input.YearLevel, input.ClassGroup, input.InternStartDate, input.InternEndDate, statusVal, userIDInt,
 		)
 
 		if err == nil && targetRole == "company" {

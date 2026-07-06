@@ -2662,8 +2662,9 @@
           </div>
         </article>
 
-        <div class="glass-card rounded-[2.5rem] overflow-hidden">
-          <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0">
+        <div class="glass-card rounded-[2.5rem] overflow-hidden p-4 md:p-0 border border-slate-200/60 md:border-0 shadow-sm md:shadow-none">
+          <!-- Desktop Table (md:block) -->
+          <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0 hidden md:block">
             <table class="w-full text-left">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
@@ -2712,6 +2713,45 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Cards (block md:hidden) -->
+          <div class="block md:hidden space-y-3">
+            <div *ngFor="let evaluation of visibleEvaluations" class="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-3 shadow-sm active:bg-slate-50 transition-colors">
+              <div class="flex items-center justify-between" (click)="toggleEvaluationDetails(evaluation.id)">
+                <div class="font-black text-slate-900 text-sm flex items-center gap-2">
+                  <span class="text-slate-400 transition-transform duration-200" [class.rotate-90]="expandedEvaluationId === evaluation.id">▶</span>
+                  {{ evaluationStudentName(evaluation) }}
+                </div>
+                <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 shadow-sm font-sans">
+                  {{ evaluation.score }} / {{ getEvaluationMaxScore(evaluation) }}
+                </span>
+              </div>
+
+              <div class="text-xs border-t border-b border-slate-50 py-2 space-y-1">
+                <div><span class="font-black text-slate-400">ผู้ประเมิน: </span><span class="font-bold text-slate-700">{{ evaluatorLabel(evaluation) }}</span></div>
+                <div *ngIf="evaluation.feedback"><span class="font-black text-slate-400">ความเห็น: </span><span class="text-slate-600 font-medium italic">"{{ evaluation.feedback }}"</span></div>
+              </div>
+
+              <!-- Rubrics Breakdown on Mobile -->
+              <div *ngIf="expandedEvaluationId === evaluation.id" class="p-3 bg-slate-50 rounded-xl space-y-3 animate-in fade-in duration-200">
+                <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Rubrics Breakdown</div>
+                <div class="space-y-2" *ngIf="evaluation.scores && evaluation.scores.length > 0; else noScoresMobile">
+                  <div *ngFor="let s of evaluation.scores" class="bg-white rounded-lg p-2.5 border border-slate-100 flex justify-between items-center shadow-sm">
+                    <span class="font-bold text-slate-800 text-[11px]">{{ s.label }}</span>
+                    <span class="inline-flex px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[9px] font-black rounded border border-indigo-100">
+                      {{ s.score }} / {{ s.maxScore || 10 }}
+                    </span>
+                  </div>
+                </div>
+                <ng-template #noScoresMobile>
+                  <div class="text-[10px] font-bold text-slate-400 italic">ไม่มีเกณฑ์ประเมินปลีกย่อย</div>
+                </ng-template>
+              </div>
+            </div>
+            <div *ngIf="visibleEvaluations.length === 0" class="p-8 text-center text-slate-400 font-bold text-sm bg-slate-50 rounded-2xl border border-dashed">
+              ยังไม่มีผลการประเมิน
+            </div>
           </div>
         </div>
       </section>
@@ -2867,7 +2907,7 @@
                          class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all placeholder:font-medium placeholder:text-slate-400">
                 </div>
               </div>
-              <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0">
+              <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0 hidden md:block">
                 <table class="w-full text-left">
                   <thead>
                     <tr class="bg-gradient-to-r from-slate-50 to-blue-50/30">
@@ -2944,6 +2984,59 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Mobile Cards (block md:hidden) -->
+              <div class="block md:hidden space-y-3">
+                <div *ngFor="let s of displayedAdvisorStudents; let idx = index" 
+                     (click)="showStudentDetail(s)"
+                     class="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-3 shadow-sm active:bg-slate-50 transition-colors cursor-pointer">
+                  
+                  <div class="flex items-center justify-between">
+                    <div class="font-black text-slate-900 text-sm leading-tight flex items-center gap-1.5">
+                      <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" 
+                            [class.bg-emerald-500]="userOnlineStatus(s.id) === 'online'"
+                            [class.bg-orange-500]="userOnlineStatus(s.id) === 'AFK'"
+                            [class.bg-slate-400]="userOnlineStatus(s.id) === 'offline' || !userOnlineStatus(s.id)"></span>
+                      {{ s.name }}
+                    </div>
+                    <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm"
+                          [class.bg-emerald-50]="s.status === 'active'" [class.text-emerald-600]="s.status === 'active'" [class.border-emerald-100]="s.status === 'active'"
+                          [class.bg-amber-50]="s.status === 'pending'" [class.text-amber-600]="s.status === 'pending'" [class.border-amber-100]="s.status === 'pending'"
+                          [class.bg-rose-50]="s.status === 'rejected'" [class.text-rose-600]="s.status === 'rejected'" [class.border-rose-100]="s.status === 'rejected'">
+                      {{ userStatusLabel(s.status) }}
+                    </span>
+                  </div>
+
+                  <div class="text-xs border-t border-b border-slate-50 py-2 space-y-1">
+                    <div><span class="font-black text-slate-400">อีเมล: </span><span class="font-bold text-slate-700">{{ s.email }}</span></div>
+                    <div *ngIf="s.phone"><span class="font-black text-slate-400">โทร: </span><span class="font-bold text-slate-700">{{ s.phone }}</span></div>
+                    <div><span class="font-black text-slate-400">ชั้นปี/กลุ่ม: </span><span class="font-bold text-indigo-600">{{ s.yearLevel || '—' }}{{ s.classGroup || '' }}</span></div>
+                    <div><span class="font-black text-slate-400">สาขา: </span><span class="font-bold text-slate-700">{{ s.field || '—' }}</span></div>
+                    <div *ngIf="s.intro" class="italic text-slate-400 font-medium">"{{ s.intro }}"</div>
+                  </div>
+
+                  <div class="flex justify-between items-center mt-1" (click)="$event.stopPropagation()">
+                    <span class="text-xs font-black text-slate-400">#{{ idx + 1 }}</span>
+                    <div class="flex gap-2">
+                      <!-- Claim student button if not in advisor roster -->
+                      <button type="button" *ngIf="!isMyStudent(s.id)"
+                              (click)="assignStudentToAdvisor(s.id)"
+                              class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-800 text-[9px] font-black uppercase tracking-widest rounded-lg border border-emerald-100 transition-all cursor-pointer font-sans">
+                        ดูแลนักศึกษา
+                      </button>
+                      <!-- Remove student button if in advisor roster -->
+                      <button type="button" *ngIf="isMyStudent(s.id)"
+                              (click)="removeStudentFromAdvisor(s.id)"
+                              class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-800 text-[9px] font-black uppercase tracking-widest rounded-lg border border-rose-100 transition-all cursor-pointer font-sans">
+                        นำออก
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="displayedAdvisorStudents.length === 0" class="p-8 text-center text-slate-400 font-bold text-sm bg-slate-50 rounded-2xl border border-dashed">
+                  ไม่พบนักศึกษาในกลุ่มหรือห้องเรียนนี้
+                </div>
               </div>
             </article>
           </div>

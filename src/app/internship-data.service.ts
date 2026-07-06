@@ -1173,6 +1173,34 @@ export class InternshipDataService {
     this.persist();
   }
 
+  async updateAssignment(id: number, assignment: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.updateAssignment(id, assignment));
+      await this.refreshFromApi();
+      return;
+    }
+
+    const nowStr = new Date().toISOString();
+    this.assignments = this.assignments.map(a => a.id === id ? {
+      ...a,
+      ...assignment,
+      updatedAt: nowStr
+    } : a);
+    this.persist();
+  }
+
+  async deleteAssignment(id: number): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.deleteAssignment(id));
+      await this.refreshFromApi();
+      return;
+    }
+
+    this.assignments = this.assignments.filter(a => a.id !== id);
+    this.submissions = this.submissions.filter(s => s.assignmentId !== id);
+    this.persist();
+  }
+
   async addSubmission(submission: Omit<Submission, 'id' | 'submittedAt' | 'gradedAt' | 'score' | 'feedback' | 'status'>): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.createSubmission(submission));

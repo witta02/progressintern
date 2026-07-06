@@ -67,6 +67,7 @@ export class App {
     if (typeof window !== 'undefined') {
       setInterval(() => {
         this.currentTime = new Date();
+        this.cdr.detectChanges();
       }, 1000);
     }
   }
@@ -314,6 +315,16 @@ export class App {
 
   // ----------- Classroom Assignment System & UX Improvements -----------
   protected newAssignment = {
+    title: '',
+    description: '',
+    dueDate: '',
+    points: 100,
+    targetType: 'all' as 'all' | 'student' | 'position',
+    studentId: null as number | null,
+    jobPostingId: null as number | null
+  };
+  protected isEditingAssignment = false;
+  protected editAssignmentForm = {
     title: '',
     description: '',
     dueDate: '',
@@ -2272,6 +2283,84 @@ export class App {
     }
   }
 
+  protected startEditAssignment(ass: Assignment): void {
+    this.isEditingAssignment = true;
+    let targetType: 'all' | 'student' | 'position' = 'all';
+    if (ass.studentId) {
+      targetType = 'student';
+    } else if (ass.jobPostingId) {
+      targetType = 'position';
+    }
+    let formattedDate = '';
+    if (ass.dueDate) {
+      formattedDate = new Date(ass.dueDate).toISOString().split('T')[0];
+    }
+    this.editAssignmentForm = {
+      title: ass.title,
+      description: ass.description || '',
+      dueDate: formattedDate,
+      points: ass.points,
+      targetType,
+      studentId: ass.studentId || null,
+      jobPostingId: ass.jobPostingId || null
+    };
+  }
+
+  protected cancelEditAssignment(): void {
+    this.isEditingAssignment = false;
+  }
+
+  protected async saveEditAssignment(id: number): Promise<void> {
+    const user = this.currentUser;
+    if (!user) return;
+    if (!this.editAssignmentForm.title.trim() || !this.editAssignmentForm.description.trim()) {
+      this.notifications.warning('กรุณากรอกหัวข้อและคำอธิบายงาน', 'แก้ไขงาน');
+      return;
+    }
+
+    const payload: any = {
+      title: this.editAssignmentForm.title.trim(),
+      description: this.editAssignmentForm.description.trim(),
+      dueDate: this.editAssignmentForm.dueDate ? new Date(this.editAssignmentForm.dueDate).toISOString() : undefined,
+      points: this.editAssignmentForm.points,
+      creatorId: user.id,
+      creatorRole: user.role
+    };
+
+    if (this.editAssignmentForm.targetType === 'student' && this.editAssignmentForm.studentId) {
+      payload.studentId = Number(this.editAssignmentForm.studentId);
+    } else if (this.editAssignmentForm.targetType === 'position' && this.editAssignmentForm.jobPostingId) {
+      payload.jobPostingId = Number(this.editAssignmentForm.jobPostingId);
+    } else {
+      payload.studentId = null;
+      payload.jobPostingId = null;
+    }
+
+    try {
+      await this.data.updateAssignment(id, payload);
+      this.isEditingAssignment = false;
+      this.notifications.success('แก้ไขงานมอบหมายเรียบร้อยแล้ว', 'สำเร็จ');
+    } catch (err: any) {
+      this.notifications.error('แก้ไขงานล้มเหลว: ' + err.message, 'ผิดพลาด');
+    }
+  }
+
+  protected async deleteAssignment(id: number): Promise<void> {
+    const confirm = await this.notifications.confirm(
+      'ยืนยันการลบงานมอบหมาย',
+      'คุณแน่ใจหรือไม่ว่าต้องการลบงานมอบหมายนี้? ข้อมูลการส่งงานของนักศึกษาจะถูกลบทั้งหมดและไม่สามารถกู้คืนได้'
+    );
+    if (!confirm) return;
+
+    try {
+      await this.data.deleteAssignment(id);
+      this.selectedAssignmentIdForDetails = null;
+      this.notifications.success('ลบงานมอบหมายเรียบร้อยแล้ว', 'สำเร็จ');
+    } catch (err: any) {
+      this.notifications.error('ลบงานล้มเหลว: ' + err.message, 'ผิดพลาด');
+    }
+  }
+
   protected async submitAssignment(assignmentId: number): Promise<void> {
     const user = this.currentUser;
     if (!user) return;
@@ -2357,6 +2446,12 @@ export class App {
 
   protected getSubmissionsForAssignment(assignmentId: number): Submission[] {
     return this.submissions.filter(s => s.assignmentId === assignmentId);
+  }
+
+  protected getCompletedSubmissionsForAssignment(assignmentId: number): Submission[] {
+    return this.submissions.filter(s => s.assignmentId === assignmentId && 
+      (s.status === 'submitted' || s.status === 'late' || s.status === 'graded')
+    );
   }
 
   protected getStudentSubmission(assignmentId: number, studentId: number): Submission | undefined {

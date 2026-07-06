@@ -3055,6 +3055,21 @@
                       <p class="text-white/70 text-xs font-medium mt-1.5">
                         สั่งโดย: {{ selectedAssignment?.creatorRole === 'advisor' ? 'อาจารย์ที่ดูแล' : 'พี่เลี้ยงสถานประกอบการ' }}
                       </p>
+                      <div class="flex items-center gap-2 mt-3" 
+                           *ngIf="currentUser?.role === 'admin' || 
+                                  selectedAssignment?.creatorId === currentUser?.id || 
+                                  (currentUser?.role === 'company' && selectedAssignment?.companyId === currentCompanyId)">
+                        <button type="button" (click)="selectedAssignment && startEditAssignment(selectedAssignment)"
+                                class="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] font-black rounded-lg transition-all flex items-center gap-1.5">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          แก้ไข (Edit)
+                        </button>
+                        <button type="button" (click)="selectedAssignment && deleteAssignment(selectedAssignment.id)"
+                                class="px-3.5 py-1.5 bg-rose-500/80 hover:bg-rose-600 text-white text-[11px] font-black rounded-lg transition-all flex items-center gap-1.5">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          ลบ (Delete)
+                        </button>
+                      </div>
                     </div>
                     <div class="shrink-0 text-right">
                       <div class="bg-white/20 rounded-2xl px-4 py-2 mb-2">
@@ -3070,7 +3085,97 @@
                 </div>
               </div>
 
-              <div class="p-6 xl:p-8 space-y-6">
+              <!-- EDIT ASSIGNMENT FORM (Shown when editing is active) -->
+              <div *ngIf="isEditingAssignment && selectedAssignment" class="p-6 xl:p-8 space-y-6">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <h4 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                    🔧 แก้ไขรายละเอียดงานมอบหมาย
+                  </h4>
+                  <button type="button" (click)="cancelEditAssignment()" class="text-slate-400 hover:text-slate-600 text-xs font-bold">
+                    ✕ ยกเลิก
+                  </button>
+                </div>
+
+                <form (ngSubmit)="saveEditAssignment(selectedAssignment.id)" class="space-y-6">
+                  <!-- Title & Points -->
+                  <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+                    <div class="md:col-span-9 space-y-2">
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">หัวข้องาน (ASSIGNMENT TITLE) *</label>
+                      <input name="editTitle" [(ngModel)]="editAssignmentForm.title" placeholder="เช่น รายงานความก้าวหน้าโครงงาน" required
+                             class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-indigo-500/15 focus:border-indigo-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-400">
+                    </div>
+                    <div class="md:col-span-3 space-y-2">
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">คะแนนเต็ม *</label>
+                      <input name="editPoints" type="number" [(ngModel)]="editAssignmentForm.points" min="1" max="100" required
+                             class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-indigo-500/15 focus:border-indigo-500 outline-none font-bold transition-all text-slate-900">
+                    </div>
+                  </div>
+
+                  <!-- Description -->
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">รายละเอียดงาน (INSTRUCTIONS) *</label>
+                    <textarea name="editDesc" [(ngModel)]="editAssignmentForm.description" rows="3" placeholder="ระบุรายละเอียดงานเพิ่มเติม..." required
+                              class="w-full px-6 py-4 bg-slate-50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-8 focus:ring-indigo-500/15 focus:border-indigo-500 outline-none font-bold transition-all text-slate-900 placeholder:text-slate-300"></textarea>
+                  </div>
+
+                  <!-- Target & Due Date -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="space-y-2">
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เป้าหมายผู้รับงาน (TARGET)</label>
+                      <select name="editTargetType" [(ngModel)]="editAssignmentForm.targetType"
+                              class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-8 focus:ring-indigo-500/15 focus:border-indigo-500 outline-none font-bold transition-all text-slate-900">
+                        <option value="all">ทุกคนในความดูแล (All)</option>
+                        <option value="student">เฉพาะนักศึกษาบางคน</option>
+                        <option value="position" *ngIf="currentUser?.role === 'company'">เฉพาะตำแหน่งงาน (Position)</option>
+                      </select>
+                    </div>
+
+                    <div class="space-y-2">
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">กำหนดส่งงาน (DUE DATE)</label>
+                      <input name="editDueDate" type="date" [(ngModel)]="editAssignmentForm.dueDate"
+                             class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-8 focus:ring-indigo-500/15 focus:border-indigo-500 outline-none font-bold transition-all text-slate-900">
+                    </div>
+                  </div>
+
+                  <!-- Conditional Target Dropdown -->
+                  <div *ngIf="editAssignmentForm.targetType === 'student'" class="space-y-2 animate-in fade-in duration-150">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เลือกนักศึกษาผู้รับงาน</label>
+                    <select name="editTargetStudent" [(ngModel)]="editAssignmentForm.studentId" required
+                            class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-8 focus:ring-indigo-500/15 focus:border-indigo-500 outline-none font-bold transition-all text-slate-900">
+                      <option [ngValue]="null" disabled selected>-- กรุณาเลือกนักศึกษา --</option>
+                      <ng-container *ngIf="currentUser?.role === 'advisor'">
+                        <option *ngFor="let s of advisorStudents" [value]="s.id">{{ s.name }} ({{ s.email }})</option>
+                      </ng-container>
+                      <ng-container *ngIf="currentUser?.role === 'company'">
+                        <option *ngFor="let s of companyStudents" [value]="s.id">{{ s.name }}</option>
+                      </ng-container>
+                    </select>
+                  </div>
+
+                  <div *ngIf="editAssignmentForm.targetType === 'position' && currentUser?.role === 'company'" class="space-y-2 animate-in fade-in duration-150">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">เลือกตำแหน่งงาน (Position)</label>
+                    <select name="editTargetPosition" [(ngModel)]="editAssignmentForm.jobPostingId" required
+                            class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-8 focus:ring-indigo-500/15 focus:border-indigo-500 outline-none font-bold transition-all text-slate-900">
+                      <option [ngValue]="null" disabled selected>-- กรุณาเลือกตำแหน่งงาน --</option>
+                      <option *ngFor="let j of companyJobPostings" [value]="j.id">{{ j.title }}</option>
+                    </select>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+                    <button type="submit" 
+                            class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-sm transition-all shadow-md">
+                      บันทึกการแก้ไข
+                    </button>
+                    <button type="button" (click)="cancelEditAssignment()"
+                            class="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-black text-sm transition-all">
+                      ยกเลิก
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div class="p-6 xl:p-8 space-y-6" *ngIf="!isEditingAssignment">
 
                 <!-- Description -->
                 <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100">
@@ -3226,7 +3331,7 @@
                   <div class="flex items-center justify-between mb-4">
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">📋 รายงานการส่งงานนักศึกษา</h4>
                     <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black border border-indigo-100">
-                      {{ getSubmissionsForAssignment(selectedAssignmentIdForDetails).length }} / {{ assignmentStudents.length }} ส่งแล้ว
+                      {{ getCompletedSubmissionsForAssignment(selectedAssignmentIdForDetails).length }} / {{ assignmentStudents.length }} ส่งแล้ว
                     </span>
                   </div>
 
@@ -3240,8 +3345,10 @@
                          [class.bg-blue-50]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'submitted'"
                          [class.border-amber-200]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'late'"
                          [class.bg-amber-50]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'late'"
-                         [class.border-slate-100]="!getStudentSubmission(selectedAssignmentIdForDetails, s.id)"
-                         [class.bg-white]="!getStudentSubmission(selectedAssignmentIdForDetails, s.id)">
+                         [class.border-rose-200]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'ignored'"
+                         [class.bg-rose-50/10]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'ignored'"
+                         [class.border-slate-100]="!getStudentSubmission(selectedAssignmentIdForDetails, s.id) || getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'accepted'"
+                         [class.bg-white]="!getStudentSubmission(selectedAssignmentIdForDetails, s.id) || getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'accepted'">
 
                       <!-- Student Header Row -->
                       <div class="px-5 py-4 flex items-center justify-between gap-4">
@@ -3253,6 +3360,10 @@
                                [class.text-white]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'submitted'"
                                [class.bg-amber-500]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'late'"
                                [class.text-white]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'late'"
+                               [class.bg-indigo-500]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'accepted'"
+                               [class.text-white]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'accepted'"
+                               [class.bg-rose-500]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'ignored'"
+                               [class.text-white]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'ignored'"
                                [class.bg-slate-100]="!getStudentSubmission(selectedAssignmentIdForDetails, s.id)"
                                [class.text-slate-400]="!getStudentSubmission(selectedAssignmentIdForDetails, s.id)">
                             {{ s.name.charAt(0) }}
@@ -3262,13 +3373,19 @@
                             <div class="flex items-center gap-1.5 mt-0.5">
                               <span *ngIf="!getStudentSubmission(selectedAssignmentIdForDetails, s.id)"
                                     class="text-[9px] font-black text-slate-400 uppercase tracking-wider">ยังไม่ส่ง</span>
+                              <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'accepted'"
+                                    class="text-[9px] font-black text-indigo-600 uppercase tracking-wider">⏳ ยอมรับแล้ว (In Progress)</span>
+                              <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'ignored'"
+                                    class="text-[9px] font-black text-rose-600 uppercase tracking-wider">✕ ปฏิเสธงาน (Ignored)</span>
                               <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'submitted'"
                                     class="text-[9px] font-black text-blue-600 uppercase tracking-wider">✓ ส่งแล้ว</span>
                               <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'late'"
                                     class="text-[9px] font-black text-amber-600 uppercase tracking-wider">⚠ ส่งช้า</span>
                               <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'graded'"
                                     class="text-[9px] font-black text-emerald-600 uppercase tracking-wider">✅ ตรวจแล้ว</span>
-                              <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.submittedAt"
+                              <span *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.submittedAt && 
+                                           getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status !== 'accepted' && 
+                                           getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status !== 'ignored'"
                                     class="text-[9px] text-slate-400 font-medium">
                                 · {{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.submittedAt | date:'dd MMM HH:mm' }}
                               </span>
@@ -3285,7 +3402,9 @@
                             <strong class="text-lg font-black text-emerald-700">{{ getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.score }}/{{ selectedAssignment?.points }}</strong>
                           </div>
                           <!-- Grade button -->
-                          <button *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id) && getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status !== 'graded'"
+                          <button *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id) && 
+                                         (getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'submitted' || 
+                                          getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'late')"
                                   type="button"
                                   (click)="openGradingModal(getStudentSubmission(selectedAssignmentIdForDetails, s.id)!)"
                                   class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all hover:shadow-md hover:shadow-indigo-200 cursor-pointer">
@@ -3295,7 +3414,11 @@
                       </div>
 
                       <!-- Submission Content (if submitted) -->
-                      <div *ngIf="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.content || getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.fileName"
+                      <div *ngIf="(getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'submitted' || 
+                                   getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'late' || 
+                                   getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'graded') && 
+                                  (getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.content || 
+                                   getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.fileName)"
                            class="border-t px-5 py-4 space-y-2"
                            [class.border-emerald-200]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'graded'"
                            [class.border-blue-200]="getStudentSubmission(selectedAssignmentIdForDetails, s.id)?.status === 'submitted'"

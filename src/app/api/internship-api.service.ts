@@ -371,6 +371,14 @@ export class InternshipApiService {
     return this.postOne<ApiAssignment, Assignment>('assignments', toApiAssignment(body), mapAssignment);
   }
 
+  updateAssignment(id: number, body: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt'>): Observable<Assignment | null> {
+    return this.putOne<ApiAssignment, Assignment>(`assignments/${id}`, toApiAssignment(body), mapAssignment);
+  }
+
+  deleteAssignment(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.base}/assignments/${id}`, this.authOptions());
+  }
+
   createSubmission(body: Omit<Submission, 'id' | 'submittedAt' | 'gradedAt' | 'score' | 'feedback' | 'status'>): Observable<Submission | null> {
     return this.postOne<ApiSubmission, Submission>('submissions', toApiSubmission(body), mapSubmission);
   }

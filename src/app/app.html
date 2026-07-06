@@ -326,7 +326,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <article (click)="setActiveView(metric.view)"
                    class="glass-card p-8 rounded-[2.5rem] relative overflow-hidden group hover:scale-[1.03] transition-all duration-300 cursor-pointer animate-slide-up flex flex-col justify-between min-h-[160px]" 
-                   *ngFor="let metric of dashboardMetrics; let i = index">
+                   *ngFor="let metric of dashboardMetrics; let i = index; trackBy: trackByLabel">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r" [ngClass]="['from-indigo-500 to-indigo-600', 'from-purple-500 to-purple-600', 'from-sky-400 to-teal-500', 'from-amber-500 to-rose-500'][i % 4]"></div>
             <div>
               <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{{ metric.label }}</span>
@@ -511,7 +511,7 @@
                   <input type="checkbox" [checked]="isAllStudentsSelected" (change)="toggleSelectAllStudents($event)" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
                   <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">เลือกทั้งหมด</span>
                 </div>
-                <div *ngFor="let s of pendingStudents" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
+                <div *ngFor="let s of pendingStudents; trackBy: trackById" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                   <div class="flex items-center gap-3 min-w-0 pr-3">
                     <input type="checkbox" [(ngModel)]="selectedStudentIds[s.id]" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
                     <div class="min-w-0">
@@ -544,7 +544,7 @@
                 <h4 class="text-lg font-black text-slate-900">บันทึกประจำวันของนักศึกษาที่รอตรวจ ({{ pendingLogbooks.length }})</h4>
               </div>
               <div class="glass-card rounded-3xl divide-y divide-slate-100/60/60 overflow-hidden shadow-sm">
-                <div *ngFor="let l of pendingLogbooks" class="p-6 hover:bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors">
+                <div *ngFor="let l of pendingLogbooks; trackBy: trackById" class="p-6 hover:bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 mb-1">
                       <span class="text-xs font-black text-slate-900 flex items-center gap-1.5" *ngIf="internshipFor(l.internshipId) as intern">
@@ -599,7 +599,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100/60">
-                  <tr *ngFor="let student of advisorStudents" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
+                  <tr *ngFor="let student of advisorStudents; trackBy: trackById" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                     <td class="px-10 py-6 font-black text-slate-900 text-base flex items-center gap-2">
                       <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" 
                             [title]="userOnlineStatus(student.id) === 'online' ? 'Online' : (userOnlineStatus(student.id) === 'AFK' ? 'AFK (ไม่อยู่หน้าจอ)' : 'Offline')"
@@ -642,7 +642,7 @@
                 <h4 class="text-lg font-black text-slate-900">ใบสมัครเข้าฝึกงานที่รอดำเนินการ ({{ pendingApplications.length }})</h4>
               </div>
               <div class="glass-card rounded-3xl divide-y divide-slate-100/60/60 overflow-hidden shadow-sm">
-                <div *ngFor="let app of pendingApplications" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
+                <div *ngFor="let app of pendingApplications; trackBy: trackById" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                   <div class="min-w-0 pr-3">
                     <div class="font-black text-slate-900 text-sm truncate flex items-center gap-1.5">
                       <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" 
@@ -681,7 +681,7 @@
                    <input type="checkbox" [checked]="isAllAttendancesSelected" (change)="toggleSelectAllAttendances($event)" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">เลือกทั้งหมด</span>
                 </div>
-                <div *ngFor="let att of pendingAttendances" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
+                <div *ngFor="let att of pendingAttendances; trackBy: trackById" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                   <div class="flex items-center gap-3 min-w-0 pr-3">
                     <input type="checkbox" [(ngModel)]="selectedAttendanceIds[att.id]" class="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent border-slate-300">
                     <div class="min-w-0">
@@ -735,7 +735,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100/60">
-                  <tr *ngFor="let intern of visibleInternships" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
+                  <tr *ngFor="let intern of visibleInternships; trackBy: trackById" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                     <td class="px-10 py-6 font-black text-slate-900 text-base flex items-center gap-2">
                       <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" 
                             [title]="userOnlineStatus(intern.studentId) === 'online' ? 'Online' : (userOnlineStatus(intern.studentId) === 'AFK' ? 'AFK (ไม่อยู่หน้าจอ)' : 'Offline')"
@@ -784,7 +784,7 @@
               <h4 class="text-lg font-black text-slate-900">ผู้สมัครลงทะเบียนที่รอการเปิดใช้งานบัญชี ({{ pendingUsers.length }})</h4>
             </div>
             <div class="bg-white rounded-3xl border border-slate-200/60 shadow-lg shadow-slate-200/10 divide-y divide-slate-100/60 overflow-hidden max-h-96 overflow-y-auto">
-              <div *ngFor="let u of pendingUsers" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
+              <div *ngFor="let u of pendingUsers; trackBy: trackById" class="p-6 hover:bg-slate-50/50 flex justify-between items-center transition-colors">
                 <div class="min-w-0 pr-3">
                   <div class="font-black text-slate-900 text-sm truncate">{{ u.name }}</div>
                   <div class="text-xs text-slate-400 font-medium tracking-wide uppercase mt-0.5">{{ u.role }} | {{ u.school || u.email }}</div>
@@ -824,7 +824,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100/60">
-                  <tr *ngFor="let u of managedStudents" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
+                  <tr *ngFor="let u of managedStudents; trackBy: trackById" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                     <td class="px-10 py-6 font-black text-slate-900 text-base">{{ u.name }}</td>
                     <td class="px-10 py-6 font-bold text-slate-500 text-sm">{{ u.email }}</td>
                     <td class="px-10 py-6 font-black text-blue-600 text-xs uppercase tracking-wider">{{ u.role }}</td>
@@ -944,7 +944,7 @@
         </article>
 
         <div class="flex flex-col gap-6">
-          <article *ngFor="let job of visibleJobs" class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-md hover:shadow-lg hover:border-brand-accent/30 transition-all group flex flex-col">
+          <article *ngFor="let job of visibleJobs; trackBy: trackById" class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-md hover:shadow-lg hover:border-brand-accent/30 transition-all group flex flex-col">
             <!-- Header Row: Title, Badges, and Apply Button -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <!-- Left Column: Title, Company, and Meta Badges -->
@@ -1076,7 +1076,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100/60">
-                <tr *ngFor="let app of visibleApplications" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
+                <tr *ngFor="let app of visibleApplications; trackBy: trackById" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6">
                     <div class="font-black text-slate-900 text-lg leading-tight flex items-center gap-1.5">
                       <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" 
@@ -1203,7 +1203,7 @@
                     ไม่พบข้อมูลการฝึกงาน
                   </td>
                 </tr>
-                <tr *ngFor="let internship of filteredVisibleInternships; let idx = index"
+                <tr *ngFor="let internship of filteredVisibleInternships; let idx = index; trackBy: trackById"
                     class="hover:bg-blue-50/30 transition-colors cursor-pointer group"
                     (click)="openInternshipDetail(internship)">
                   <!-- # -->
@@ -1837,7 +1837,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100/60">
-                <tr *ngFor="let att of visibleAttendances" class="hover:bg-blue-50/20 transition-colors group">
+                <tr *ngFor="let att of visibleAttendances; trackBy: trackById" class="hover:bg-blue-50/20 transition-colors group">
                   <td class="px-5 sm:px-10 py-5 sm:py-8 font-black text-slate-900 text-base sm:text-lg flex items-center gap-2">
                     <span class="inline-block w-2.5 h-2.5 rounded-full" 
                           [class.bg-emerald-500]="userOnlineStatus(att.studentId) === 'online'"
@@ -2040,7 +2040,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100/60">
-                <tr *ngFor="let logbook of visibleLogbooks" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
+                <tr *ngFor="let logbook of visibleLogbooks; trackBy: trackById" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6 font-black text-slate-900 text-lg">{{ logbookStudentName(logbook) }}</td>
                   <td class="px-10 py-6 font-bold text-indigo-600 text-sm">
                     {{ logbook.workDate ? (logbook.workDate | date:'dd MMM yyyy') : (logbook.createdAt | date:'dd MMM yyyy') }}
@@ -2212,7 +2212,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100/60">
-                <tr *ngFor="let leave of visibleLeaves" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
+                <tr *ngFor="let leave of visibleLeaves; trackBy: trackById" class="hover:bg-slate-50 transition-colors border-b border-slate-100/60">
                   <td class="px-10 py-6 font-black text-slate-900 text-lg flex items-center gap-2">
                     <span class="inline-block w-2.5 h-2.5 rounded-full" 
                           [class.bg-emerald-500]="userOnlineStatus(leave.studentId) === 'online'"
@@ -2957,7 +2957,7 @@
             </div>
 
             <div class="flex flex-col gap-3">
-              <div *ngFor="let ass of assignments"
+              <div *ngFor="let ass of assignments; trackBy: trackById"
                    (click)="selectAssignmentForDetails(ass.id)"
                    [class.ring-2]="selectedAssignmentIdForDetails === ass.id"
                    [class.ring-indigo-500]="selectedAssignmentIdForDetails === ass.id"
@@ -4863,7 +4863,7 @@
         </button>
       </div>
       <nav class="space-y-1 flex-1 overflow-y-auto p-4">
-        <button *ngFor="let view of availableViews" (click)="setActiveView(view); closeSidebar()" 
+        <button *ngFor="let view of availableViews; trackBy: trackByValue" (click)="setActiveView(view); closeSidebar()" 
                 class="w-full px-5 py-4 flex items-center gap-4 rounded-2xl font-black text-sm transition-all"
                 [class.bg-blue-50]="activeView === view" [class.text-brand-accent]="activeView === view"
                 [class.text-slate-500]="activeView !== view" [class.hover:bg-slate-50]="activeView !== view">

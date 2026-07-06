@@ -4587,4 +4587,16 @@ export class App {
   protected toggleEvaluationDetails(id: number): void {
     this.expandedEvaluationId = this.expandedEvaluationId === id ? null : id;
   }
+
+  protected trackById(index: number, item: any): any {
+    return item?.id ?? index;
+  }
+
+  protected trackByValue(index: number, item: any): any {
+    return item;
+  }
+
+  protected trackByLabel(index: number, item: any): string {
+    return item?.label ?? index;
+  }
 }

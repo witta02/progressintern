@@ -176,6 +176,8 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		assignmentGroup.GET("", handlers.GetAllAssignmentsHandler)
 		assignmentGroup.POST("", handlers.CreateAssignmentHandler)
+		assignmentGroup.PUT("/:id", handlers.UpdateAssignmentHandler)
+		assignmentGroup.DELETE("/:id", handlers.DeleteAssignmentHandler)
 	}
 
 	submissionGroup := router.Group("/api/submissions")

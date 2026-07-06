@@ -640,3 +640,174 @@ func GradeSubmissionHandler(c *gin.Context) {
 		},
 	})
 }
+
+// ========================================================
+// [PUT] แก้ไขงาน/การบ้าน (Update Assignment)
+// ========================================================
+func UpdateAssignmentHandler(c *gin.Context) {
+	assIDStr := c.Param("id")
+	assID, err := strconv.Atoi(assIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "ID งานมอบหมายไม่ถูกต้อง"})
+		return
+	}
+
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	// Fetch existing assignment to check authorization
+	var creatorID int
+	var creatorRole string
+	var schoolID, companyID sql.NullInt64
+	err = config.DB.QueryRow(
+		"SELECT creator_id, creator_role, school_id, company_id FROM assignments WHERE id = ?",
+		assID,
+	).Scan(&creatorID, &creatorRole, &schoolID, &companyID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"status": 404, "error": "ไม่พบงานมอบหมาย"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "เกิดข้อผิดพลาดในการดึงข้อมูล: " + err.Error()})
+		}
+		return
+	}
+
+	// Authorization check:
+	isAuthorized := false
+	if roleStr == "admin" || creatorID == userIDInt {
+		isAuthorized = true
+	} else if roleStr == "company" && companyID.Valid {
+		userCompID, compErr := getUserCompanyID(userIDInt)
+		if compErr == nil && userCompID == int(companyID.Int64) {
+			isAuthorized = true
+		}
+	}
+
+	if !isAuthorized {
+		c.JSON(http.StatusForbidden, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์แก้ไขงานมอบหมายนี้"})
+		return
+	}
+
+	var input struct {
+		Title        string `json:"title" binding:"required"`
+		Description  string `json:"description"`
+		DueDate      string `json:"due_date"`
+		Points       int    `json:"points"`
+		StudentID    *int   `json:"student_id"`
+		JobPostingID *int   `json:"job_posting_id"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
+		return
+	}
+
+	var dueDateVal *time.Time = nil
+	if input.DueDate != "" {
+		parsedTime, err := time.Parse(time.RFC3339, input.DueDate)
+		if err != nil {
+			parsedTime, err = time.Parse("2006-01-02 15:04:05", input.DueDate)
+			if err != nil {
+				parsedTime, err = time.Parse("2006-01-02", input.DueDate)
+			}
+		}
+		if err == nil {
+			dueDateVal = &parsedTime
+		}
+	}
+
+	pointsVal := input.Points
+	if pointsVal <= 0 {
+		pointsVal = 100
+	}
+
+	_, err = config.DB.Exec(
+		`UPDATE assignments 
+		 SET title = ?, description = ?, due_date = ?, points = ?, student_id = ?, job_posting_id = ? 
+		 WHERE id = ?`,
+		input.Title, input.Description, dueDateVal, pointsVal, input.StudentID, input.JobPostingID, assID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ไม่สามารถแก้ไขงานมอบหมายได้: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  200,
+		"message": "แก้ไขงานที่มอบหมายสำเร็จ",
+		"data": gin.H{
+			"id":             assID,
+			"title":          input.Title,
+			"description":    input.Description,
+			"due_date":       dueDateVal,
+			"points":         pointsVal,
+			"student_id":     input.StudentID,
+			"job_posting_id": input.JobPostingID,
+		},
+	})
+}
+
+// ========================================================
+// [DELETE] ลบงาน/การบ้าน (Delete Assignment)
+// ========================================================
+func DeleteAssignmentHandler(c *gin.Context) {
+	assIDStr := c.Param("id")
+	assID, err := strconv.Atoi(assIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "ID งานมอบหมายไม่ถูกต้อง"})
+		return
+	}
+
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	// Fetch existing assignment to check authorization
+	var creatorID int
+	var companyID sql.NullInt64
+	err = config.DB.QueryRow(
+		"SELECT creator_id, company_id FROM assignments WHERE id = ?",
+		assID,
+	).Scan(&creatorID, &companyID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"status": 404, "error": "ไม่พบงานมอบหมาย"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "เกิดข้อผิดพลาดในการดึงข้อมูล: " + err.Error()})
+		}
+		return
+	}
+
+	// Authorization check:
+	isAuthorized := false
+	if roleStr == "admin" || creatorID == userIDInt {
+		isAuthorized = true
+	} else if roleStr == "company" && companyID.Valid {
+		userCompID, compErr := getUserCompanyID(userIDInt)
+		if compErr == nil && userCompID == int(companyID.Int64) {
+			isAuthorized = true
+		}
+	}
+
+	if !isAuthorized {
+		c.JSON(http.StatusForbidden, gin.H{"status": 403, "error": "คุณไม่มีสิทธิ์ลบงานมอบหมายนี้"})
+		return
+	}
+
+	_, err = config.DB.Exec("DELETE FROM assignments WHERE id = ?", assID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ไม่สามารถลบงานมอบหมายได้: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  200,
+		"message": "ลบงานมอบหมายสำเร็จ",
+	})
+}

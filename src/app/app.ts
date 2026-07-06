@@ -137,6 +137,8 @@ export class App {
     this.cdr.markForCheck();
   }
   protected sidebarOpen = false;
+  protected showStatusDropdown = false;
+  protected showSidebarStatusDropdown = false;
   protected activeView = 'dashboard';
 
   // Feature 3: Logbook work date

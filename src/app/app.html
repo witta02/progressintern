@@ -1083,8 +1083,9 @@
           </button>
         </div>
 
-        <div class="glass-card rounded-[2.5rem] overflow-hidden">
-          <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0">
+        <div class="glass-card rounded-[2.5rem] overflow-hidden p-4 md:p-0 border border-slate-200/60 md:border-0 shadow-sm md:shadow-none">
+          <!-- Desktop Table (md:block) -->
+          <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0 hidden md:block">
             <table class="w-full text-left">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
@@ -1161,6 +1162,75 @@
               </tbody>
             </table>
           </div>
+
+          <!-- Mobile Cards (block md:hidden) -->
+          <div class="block md:hidden space-y-3">
+            <div *ngFor="let app of visibleApplications; trackBy: trackById" class="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-3 shadow-sm active:bg-slate-50 transition-colors">
+              <div class="flex items-center justify-between">
+                <div class="font-black text-slate-900 text-sm leading-tight flex items-center gap-1.5">
+                  <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" 
+                        [class.bg-emerald-500]="userOnlineStatus(app.studentId) === 'online'"
+                        [class.bg-orange-500]="userOnlineStatus(app.studentId) === 'AFK'"
+                        [class.bg-slate-400]="userOnlineStatus(app.studentId) === 'offline' || !userOnlineStatus(app.studentId)"></span>
+                  {{ userName(app.studentId) }}
+                </div>
+                <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm"
+                      [class.bg-emerald-50]="app.status === 'approved'" [class.text-emerald-600]="app.status === 'approved'" [class.border-emerald-100]="app.status === 'approved'"
+                      [class.bg-rose-50]="app.status === 'rejected'" [class.text-rose-600]="app.status === 'rejected'" [class.border-rose-100]="app.status === 'rejected'"
+                      [class.bg-blue-50]="app.status === 'interview'" [class.text-blue-600]="app.status === 'interview'" [class.border-blue-100]="app.status === 'interview'"
+                      [class.bg-slate-50]="app.status === 'pending'" [class.text-slate-600]="app.status === 'pending'" [class.border-slate-100]="app.status === 'pending'">
+                  {{ applicationStatusLabel(app.status) }}
+                </span>
+              </div>
+
+              <div class="text-xs border-t border-b border-slate-50 py-2 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="font-black text-blue-600 text-sm">{{ jobTitle(app.jobPostingId) }}</span>
+                  <span class="text-slate-400 text-[10px]">{{ formatDateTime(app.appliedAt) }}</span>
+                </div>
+                <div class="text-[10px] font-black text-blue-600/70 uppercase tracking-widest">{{ studentField(app.studentId) }}</div>
+                <div *ngIf="studentStartDate(app.studentId) || studentEndDate(app.studentId)" class="text-[9px] font-bold text-slate-500">
+                  📅 ช่วงฝึกงาน: 
+                  <span class="text-brand-accent ml-1">
+                    {{ studentStartDate(app.studentId) ? formatTermDate(studentStartDate(app.studentId)) : 'ยังไม่ระบุ' }} – 
+                    {{ studentEndDate(app.studentId) ? formatTermDate(studentEndDate(app.studentId)) : 'ยังไม่ระบุ' }}
+                  </span>
+                </div>
+                <p *ngIf="studentIntro(app.studentId)" class="text-xs text-slate-400 font-medium italic">
+                  "{{ studentIntro(app.studentId) }}"
+                </p>
+                <div *ngIf="studentResume(app.studentId)" class="pt-1">
+                  <a [href]="getClickableFilePath(studentResume(app.studentId))" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-black text-[9px] uppercase tracking-widest bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 transition-all font-sans">
+                    📄 ดูเรซูเม
+                  </a>
+                </div>
+              </div>
+
+              <div class="flex justify-end items-center mt-1">
+                <div class="flex flex-wrap gap-1.5">
+                  <ng-container *ngIf="currentUser?.role === 'company' && (app.status === 'pending' || app.status === 'interview')">
+                    <button class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-sm font-sans" (click)="updateApplication(app, 'approved')">รับเข้าฝึกงาน</button>
+                    <button class="px-3 py-2 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-lg font-sans" (click)="updateApplication(app, 'interview')">นัดสัมภาษณ์</button>
+                    <button class="px-3 py-2 bg-white border border-rose-100 text-rose-600 hover:bg-rose-50 text-[9px] font-black uppercase tracking-widest rounded-lg font-sans" (click)="updateApplication(app, 'rejected')">ปฏิเสธ</button>
+                  </ng-container>
+                  <button *ngIf="app.status === 'approved'"
+                          class="inline-flex items-center gap-1 px-3 py-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg border border-indigo-100 font-sans"
+                          (click)="openInternshipDetailByStudentId(app.studentId)">
+                    ดูข้อมูลนักศึกษา
+                  </button>
+                  <button *ngIf="currentUser?.role === 'company' && (app.status === 'approved' || app.status === 'rejected')"
+                          type="button"
+                          (click)="clearApplication(app.id)"
+                          class="inline-flex items-center gap-1 px-3 py-2 bg-slate-50 hover:bg-slate-600 text-slate-600 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg border border-slate-200 cursor-pointer font-sans">
+                    ล้างรายการ
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="visibleApplications.length === 0" class="p-8 text-center text-slate-400 font-bold text-sm bg-slate-50 rounded-2xl border border-dashed">
+              ไม่มีใบสมัครในช่วงเวลาหรือตามเงื่อนไขการค้นหานี้
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1203,8 +1273,9 @@
         </div>
 
         <!-- ── Data Table ────────────────────────────────────── -->
-        <article class="glass-card rounded-[2.5rem] overflow-hidden">
-          <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0">
+        <article class="glass-card rounded-[2.5rem] overflow-hidden p-4 md:p-0 border border-slate-200/60 md:border-0 shadow-sm md:shadow-none">
+          <!-- Desktop Table (md:block) -->
+          <div class="overflow-x-auto -mx-5 sm:-mx-8 lg:mx-0 hidden md:block">
             <table class="w-full text-left">
               <thead>
                 <tr class="bg-gradient-to-r from-slate-50 to-blue-50/30">
@@ -1359,6 +1430,133 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Cards (block md:hidden) -->
+          <div class="block md:hidden space-y-3">
+            <div *ngFor="let internship of filteredVisibleInternships; let idx = index; trackBy: trackById"
+                 (click)="openInternshipDetail(internship)"
+                 class="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-3 shadow-sm active:bg-slate-50 transition-colors cursor-pointer">
+              
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-black text-slate-400">#{{ idx + 1 }}</span>
+                  <div *ngIf="currentUser?.role !== 'student'" class="font-black text-slate-900 text-sm leading-tight flex items-center gap-1.5">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" 
+                          [class.bg-emerald-500]="userOnlineStatus(internship.studentId) === 'online'"
+                          [class.bg-orange-500]="userOnlineStatus(internship.studentId) === 'AFK'"
+                          [class.bg-slate-400]="userOnlineStatus(internship.studentId) === 'offline' || !userOnlineStatus(internship.studentId)"></span>
+                    {{ userName(internship.studentId) }}
+                  </div>
+                  <div *ngIf="currentUser?.role === 'student'" class="font-black text-slate-900 text-sm">
+                    {{ companyName(internship.companyId) }}
+                  </div>
+                </div>
+                <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm"
+                      [class.bg-emerald-50]="internship.status === 'active'"
+                      [class.text-emerald-600]="internship.status === 'active'"
+                      [class.border-emerald-100]="internship.status === 'active'"
+                      [class.bg-blue-50]="internship.status === 'completed'"
+                      [class.text-blue-600]="internship.status === 'completed'"
+                      [class.border-blue-100]="internship.status === 'completed'"
+                      [class.bg-slate-50]="internship.status === 'terminated'"
+                      [class.text-slate-500]="internship.status === 'terminated'"
+                      [class.border-slate-100]="internship.status === 'terminated'">
+                  {{ internshipStatusLabel(internship.status) }}
+                </span>
+              </div>
+
+              <div class="text-xs border-t border-b border-slate-50 py-2 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="font-black text-blue-600 text-sm">{{ internshipJobTitle(internship) }}</span>
+                  <span *ngIf="currentUser?.role !== 'student'" class="text-slate-400 text-[10px]">{{ companyName(internship.companyId) }}</span>
+                </div>
+                <div *ngIf="currentUser?.role !== 'student'" class="text-[10px] font-black text-blue-600/70 uppercase tracking-widest">{{ studentField(internship.studentId) }}</div>
+                
+                <div class="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>📅 {{ formatTermDate(internship.startDate) }} – {{ formatTermDate(internship.endDate) }}</span>
+                  <span *ngIf="getInternshipProgress(internship) as progress" class="text-brand-accent">{{ progress.percent }}%</span>
+                </div>
+
+                <!-- Progress bar -->
+                <div *ngIf="getInternshipProgress(internship) as progress" class="w-full bg-slate-100/80 rounded-full h-1.5 overflow-hidden">
+                  <div class="bg-gradient-to-r from-indigo-500 to-teal-400 h-1.5 rounded-full transition-all" [style.width.%]="progress.percent"></div>
+                </div>
+
+                <!-- Advisor tag & actions -->
+                <div *ngIf="currentUser?.role === 'advisor'" class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <!-- Has Advisor -->
+                  <ng-container *ngIf="studentAdvisorName(internship.studentId) as advName; else noAdv">
+                    <span class="inline-flex px-2 py-0.5 rounded bg-slate-100 text-[9px] text-slate-600 font-bold border border-slate-200">
+                      🎓 อาจารย์: {{ advName }}
+                    </span>
+                    <button *ngIf="isMyStudent(internship.studentId)" 
+                            type="button"
+                            (click)="$event.stopPropagation(); removeStudentFromAdvisor(internship.studentId)"
+                            class="text-rose-600 hover:text-rose-800 text-[9px] font-black uppercase tracking-widest hover:underline cursor-pointer">
+                      [ นำออก ]
+                    </button>
+                  </ng-container>
+                  <!-- No Advisor -->
+                  <ng-template #noAdv>
+                    <span class="inline-flex px-2 py-0.5 rounded bg-amber-50 text-[9px] text-amber-600 font-bold border border-amber-200/60">
+                      ⚠️ ยังไม่มีอาจารย์ดูแล
+                    </span>
+                  </ng-template>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center mt-1">
+                <!-- Left: Advisor Action Buttons -->
+                <div>
+                  <button *ngIf="currentUser?.role === 'advisor' && !isMyStudent(internship.studentId)"
+                          type="button"
+                          (click)="$event.stopPropagation(); assignStudentToAdvisor(internship.studentId)"
+                          [class.bg-emerald-50]="!studentAdvisorName(internship.studentId)"
+                          [class.text-emerald-700]="!studentAdvisorName(internship.studentId)"
+                          [class.border-emerald-200]="!studentAdvisorName(internship.studentId)"
+                          [class.bg-blue-50]="studentAdvisorName(internship.studentId)"
+                          [class.text-blue-700]="studentAdvisorName(internship.studentId)"
+                          [class.border-blue-200]="studentAdvisorName(internship.studentId)"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 border text-[9px] font-black uppercase tracking-widest rounded-lg hover:scale-105 transition-all shadow-sm cursor-pointer font-sans">
+                    {{ studentAdvisorName(internship.studentId) ? '+ ร่วมดูแล' : '+ รับดูแล' }}
+                  </button>
+                </div>
+
+                <!-- Right: Actions -->
+                <div class="flex gap-2">
+                  <button type="button"
+                          (click)="openInternshipDetail(internship)"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm">
+                    ดูรายละเอียด
+                  </button>
+                  <button *ngIf="currentUser?.role === 'company' && internship.status === 'active'"
+                          type="button"
+                          (click)="$event.stopPropagation(); completeInternship(internship.id)"
+                          class="p-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white rounded-lg border border-emerald-100 hover:border-emerald-600 transition-all cursor-pointer shadow-sm"
+                          title="เสร็จสิ้นการฝึกงาน">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  </button>
+                  <button *ngIf="currentUser?.role === 'company' && internship.status === 'active'"
+                          type="button"
+                          (click)="$event.stopPropagation(); terminateInternship(internship.id)"
+                          class="p-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white rounded-lg border border-rose-100 hover:border-rose-600 transition-all cursor-pointer shadow-sm"
+                          title="นำออก">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                  <button *ngIf="currentUser?.role === 'company' && (internship.status === 'terminated' || internship.status === 'completed')"
+                          type="button"
+                          (click)="$event.stopPropagation(); dismissInternship(internship.id)"
+                          class="p-1.5 bg-slate-50 hover:bg-rose-600 text-slate-500 hover:text-white rounded-lg border border-slate-200 hover:border-rose-600 transition-all cursor-pointer shadow-sm"
+                          title="ล้างรายการ">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="filteredVisibleInternships.length === 0" class="p-8 text-center text-slate-400 font-bold text-sm bg-slate-50 rounded-2xl border border-dashed">
+              ไม่พบข้อมูลการฝึกงาน
+            </div>
           </div>
         </article>
 

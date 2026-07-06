@@ -579,6 +579,58 @@ export class App {
     return views;
   }
 
+  /** The 4 primary views shown in the mobile bottom navigation bar, by role. */
+  protected get mobileNavItems(): Array<{ view: string; label: string }> {
+    if (!this.currentUser) return [];
+    const role = this.currentUser.role;
+
+    if (role === 'student') {
+      if (this.activeInternship) {
+        return [
+          { view: 'dashboard',   label: 'ภาพรวม' },
+          { view: 'attendance',  label: 'ลงเวลา' },
+          { view: 'logbooks',    label: 'บันทึก' },
+          { view: 'classwork',   label: 'งาน' },
+        ];
+      }
+      return [
+        { view: 'dashboard',     label: 'ภาพรวม' },
+        { view: 'jobs',          label: 'งาน' },
+        { view: 'applications',  label: 'สมัคร' },
+        { view: 'internships',   label: 'ฝึกงาน' },
+      ];
+    }
+
+    if (role === 'advisor') {
+      return [
+        { view: 'dashboard',   label: 'ภาพรวม' },
+        { view: 'students',    label: 'นักศึกษา' },
+        { view: 'internships', label: 'ฝึกงาน' },
+        { view: 'attendance',  label: 'ลงเวลา' },
+      ];
+    }
+
+    if (role === 'company') {
+      return [
+        { view: 'dashboard',     label: 'ภาพรวม' },
+        { view: 'applications',  label: 'ใบสมัคร' },
+        { view: 'internships',   label: 'ฝึกงาน' },
+        { view: 'attendance',    label: 'ลงเวลา' },
+      ];
+    }
+
+    if (role === 'admin') {
+      return [
+        { view: 'dashboard',      label: 'ภาพรวม' },
+        { view: 'admin_users',    label: 'ผู้ใช้' },
+        { view: 'admin_codes',    label: 'รหัส' },
+        { view: 'company_school', label: 'บริษัท' },
+      ];
+    }
+
+    return [{ view: 'dashboard', label: 'ภาพรวม' }];
+  }
+
   protected get dashboardMetrics() {
     if (this.currentUser?.role === 'admin') {
       return [

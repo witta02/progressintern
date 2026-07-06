@@ -58,11 +58,17 @@ export class App {
   protected currentUserId: number | null = null;
   protected initialized = false;
   protected apiRetrying = false;
+  protected currentTime = new Date();
 
   constructor() {
     console.log('โปรเจคส่งที่ฝึกงานฮัฟ ส่องไรเอ่ยย');
     this.applyRoleTheme(undefined);
     this.initSession();
+    if (typeof window !== 'undefined') {
+      setInterval(() => {
+        this.currentTime = new Date();
+      }, 1000);
+    }
   }
 
   private async initSession(): Promise<void> {
@@ -2355,6 +2361,73 @@ export class App {
 
   protected getStudentSubmission(assignmentId: number, studentId: number): Submission | undefined {
     return this.submissions.find(s => s.assignmentId === assignmentId && s.studentId === studentId);
+  }
+
+  protected get pendingCompanyAssignmentsCount(): number {
+    const user = this.currentUser;
+    if (!user || user.role !== 'student') return 0;
+    
+    const companyAssList = this.assignments.filter(a => a.companyId !== undefined && a.companyId !== null || a.creatorRole === 'company');
+    let count = 0;
+    for (const ass of companyAssList) {
+      const sub = this.getStudentSubmission(ass.id, user.id);
+      if (!sub) {
+        count++;
+      } else if (sub.status !== 'accepted' && sub.status !== 'ignored' && sub.status !== 'submitted' && sub.status !== 'late' && sub.status !== 'graded') {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  protected getCountdownText(dueDateStr: string | undefined): string {
+    if (!dueDateStr) return 'ไม่มีกำหนดส่ง (No Deadline)';
+    const dueDate = new Date(dueDateStr);
+    const now = this.currentTime;
+    const diffMs = dueDate.getTime() - now.getTime();
+    if (diffMs <= 0) {
+      return 'หมดเวลาส่งแล้ว (Deadline passed)';
+    }
+
+    const diffSecs = Math.floor(diffMs / 1000);
+    const secs = diffSecs % 60;
+    const diffMins = Math.floor(diffSecs / 60);
+    const mins = diffMins % 60;
+    const diffHours = Math.floor(diffMins / 60);
+    const hours = diffHours % 24;
+    const days = Math.floor(diffHours / 24);
+
+    let parts: string[] = [];
+    if (days > 0) parts.push(`${days} วัน`);
+    if (hours > 0 || days > 0) parts.push(`${hours} ชั่วโมง`);
+    if (diffMins > 0 || hours > 0 || days > 0) parts.push(`${mins} นาที`);
+    parts.push(`${secs} วินาที`);
+
+    return 'เหลือเวลา: ' + parts.join(' ');
+  }
+
+  protected async acceptAssignment(assignmentId: number): Promise<void> {
+    const studentId = this.currentUserId;
+    if (!studentId) return;
+    try {
+      await this.data.acceptSubmission(assignmentId, studentId);
+      this.notifications.success('ยอมรับงานสำเร็จและเริ่มจับเวลาแล้ว', 'สำเร็จ');
+      this.selectAssignmentForDetails(assignmentId);
+    } catch (err: any) {
+      this.notifications.error('ยอมรับงานล้มเหลว: ' + err.message, 'ผิดพลาด');
+    }
+  }
+
+  protected async ignoreAssignment(assignmentId: number): Promise<void> {
+    const studentId = this.currentUserId;
+    if (!studentId) return;
+    try {
+      await this.data.ignoreSubmission(assignmentId, studentId);
+      this.notifications.success('ปฏิเสธงานเรียบร้อยแล้ว', 'สำเร็จ');
+      this.selectAssignmentForDetails(assignmentId);
+    } catch (err: any) {
+      this.notifications.error('ปฏิเสธงานล้มเหลว: ' + err.message, 'ผิดพลาด');
+    }
   }
 
   // --- Resume Uploader Simulation ---

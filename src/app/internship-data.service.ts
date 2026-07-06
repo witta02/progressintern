@@ -1231,6 +1231,60 @@ export class InternshipDataService {
     this.persist();
   }
 
+  async acceptSubmission(assignmentId: number, studentId: number): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.acceptSubmission(assignmentId));
+      await this.refreshFromApi();
+      return;
+    }
+
+    const nowStr = new Date().toISOString();
+    const idx = this.submissions.findIndex(s => s.assignmentId === assignmentId && s.studentId === studentId);
+    if (idx >= 0) {
+      this.submissions = this.submissions.map((s, i) => i === idx ? {
+        ...s,
+        status: 'accepted'
+      } : s);
+    } else {
+      const newSub: Submission = {
+        id: this.nextId(this.submissions),
+        assignmentId,
+        studentId,
+        status: 'accepted',
+        submittedAt: nowStr
+      };
+      this.submissions = [...this.submissions, newSub];
+    }
+    this.persist();
+  }
+
+  async ignoreSubmission(assignmentId: number, studentId: number): Promise<void> {
+    if (this.api.apiEnabled()) {
+      await firstValueFrom(this.api.ignoreSubmission(assignmentId));
+      await this.refreshFromApi();
+      return;
+    }
+
+    const nowStr = new Date().toISOString();
+    const idx = this.submissions.findIndex(s => s.assignmentId === assignmentId && s.studentId === studentId);
+    if (idx >= 0) {
+      this.submissions = this.submissions.map((s, i) => i === idx ? {
+        ...s,
+        status: 'ignored'
+      } : s);
+    } else {
+      const newSub: Submission = {
+        id: this.nextId(this.submissions),
+        assignmentId,
+        studentId,
+        status: 'ignored',
+        submittedAt: nowStr
+      };
+      this.submissions = [...this.submissions, newSub];
+    }
+    this.persist();
+  }
+
   private hasLocalStorage(): boolean {
     return typeof localStorage !== 'undefined';
   }

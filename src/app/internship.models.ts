@@ -228,7 +228,7 @@ export interface Assignment {
   updatedAt?: string;
 }
 
-export type SubmissionStatus = 'submitted' | 'late' | 'graded';
+export type SubmissionStatus = 'submitted' | 'late' | 'graded' | 'accepted' | 'ignored';
 
 export interface Submission {
   id: number;

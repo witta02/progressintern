@@ -379,6 +379,14 @@ export class InternshipApiService {
     return this.putOne<ApiSubmission, Submission>(`submissions/${id}/grade`, { score, feedback }, mapSubmission);
   }
 
+  acceptSubmission(assignmentId: number): Observable<Submission | null> {
+    return this.postOne<ApiSubmission, Submission>('submissions/accept', { assignment_id: assignmentId }, mapSubmission);
+  }
+
+  ignoreSubmission(assignmentId: number): Observable<Submission | null> {
+    return this.postOne<ApiSubmission, Submission>('submissions/ignore', { assignment_id: assignmentId }, mapSubmission);
+  }
+
   private getList<D, M>(path: string, mapper: (dto: D) => M): Observable<M[]> {
     interface ApiResponseList<T> {
       status?: number;

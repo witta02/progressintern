@@ -343,6 +343,145 @@ func CreateSubmissionHandler(c *gin.Context) {
 }
 
 // ========================================================
+// [POST] นักศึกษากดรับงาน (Accept Assignment Work)
+// ========================================================
+func AcceptSubmissionHandler(c *gin.Context) {
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	if roleStr != "student" {
+		c.JSON(http.StatusForbidden, gin.H{"status": 403, "error": "เฉพาะนักศึกษาเท่านั้นที่สามารถรับงานได้"})
+		return
+	}
+
+	var input struct {
+		AssignmentID int `json:"assignment_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
+		return
+	}
+
+	// Check if a submission record already exists
+	var existingID int
+	var existingStatus string
+	err := config.DB.QueryRow(
+		"SELECT id, status FROM submissions WHERE assignment_id = ? AND student_id = ?",
+		input.AssignmentID, userIDInt,
+	).Scan(&existingID, &existingStatus)
+
+	var res sql.Result
+	if err == sql.ErrNoRows {
+		res, err = config.DB.Exec(
+			`INSERT INTO submissions (assignment_id, student_id, status, content, file_name, file_path, submitted_at)
+			 VALUES (?, ?, 'accepted', '', '', '', NOW())`,
+			input.AssignmentID, userIDInt,
+		)
+	} else if err == nil {
+		res, err = config.DB.Exec(
+			"UPDATE submissions SET status = 'accepted', submitted_at = NOW() WHERE id = ?",
+			existingID,
+		)
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ไม่สามารถตอบรับงานได้: " + err.Error()})
+		return
+	}
+
+	var id int64
+	if existingID > 0 {
+		id = int64(existingID)
+	} else {
+		id, _ = res.LastInsertId()
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  200,
+		"message": "ตอบรับงานมอบหมายเรียบร้อยแล้ว",
+		"data": gin.H{
+			"id":            id,
+			"assignment_id": input.AssignmentID,
+			"student_id":    userIDInt,
+			"status":        "accepted",
+		},
+	})
+}
+
+// ========================================================
+// [POST] นักศึกษากดปฏิเสธงาน (Ignore Assignment Work)
+// ========================================================
+func IgnoreSubmissionHandler(c *gin.Context) {
+	reqRole, _ := c.Get("role")
+	reqUserID, _ := c.Get("user_id")
+
+	roleStr := reqRole.(string)
+	userIDInt := reqUserID.(int)
+
+	if roleStr != "student" {
+		c.JSON(http.StatusForbidden, gin.H{"status": 403, "error": "เฉพาะนักศึกษาเท่านั้นที่สามารถปฏิเสธงานได้"})
+		return
+	}
+
+	var input struct {
+		AssignmentID int `json:"assignment_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "ข้อมูลไม่ถูกต้อง: " + err.Error()})
+		return
+	}
+
+	// Check if a submission record already exists
+	var existingID int
+	var existingStatus string
+	err := config.DB.QueryRow(
+		"SELECT id, status FROM submissions WHERE assignment_id = ? AND student_id = ?",
+		input.AssignmentID, userIDInt,
+	).Scan(&existingID, &existingStatus)
+
+	var res sql.Result
+	if err == sql.ErrNoRows {
+		res, err = config.DB.Exec(
+			`INSERT INTO submissions (assignment_id, student_id, status, content, file_name, file_path, submitted_at)
+			 VALUES (?, ?, 'ignored', '', '', '', NOW())`,
+			input.AssignmentID, userIDInt,
+		)
+	} else if err == nil {
+		res, err = config.DB.Exec(
+			"UPDATE submissions SET status = 'ignored', submitted_at = NOW() WHERE id = ?",
+			existingID,
+		)
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ไม่สามารถปฏิเสธงานได้: " + err.Error()})
+		return
+	}
+
+	var id int64
+	if existingID > 0 {
+		id = int64(existingID)
+	} else {
+		id, _ = res.LastInsertId()
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  200,
+		"message": "ปฏิเสธงานมอบหมายเรียบร้อยแล้ว",
+		"data": gin.H{
+			"id":            id,
+			"assignment_id": input.AssignmentID,
+			"student_id":    userIDInt,
+			"status":        "ignored",
+		},
+	})
+}
+
+
+// ========================================================
 // [GET] ดึงข้อมูลส่งงานทั้งหมด (Get All Submissions)
 // ========================================================
 func GetAllSubmissionsHandler(c *gin.Context) {

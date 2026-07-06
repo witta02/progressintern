@@ -183,6 +183,8 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		submissionGroup.GET("", handlers.GetAllSubmissionsHandler)
 		submissionGroup.POST("", handlers.CreateSubmissionHandler)
+		submissionGroup.POST("/accept", handlers.AcceptSubmissionHandler)
+		submissionGroup.POST("/ignore", handlers.IgnoreSubmissionHandler)
 		submissionGroup.PUT("/:id/grade", handlers.GradeSubmissionHandler)
 	}
 

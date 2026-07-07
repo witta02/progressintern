@@ -2159,6 +2159,25 @@ export class App {
 
     // Radius check (only if NOT WFH)
     if (!isWfh) {
+      const company = this.studentCompany;
+      const isCompanyLocationMissing = !company || 
+                                       company.latitude === undefined || 
+                                       company.longitude === undefined || 
+                                       company.latitude === null || 
+                                       company.longitude === null ||
+                                       (Number(company.latitude) === 0 && Number(company.longitude) === 0);
+
+      if (isCompanyLocationMissing) {
+        Swal.fire({
+          title: 'สถานประกอบการยังไม่ได้ตั้งค่าพิกัด',
+          text: 'สถานประกอบการของคุณยังไม่ได้ระบุพิกัดที่ตั้งบนแผนที่ กรุณาแจ้งผู้ดูแลหรือพี่เลี้ยงของท่านให้ปักหมุดพิกัดบริษัทในหน้าตั้งค่าโปรไฟล์ก่อนลงเวลาเข้างาน',
+          icon: 'warning',
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#eab308'
+        });
+        return;
+      }
+
       if (lat === undefined || lon === undefined || this.companyDistance === null) {
         Swal.fire({
           title: 'ไม่สามารถตรวจสอบตำแหน่งได้',

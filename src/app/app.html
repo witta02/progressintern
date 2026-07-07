@@ -437,9 +437,12 @@
                       <span *ngIf="companyDistance <= companyCheckRadius">✓ (อยู่ในขอบเขตบริษัท)</span>
                     </span>
                   </div>
-                  <div class="flex flex-col gap-3">
-                    <button type="button" (click)="checkIn(false)" class="w-full py-5 bg-white text-blue-600 hover:bg-slate-50 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                  <div class="flex flex-col sm:flex-row gap-3">
+                    <button type="button" (click)="checkIn(false)" class="flex-grow py-5 bg-white text-blue-600 hover:bg-slate-50 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
                       ลงเวลาเข้างาน (Check In)
+                    </button>
+                    <button type="button" (click)="checkIn(true)" class="py-5 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-pointer min-w-[100px]">
+                      WFH
                     </button>
                   </div>
                   <p class="text-center text-[10px] text-blue-200/60 font-bold uppercase tracking-widest">พิกัด GPS จะถูกตรวจสอบโดยผู้ควบคุมงาน</p>

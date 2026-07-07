@@ -2118,7 +2118,9 @@ export class App {
         (error) => {
           Swal.close();
           console.error('[App] Geolocation check-in error — trying IP fallback', error);
-          if (error.code === 1) {
+          if (isWfh) {
+            this.executeCheckIn(undefined, undefined, isWfh);
+          } else if (error.code === 1) {
             this.handleGeolocationError(error, true);
           } else {
             this.getIpLocation().then(coords => {
@@ -2132,13 +2134,17 @@ export class App {
         }
       );
     } else {
-      Swal.fire({
-        title: 'ระบบระบุพิกัดไม่ทำงาน',
-        text: 'เบราว์เซอร์ของคุณไม่สนับสนุนการระบุตำแหน่ง GPS ไม่สามารถเช็คอินได้',
-        icon: 'error',
-        confirmButtonText: 'ตกลง',
-        confirmButtonColor: '#ef4444'
-      });
+      if (isWfh) {
+        this.executeCheckIn(undefined, undefined, isWfh);
+      } else {
+        Swal.fire({
+          title: 'ระบบระบุพิกัดไม่ทำงาน',
+          text: 'เบราว์เซอร์ของคุณไม่สนับสนุนการระบุตำแหน่ง GPS ไม่สามารถเช็คอินได้',
+          icon: 'error',
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#ef4444'
+        });
+      }
     }
   }
 
@@ -2151,27 +2157,29 @@ export class App {
       this.currentLongitude = lon;
     }
 
-    // Strict radius check: must have location and must be in radius
-    if (lat === undefined || lon === undefined || this.companyDistance === null) {
-      Swal.fire({
-        title: 'ไม่สามารถตรวจสอบตำแหน่งได้',
-        text: 'ระบบต้องการพิกัดตำแหน่ง GPS เพื่อทำการเช็คอิน กรุณาอนุญาตการเข้าถึงตำแหน่งของคุณ',
-        icon: 'error',
-        confirmButtonText: 'ตกลง',
-        confirmButtonColor: '#ef4444'
-      });
-      return;
-    }
+    // Radius check (only if NOT WFH)
+    if (!isWfh) {
+      if (lat === undefined || lon === undefined || this.companyDistance === null) {
+        Swal.fire({
+          title: 'ไม่สามารถตรวจสอบตำแหน่งได้',
+          text: 'ระบบต้องการพิกัดตำแหน่ง GPS เพื่อทำการเช็คอิน กรุณาอนุญาตการเข้าถึงตำแหน่งของคุณ',
+          icon: 'error',
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#ef4444'
+        });
+        return;
+      }
 
-    if (this.companyDistance > this.companyCheckRadius) {
-      Swal.fire({
-        title: 'อยู่นอกพื้นที่เช็คอิน',
-        text: `คุณอยู่ห่างจากสถานที่ทำงาน ${Math.round(this.companyDistance)} เมตร (เกินระยะที่กำหนด ${this.companyCheckRadius} เมตร) ไม่สามารถเช็คอินได้`,
-        icon: 'error',
-        confirmButtonText: 'ตกลง',
-        confirmButtonColor: '#ef4444'
-      });
-      return;
+      if (this.companyDistance > this.companyCheckRadius) {
+        Swal.fire({
+          title: 'อยู่นอกพื้นที่เช็คอิน',
+          text: `คุณอยู่ห่างจากสถานที่ทำงาน ${Math.round(this.companyDistance)} เมตร (เกินระยะที่กำหนด ${this.companyCheckRadius} เมตร) หากทำงานที่บ้านกรุณาเช็คอินแบบ WFH`,
+          icon: 'warning',
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#3b82f6'
+        });
+        return;
+      }
     }
 
     const now = new Date();

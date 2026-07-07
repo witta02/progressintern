@@ -1840,19 +1840,19 @@ export class App {
     onSuccess: (pos: GeolocationPosition) => void,
     onFailure: (err: any) => void
   ): void {
-    const optionsHigh = { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 };
-    const optionsLow = { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 };
+    const optionsHigh = { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 };
+    const optionsLow = { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 };
 
     let completed = false;
 
-    // Timeout safety net (6 seconds)
+    // Timeout safety net (16 seconds)
     const timeoutId = setTimeout(() => {
       if (!completed) {
         completed = true;
         console.warn('[App] Geolocation high accuracy hung or timed out — trying low accuracy fallback');
         tryLowAccuracy();
       }
-    }, 6000);
+    }, 16000);
 
     const tryLowAccuracy = () => {
       let lowCompleted = false;
@@ -1861,7 +1861,7 @@ export class App {
           lowCompleted = true;
           onFailure({ code: 3, message: 'Position request timed out' });
         }
-      }, 6000);
+      }, 11000);
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -1906,33 +1906,34 @@ export class App {
   }
 
   private handleGeolocationError(error: any, showSwal: boolean = true): void {
-    let msg = 'ไม่สามารถดึงตำแหน่งได้ กรุณาลองใหม่อีกครั้ง';
+    let msg = 'ไม่สามารถดึงตำแหน่งได้';
     const isHttp = typeof window !== 'undefined' && 
                    window.location.protocol !== 'https:' && 
                    window.location.hostname !== 'localhost' && 
                    window.location.hostname !== '127.0.0.1';
 
-    if (error && error.code) {
+    if (error) {
+      msg += ` (Error Code: ${error.code || 'UNKNOWN'}, Message: ${error.message || 'No details'})`;
+      
       if (error.code === 1) {
-        msg = 'สิทธิ์ตำแหน่งถูกปฏิเสธ: กรุณาเปิด "บริการตำแหน่งที่ตั้ง" (Location Services) ใน Settings > Privacy > Location Services ของ iOS และตรวจสอบสิทธิ์เบราว์เซอร์';
+        msg += '\n\n💡 สิทธิ์ตำแหน่งถูกปฏิเสธ: กรุณาเปิด "บริการตำแหน่งที่ตั้ง" (Location Services) และตรวจสอบสิทธิ์เบราว์เซอร์สำหรับเว็บไซต์นี้';
         if (isHttp) {
-          msg += '\n\n⚠️ หมายเหตุ: เบราว์เซอร์ iOS Safari กำหนดให้ใช้การเชื่อมต่อแบบปลอดภัย (HTTPS) เท่านั้นสำหรับการระบุตำแหน่ง GPS';
+          msg += '\n\n⚠️ สำคัญ: ตรวจพบการใช้งานผ่าน HTTP (ไม่ปลอดภัย) เบราว์เซอร์ส่วนใหญ่จะบล็อกฟังก์ชัน GPS ลงเวลาเสมอ! กรุณาเปลี่ยนไปใช้งานผ่าน HTTPS';
         }
       } else if (error.code === 2) {
-        msg = 'ไม่พบสัญญาณตำแหน่ง: กรุณาตรวจสอบว่าเปิดระบุตำแหน่งบนโทรศัพท์แล้ว';
+        msg += '\n\n💡 ไม่พบสัญญาณตำแหน่ง: กรุณาเปิดการระบุตำแหน่ง (GPS) บนอุปกรณ์ และลองเปลี่ยนสถานที่ใช้งานเป็นที่โล่งแจ้ง';
       } else if (error.code === 3) {
-        msg = 'ดึงพิกัดหมดเวลา (Timeout): กรุณาลองใหม่อีกครั้ง หรือใช้สัญญาณอินเทอร์เน็ตอื่น';
-        if (isHttp) {
-          msg += '\n\n⚠️ หมายเหตุ: เบราว์เซอร์ iOS Safari กำหนดให้ใช้การเชื่อมต่อแบบปลอดภัย (HTTPS) เท่านั้นสำหรับการระบุตำแหน่ง GPS';
-        }
+        msg += '\n\n💡 ดึงพิกัดหมดเวลา (Timeout): สัญญาณ GPS/อินเทอร์เน็ตอาจช้าเกินไป กรุณาลองใหม่อีกครั้ง';
       }
-    } else if (isHttp) {
-      msg += '\n\n⚠️ หมายเหตุ: เบราว์เซอร์ iOS Safari กำหนดให้ใช้การเชื่อมต่อแบบปลอดภัย (HTTPS) เท่านั้นสำหรับการระบุตำแหน่ง GPS';
+    }
+    
+    if (isHttp && (!error || error.code !== 1)) {
+      msg += '\n\n⚠️ คำเตือน: ตรวจพบการเชื่อมต่อแบบ HTTP ซึ่งเบราว์เซอร์ส่วนใหญ่จะบล็อกฟังก์ชันระบุพิกัด GPS เพื่อความเป็นส่วนตัว';
     }
 
     if (showSwal) {
       Swal.fire({
-        title: 'ข้อผิดพลาดเกี่ยวกับตำแหน่ง',
+        title: 'ไม่สามารถดึงพิกัดตำแหน่งได้',
         text: msg,
         icon: 'error',
         confirmButtonText: 'ตกลง',

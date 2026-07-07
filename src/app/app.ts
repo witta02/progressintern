@@ -1836,6 +1836,113 @@ export class App {
     }
   }
 
+  private getPreciseLocation(
+    onSuccess: (pos: GeolocationPosition) => void,
+    onFailure: (err: any) => void
+  ): void {
+    const optionsHigh = { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 };
+    const optionsLow = { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 };
+
+    let completed = false;
+
+    // Timeout safety net (6 seconds)
+    const timeoutId = setTimeout(() => {
+      if (!completed) {
+        completed = true;
+        console.warn('[App] Geolocation high accuracy hung or timed out — trying low accuracy fallback');
+        tryLowAccuracy();
+      }
+    }, 6000);
+
+    const tryLowAccuracy = () => {
+      let lowCompleted = false;
+      const lowTimeoutId = setTimeout(() => {
+        if (!lowCompleted) {
+          lowCompleted = true;
+          onFailure({ code: 3, message: 'Position request timed out' });
+        }
+      }, 6000);
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(lowTimeoutId);
+          if (!lowCompleted) {
+            lowCompleted = true;
+            onSuccess(position);
+          }
+        },
+        (error) => {
+          clearTimeout(lowTimeoutId);
+          if (!lowCompleted) {
+            lowCompleted = true;
+            onFailure(error);
+          }
+        },
+        optionsLow
+      );
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        clearTimeout(timeoutId);
+        if (!completed) {
+          completed = true;
+          onSuccess(position);
+        }
+      },
+      (error) => {
+        clearTimeout(timeoutId);
+        if (!completed) {
+          completed = true;
+          if (error.code === 1) {
+            onFailure(error);
+          } else {
+            tryLowAccuracy();
+          }
+        }
+      },
+      optionsHigh
+    );
+  }
+
+  private handleGeolocationError(error: any, showSwal: boolean = true): void {
+    let msg = 'ไม่สามารถดึงตำแหน่งได้ กรุณาลองใหม่อีกครั้ง';
+    const isHttp = typeof window !== 'undefined' && 
+                   window.location.protocol !== 'https:' && 
+                   window.location.hostname !== 'localhost' && 
+                   window.location.hostname !== '127.0.0.1';
+
+    if (error && error.code) {
+      if (error.code === 1) {
+        msg = 'สิทธิ์ตำแหน่งถูกปฏิเสธ: กรุณาเปิด "บริการตำแหน่งที่ตั้ง" (Location Services) ใน Settings > Privacy > Location Services ของ iOS และตรวจสอบสิทธิ์เบราว์เซอร์';
+        if (isHttp) {
+          msg += '\n\n⚠️ หมายเหตุ: เบราว์เซอร์ iOS Safari กำหนดให้ใช้การเชื่อมต่อแบบปลอดภัย (HTTPS) เท่านั้นสำหรับการระบุตำแหน่ง GPS';
+        }
+      } else if (error.code === 2) {
+        msg = 'ไม่พบสัญญาณตำแหน่ง: กรุณาตรวจสอบว่าเปิดระบุตำแหน่งบนโทรศัพท์แล้ว';
+      } else if (error.code === 3) {
+        msg = 'ดึงพิกัดหมดเวลา (Timeout): กรุณาลองใหม่อีกครั้ง หรือใช้สัญญาณอินเทอร์เน็ตอื่น';
+        if (isHttp) {
+          msg += '\n\n⚠️ หมายเหตุ: เบราว์เซอร์ iOS Safari กำหนดให้ใช้การเชื่อมต่อแบบปลอดภัย (HTTPS) เท่านั้นสำหรับการระบุตำแหน่ง GPS';
+        }
+      }
+    } else if (isHttp) {
+      msg += '\n\n⚠️ หมายเหตุ: เบราว์เซอร์ iOS Safari กำหนดให้ใช้การเชื่อมต่อแบบปลอดภัย (HTTPS) เท่านั้นสำหรับการระบุตำแหน่ง GPS';
+    }
+
+    if (showSwal) {
+      Swal.fire({
+        title: 'ข้อผิดพลาดเกี่ยวกับตำแหน่ง',
+        text: msg,
+        icon: 'error',
+        confirmButtonText: 'ตกลง',
+        confirmButtonColor: '#ef4444'
+      });
+    } else {
+      this.notifications.error(msg, 'ตำแหน่ง');
+    }
+  }
+
   protected pinProfileCoordinates(): void {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       Swal.fire({
@@ -1846,7 +1953,7 @@ export class App {
           Swal.showLoading();
         }
       });
-      navigator.geolocation.getCurrentPosition(
+      this.getPreciseLocation(
         (position) => {
           Swal.close();
           this.profileDraft.latitude = position.coords.latitude.toFixed(6);
@@ -1861,7 +1968,7 @@ export class App {
         },
         (error) => {
           Swal.close();
-          this.notifications.error('ไม่สามารถดึงตำแหน่งได้ กรุณากรอกด้วยตนเอง', 'ตำแหน่ง');
+          this.handleGeolocationError(error, false);
         }
       );
     } else {
@@ -2000,7 +2107,7 @@ export class App {
         }
       });
 
-      navigator.geolocation.getCurrentPosition(
+      this.getPreciseLocation(
         (position) => {
           Swal.close();
           const lat = position.coords.latitude;
@@ -2010,22 +2117,18 @@ export class App {
         (error) => {
           Swal.close();
           console.error('[App] Geolocation check-in error — trying IP fallback', error);
-          // PC fallback: use IP-based geolocation
-          this.getIpLocation().then(coords => {
-            if (coords) {
-              this.executeCheckIn(coords.lat, coords.lon, isWfh);
-            } else {
-              Swal.fire({
-                title: 'ไม่สามารถดึงตำแหน่งได้',
-                text: 'ไม่พบพิกัดตำแหน่งสำหรับการตรวจสอบพื้นที่เช็คอินของคุณ ไม่สามารถเช็คอินได้',
-                icon: 'error',
-                confirmButtonText: 'ตกลง',
-                confirmButtonColor: '#ef4444'
-              });
-            }
-          });
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
+          if (error.code === 1) {
+            this.handleGeolocationError(error, true);
+          } else {
+            this.getIpLocation().then(coords => {
+              if (coords) {
+                this.executeCheckIn(coords.lat, coords.lon, isWfh);
+              } else {
+                this.handleGeolocationError(error, true);
+              }
+            });
+          }
+        }
       );
     } else {
       Swal.fire({
@@ -2135,7 +2238,7 @@ export class App {
         }
       });
 
-      navigator.geolocation.getCurrentPosition(
+      this.getPreciseLocation(
         (position) => {
           Swal.close();
           const lat = position.coords.latitude;
@@ -2145,25 +2248,27 @@ export class App {
         (error) => {
           Swal.close();
           console.error('[App] Geolocation check-out error — trying IP fallback', error);
-          // PC fallback: use IP-based geolocation
-          this.getIpLocation().then(coords => {
-            if (coords) {
-              this.executeCheckOut(openAttendance.id, coords.lat, coords.lon);
-            } else {
-              Swal.fire({
-                title: 'ไม่สามารถดึงตำแหน่งได้',
-                text: 'ระบบไม่สามารถระบุพิกัดได้ คุณต้องการลงเวลาออกงานต่อโดยไม่มีพิกัดหรือไม่?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'ลงเวลาต่อ',
-                cancelButtonText: 'ยกเลิก'
-              }).then((result) => {
-                if (result.isConfirmed) this.executeCheckOut(openAttendance.id);
-              });
-            }
-          });
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
+          if (error.code === 1) {
+            this.handleGeolocationError(error, true);
+          } else {
+            this.getIpLocation().then(coords => {
+              if (coords) {
+                this.executeCheckOut(openAttendance.id, coords.lat, coords.lon);
+              } else {
+                Swal.fire({
+                  title: 'ไม่สามารถดึงตำแหน่งได้',
+                  text: 'ระบบไม่สามารถระบุพิกัดได้ คุณต้องการลงเวลาออกงานต่อโดยไม่มีพิกัดหรือไม่?',
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonText: 'ลงเวลาต่อ',
+                  cancelButtonText: 'ยกเลิก'
+                }).then((result) => {
+                  if (result.isConfirmed) this.executeCheckOut(openAttendance.id);
+                });
+              }
+            });
+          }
+        }
       );
     } else {
       this.executeCheckOut(openAttendance.id);
@@ -2266,7 +2371,7 @@ export class App {
 
   private fetchCurrentLocationForDistance(): void {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      this.getPreciseLocation(
         (position) => {
           this.currentLatitude = position.coords.latitude;
           this.currentLongitude = position.coords.longitude;

@@ -186,7 +186,7 @@ export class InternshipApiService {
     });
   }
 
-  updateUser(id: number, body: Partial<User>): Observable<User | null> {
+  updateUser(id: number, body: Partial<User> & any): Observable<User | null> {
     return this.putOne<ApiUser, User>(`users/${id}`, {
       id: id,
       name: body.name ?? '',
@@ -204,8 +204,14 @@ export class InternshipApiService {
       intern_start_date: body.internStartDate !== undefined ? body.internStartDate : undefined,
       intern_end_date: body.internEndDate !== undefined ? body.internEndDate : undefined,
       company_role: body.companyRole !== undefined ? body.companyRole : undefined,
-      remove_company: (body as any).removeCompany !== undefined ? (body as any).removeCompany : undefined,
-      online_status: body.onlineStatus !== undefined ? body.onlineStatus : undefined
+      remove_company: body.removeCompany !== undefined ? body.removeCompany : undefined,
+      online_status: body.onlineStatus !== undefined ? body.onlineStatus : undefined,
+      company_name: body.companyName !== undefined ? body.companyName : undefined,
+      description: body.description !== undefined ? body.description : undefined,
+      address: body.address !== undefined ? body.address : undefined,
+      latitude: body.latitude !== undefined ? body.latitude : undefined,
+      longitude: body.longitude !== undefined ? body.longitude : undefined,
+      check_radius: body.check_radius !== undefined ? body.check_radius : undefined
     } as any, mapUser);
   }
 

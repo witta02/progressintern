@@ -4537,6 +4537,63 @@ export class App {
     }
   }
 
+  protected async searchLocationOnMap(query: string): Promise<void> {
+    if (!query.trim()) {
+      this.notifications.warning('กรุณาระบุสถานที่หรือที่อยู่ต้องการค้นหา', 'ค้นหาตำแหน่ง');
+      return;
+    }
+
+    Swal.fire({
+      title: 'กำลังค้นหาตำแหน่ง...',
+      text: 'กรุณารอสักครู่',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+      const res = await fetch(url, {
+        headers: {
+          'Accept-Language': 'th,en'
+        }
+      });
+      if (!res.ok) throw new Error('ค้นหาล้มเหลว');
+      const results = await res.json();
+      
+      Swal.close();
+      if (results && results.length > 0) {
+        const first = results[0];
+        const lat = parseFloat(first.lat);
+        const lon = parseFloat(first.lon);
+
+        this.profileDraft.latitude = lat.toFixed(6);
+        this.profileDraft.longitude = lon.toFixed(6);
+
+        if (this.leafletMap && this.leafletMarker && this.leafletCircle) {
+          const latlng = [lat, lon];
+          this.leafletMarker.setLatLng(latlng);
+          this.leafletCircle.setLatLng(latlng);
+          this.leafletMap.setView(latlng, 15);
+        }
+
+        this.notifications.success(`ค้นพบตำแหน่ง: ${first.display_name}`, 'ค้นหาตำแหน่ง');
+      } else {
+        Swal.fire({
+          title: 'ไม่พบตำแหน่ง',
+          text: 'ระบบไม่พบพิกัดของสถานที่ดังกล่าว กรุณาระบุชื่อสถานที่ให้ชัดเจนยิ่งขึ้น หรือปักหมุดเองบนแผนที่',
+          icon: 'warning',
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#eab308'
+        });
+      }
+    } catch (err: any) {
+      Swal.close();
+      this.notifications.error(`เกิดข้อผิดพลาดในการค้นหา: ${err.message || err}`, 'ค้นหาตำแหน่ง');
+    }
+  }
+
   // --- Feature 6: Custom Evaluation Rubrics ---
   protected async loadEvaluationTemplates(): Promise<void> {
     try {

@@ -108,43 +108,45 @@ func CheckInHandler(c *gin.Context) {
 		}
 	}
 
-	// GPS radius check (enforced strictly)
-	var compLat, compLng *float64
-	var checkRadius *int
-	err = config.DB.QueryRow(
-		`SELECT c.latitude, c.longitude, c.check_radius 
-		 FROM internships i 
-		 JOIN companies c ON i.company_id = c.id 
-		 WHERE i.id = ?`, input.InternshipID,
-	).Scan(&compLat, &compLng, &checkRadius)
-	
-	if err != nil || compLat == nil || compLng == nil {
-		c.JSON(400, gin.H{
-			"status": 400,
-			"error": "สถานประกอบการยังไม่ได้ตั้งค่าพิกัดตำแหน่งที่ตั้ง กรุณาแจ้งพี่เลี้ยงให้ปักหมุดพิกัดบนแผนที่ก่อนลงเวลาเข้างาน",
-		})
-		return
-	}
+	// GPS radius check (enforced strictly if NOT WFH)
+	if !input.IsWFH {
+		var compLat, compLng *float64
+		var checkRadius *int
+		err = config.DB.QueryRow(
+			`SELECT c.latitude, c.longitude, c.check_radius 
+			 FROM internships i 
+			 JOIN companies c ON i.company_id = c.id 
+			 WHERE i.id = ?`, input.InternshipID,
+		).Scan(&compLat, &compLng, &checkRadius)
+		
+		if err != nil || compLat == nil || compLng == nil {
+			c.JSON(400, gin.H{
+				"status": 400,
+				"error": "สถานประกอบการยังไม่ได้ตั้งค่าพิกัดตำแหน่งที่ตั้ง กรุณาแจ้งพี่เลี้ยงให้ปักหมุดพิกัดบนแผนที่ก่อนลงเวลาเข้างาน",
+			})
+			return
+		}
 
-	if input.Latitude == 0 && input.Longitude == 0 {
-		c.JSON(400, gin.H{
-			"status": 400,
-			"error": "ไม่พบพิกัดตำแหน่งสำหรับยืนยันระยะเช็คอินของคุณ กรุณาเปิดใช้งานสิทธิ์ระบุตำแหน่ง GPS",
-		})
-		return
-	}
+		if input.Latitude == 0 && input.Longitude == 0 {
+			c.JSON(400, gin.H{
+				"status": 400,
+				"error": "ไม่พบพิกัดตำแหน่งสำหรับยืนยันระยะเช็คอินของคุณ กรุณาเปิดใช้งานสิทธิ์ระบุตำแหน่ง GPS",
+			})
+			return
+		}
 
-	radius := 200
-	if checkRadius != nil {
-		radius = *checkRadius
-	}
-	dist := distance(input.Latitude, input.Longitude, *compLat, *compLng)
-	if dist > float64(radius) {
-		c.JSON(400, gin.H{
-			"status": 400, 
-			"error": fmt.Sprintf("คุณอยู่นอกพื้นที่เช็คอินที่บริษัทกำหนด (ระยะห่างปัจจุบัน %.0f เมตร เกินระยะ %d เมตร) ไม่สามารถเช็คอินได้", dist, radius),
-		})
-		return
+		radius := 200
+		if checkRadius != nil {
+			radius = *checkRadius
+		}
+		dist := distance(input.Latitude, input.Longitude, *compLat, *compLng)
+		if dist > float64(radius) {
+			c.JSON(400, gin.H{
+				"status": 400, 
+				"error": fmt.Sprintf("คุณอยู่นอกพื้นที่เช็คอินที่บริษัทกำหนด (ระยะห่างปัจจุบัน %.0f เมตร เกินระยะ %d เมตร) ไม่สามารถเช็คอินได้", dist, radius),
+			})
+			return
+		}
 	}
 
 	notes := ""

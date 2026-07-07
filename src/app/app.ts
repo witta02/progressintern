@@ -2146,8 +2146,13 @@ export class App {
     const user = this.currentUser;
     if (!user || !this.activeInternship) return;
 
+    if (lat !== undefined && lon !== undefined) {
+      this.currentLatitude = lat;
+      this.currentLongitude = lon;
+    }
+
     // Strict radius check: must have location and must be in radius
-    if (this.companyDistance === null || lat === undefined || lon === undefined) {
+    if (lat === undefined || lon === undefined || this.companyDistance === null) {
       Swal.fire({
         title: 'ไม่สามารถตรวจสอบตำแหน่งได้',
         text: 'ระบบต้องการพิกัดตำแหน่ง GPS เพื่อทำการเช็คอิน กรุณาอนุญาตการเข้าถึงตำแหน่งของคุณ',

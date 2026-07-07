@@ -2216,7 +2216,7 @@ export class App {
       );
     } catch (err: any) {
       console.error('[CheckIn] Error during check-in:', err);
-      this.notifications.error(`ลงเวลาเข้างานไม่สำเร็จ: ${err.message || err}`, 'ลงเวลา');
+      this.notifications.error(`ลงเวลาเข้างานไม่สำเร็จ: ${this.extractErrorMessage(err)}`, 'ลงเวลา');
     }
   }
 

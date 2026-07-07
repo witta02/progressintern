@@ -268,8 +268,8 @@ export class InternshipApiService {
     return this.putOne<ApiInternship, Internship>(`internships/${id}/status`, { status }, mapInternship);
   }
 
-  createAttendance(body: Omit<Attendance, 'id' | 'createdAt'> & { isWfh?: boolean }): Observable<Attendance | null> {
-    return this.postOne<ApiAttendance, Attendance>('attendance/check-in', {
+  createAttendance(body: Omit<Attendance, 'id' | 'createdAt'> & { isWfh?: boolean }): Observable<Attendance> {
+    return this.postOneRequired<ApiAttendance, Attendance>('attendance/check-in', {
       internship_id: body.internshipId,
       student_id: body.studentId,
       check_in_time: body.checkInTime,

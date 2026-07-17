@@ -5018,6 +5018,7 @@ export class App {
           this.chatMessages.push(msg);
           // Mark as read in UI by doing nothing extra, if it was sent to us we should tell server, 
           // but for now getting history marks as read.
+          this.cdr.detectChanges();
           this.scrollToBottom();
         } else {
           // It's for someone else, update unread count
@@ -5084,13 +5085,7 @@ export class App {
     };
     
     this.chatService.sendMessage(msg);
-    // Optimistically add to UI
-    this.chatMessages.push({
-      ...msg,
-      created_at: new Date().toISOString()
-    });
     this.newChatMessage = '';
-    this.scrollToBottom();
   }
   
   private scrollToBottom(): void {

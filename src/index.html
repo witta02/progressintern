@@ -14,6 +14,7 @@
     />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -74,9 +75,92 @@
     </style>
   </head>
   <body
-    class="bg-slate-50 text-slate-900 font-sans antialiased"
+    class="bg-slate-50 text-slate-900 font-sans antialiased relative"
     style="font-family: 'Mitr', 'Kanit', sans-serif"
   >
+    <!-- 3D Particle Scene Container (CSS Parallax + Canvas) -->
+    <div id="immersive-background" class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden bg-slate-50">
+      <!-- CSS Parallax Blobs -->
+      <div class="parallax-blob w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply opacity-30" style="top: -10%; left: -10%; animation: float 15s ease-in-out infinite;"></div>
+      <div class="parallax-blob w-96 h-96 bg-teal-300 rounded-full mix-blend-multiply opacity-30" style="top: 40%; right: -10%; animation: float 20s ease-in-out infinite alternate;"></div>
+      <div class="parallax-blob w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply opacity-30" style="bottom: -10%; left: 20%; animation: float 18s ease-in-out infinite;"></div>
+      
+      <!-- Three.js Canvas Container -->
+      <div id="three-canvas-container" class="absolute inset-0"></div>
+    </div>
+    
     <app-root></app-root>
+
+    <!-- Basic Three.js Particle Setup -->
+    <script>
+      // Only init Three.js if not on reduced motion
+      if (window.matchMedia && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && typeof THREE !== 'undefined') {
+        const container = document.getElementById('three-canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Create particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 300;
+        const posArray = new Float32Array(particlesCount * 3);
+        
+        for(let i = 0; i < particlesCount * 3; i++) {
+          posArray[i] = (Math.random() - 0.5) * 10;
+        }
+        
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+          size: 0.02,
+          color: 0x6366f1,
+          transparent: true,
+          opacity: 0.4,
+          blending: THREE.AdditiveBlending
+        });
+        
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+        camera.position.z = 3;
+
+        // Animation Loop
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+          mouseX = (event.clientX - windowHalfX);
+          mouseY = (event.clientY - windowHalfY);
+        });
+
+        function animate() {
+          requestAnimationFrame(animate);
+          
+          targetX = mouseX * 0.001;
+          targetY = mouseY * 0.001;
+          
+          particlesMesh.rotation.y += 0.001;
+          particlesMesh.rotation.x += 0.0005;
+          
+          particlesMesh.rotation.y += 0.05 * (targetX - particlesMesh.rotation.y);
+          particlesMesh.rotation.x += 0.05 * (targetY - particlesMesh.rotation.x);
+          
+          renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+      }
+    </script>
   </body>
 </html>

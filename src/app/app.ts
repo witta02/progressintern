@@ -83,6 +83,7 @@ export class App {
         this.currentTime = new Date();
         this.cdr.detectChanges();
       }, 1000);
+      this.initMotionSystem();
     }
   }
 
@@ -170,6 +171,69 @@ export class App {
     this.initialized = true;
     this.cdr.markForCheck();
   }
+
+  private initMotionSystem() {
+    // 1. Global event delegation for 3D card tilt
+    document.addEventListener('mousemove', (e) => {
+      const target = e.target as HTMLElement;
+      const card = target.closest('.card-3d') as HTMLElement;
+      if (card) {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -5;
+        const rotateY = ((x - centerX) / centerX) * 5;
+        card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      const target = e.target as HTMLElement;
+      const card = target.closest('.card-3d') as HTMLElement;
+      if (card) {
+        card.style.transform = '';
+      }
+    });
+
+    // 2. Global event delegation for button ripples
+    document.addEventListener('mousemove', (e) => {
+      const target = e.target as HTMLElement;
+      const btn = target.closest('.btn-motion') as HTMLElement;
+      if (btn) {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        btn.style.setProperty('--x', `${x}px`);
+        btn.style.setProperty('--y', `${y}px`);
+      }
+    });
+
+    // 3. Scroll-reveal Observer with MutationObserver to catch dynamically added elements
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    const observeElements = () => {
+      document.querySelectorAll('.reveal-on-scroll:not(.visible)').forEach(el => {
+        observer.observe(el);
+      });
+    };
+
+    const mutObserver = new MutationObserver(() => {
+      observeElements();
+    });
+    mutObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Initial call
+    setTimeout(observeElements, 100);
+  }
+
   protected sidebarOpen = false;
   protected showStatusDropdown = false;
   protected showSidebarStatusDropdown = false;

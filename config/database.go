@@ -372,24 +372,7 @@ func migrateDatabase(db *sql.DB) {
 		_, _ = db.Exec("CREATE INDEX idx_logbooks_student_id_work ON logbooks(student_id, work_date)")
 	}
 
-	// 15. ตาราง chat_messages
-	if !tableExists(db, "chat_messages") {
-		_, err := db.Exec(`CREATE TABLE chat_messages (
-			id INT AUTO_INCREMENT PRIMARY KEY,
-			sender_id INT NOT NULL,
-			receiver_id INT NOT NULL,
-			message TEXT NOT NULL,
-			is_read BOOLEAN DEFAULT FALSE,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-			FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
-		if err != nil {
-			log.Println("❌ Failed to create chat_messages table:", err)
-		} else {
-			fmt.Println("  ↳ สร้างตาราง chat_messages สำเร็จ")
-		}
-	}
+
 
 	fmt.Println("✅ [Data Engineer] การปรับปรุงโครงสร้างฐานข้อมูลเสร็จสิ้นเรียบร้อย!")
 }

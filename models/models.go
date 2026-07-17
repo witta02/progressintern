@@ -550,24 +550,3 @@ type EvaluationScore struct {
 	MaxScore     int     `json:"max_score,omitempty"`
 }
 
-// ==================== Chat System ====================
-
-type ChatMessage struct {
-	ID         int       `json:"id" db:"id"`
-	SenderID   int       `json:"sender_id" db:"sender_id"`
-	ReceiverID int       `json:"receiver_id" db:"receiver_id"`
-	Message    string    `json:"message" db:"message"`
-	IsRead     bool      `json:"is_read" db:"is_read"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
-}
-
-type ChatContact struct {
-	UserID       int       `json:"user_id"`
-	Name         string    `json:"name"`
-	Role         string    `json:"role"`
-	ProfileImage string    `json:"profile_image"`
-	OnlineStatus string    `json:"online_status"`
-	LastMessage  string    `json:"last_message"`
-	LastMessageTime time.Time `json:"last_message_time"`
-	UnreadCount  int       `json:"unread_count"`
-}

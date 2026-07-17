@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"internship-backend/config"
 	"internship-backend/models"
@@ -271,10 +272,22 @@ func GetChatContactsHandler(c *gin.Context) {
 	}
 
 	db := config.GetDB()
-	// Get all users (except self) + their latest message if any
-	// In a real application, you might filter contacts based on relationships (student->teacher, etc)
-	// For this task, we return everyone who is a valid contact (all active users) 
-	// and left join the most recent message.
+
+	// 1. Retrieve current user's role, class_group, and company_id to enforce chat rules
+	var role, classGroup string
+	var companyID sql.NullInt64
+	errUser := db.QueryRow("SELECT role, COALESCE(class_group, ''), company_id FROM users WHERE id = ?", currentUserID).Scan(&role, &classGroup, &companyID)
+	if errUser != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user info"})
+		return
+	}
+
+	compID := int64(0)
+	if companyID.Valid {
+		compID = companyID.Int64
+	}
+
+	// 2. Fetch contacts matching the criteria
 	query := `
 		SELECT 
 			u.id, u.name, u.role, COALESCE(u.profile_image, ''), u.online_status,
@@ -294,9 +307,24 @@ func GetChatContactsHandler(c *gin.Context) {
 			WHERE t.rn = 1
 		) m ON u.id = m.other_id
 		WHERE u.id != ? AND u.status = 'active'
+		AND (
+			( ? != '' AND u.class_group = ? ) OR 
+			( ? != 0 AND u.company_id = ? ) OR
+			( ? = 'admin' ) OR
+			( ? = 'advisor' AND u.advisor_id = ? ) OR
+			( ? = 'student' AND u.id = (SELECT advisor_id FROM users WHERE id = ?) )
+		)
 		ORDER BY last_message_time DESC, u.name ASC
 	`
-	rows, err := db.Query(query, currentUserID, currentUserID, currentUserID, currentUserID, currentUserID, currentUserID)
+	rows, err := db.Query(query, 
+		currentUserID, currentUserID, currentUserID, currentUserID, currentUserID, 
+		currentUserID, // u.id != ?
+		classGroup, classGroup, // u.class_group
+		compID, compID, // u.company_id
+		role, // admin
+		role, currentUserID, // advisor
+		role, currentUserID, // student
+	)
 	if err != nil {
 		log.Println("GetChatContacts err:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve chat contacts"})

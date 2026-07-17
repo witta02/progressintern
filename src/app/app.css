@@ -1177,11 +1177,11 @@ summary {
   /* 1. Reset the main wrapper to a Grid Shell */
   main.min-h-screen:has(> nav.glass-navbar) {
     display: grid !important;
-    grid-template-columns: 280px 1fr auto !important;
+    grid-template-columns: 280px 1fr !important;
     grid-template-rows: auto 1fr !important;
     grid-template-areas: 
-      "sidebar navbar chat"
-      "sidebar content chat" !important;
+      "sidebar navbar"
+      "sidebar content" !important;
     height: 100vh !important;
     min-height: 100vh !important;
     overflow: hidden !important;
@@ -1224,39 +1224,5 @@ summary {
     display: none !important;
   }
 
-  /* 5. Right Sidebar (Chat Panel) */
-  main.min-h-screen:has(> nav.glass-navbar) > div.chat-panel {
-    grid-area: chat;
-    position: relative !important;
-    bottom: auto !important;
-    right: auto !important;
-    width: 360px !important;
-    height: 100% !important;
-    transform: none !important;
-    border-radius: 0 !important;
-    border-left: 1px solid var(--color-slate-200);
-    box-shadow: none !important;
-    z-index: 10 !important;
-    display: flex !important;
-    flex-direction: column;
-  }
-  
-  /* Make sure internal chat elements stretch properly */
-  main.min-h-screen:has(> nav.glass-navbar) > div.chat-panel .chat-thread-view,
-  main.min-h-screen:has(> nav.glass-navbar) > div.chat-panel .chat-contacts-view {
-    height: 100% !important;
-    display: flex;
-    flex-direction: column;
-  }
-  main.min-h-screen:has(> nav.glass-navbar) > div.chat-panel .chat-messages-container,
-  main.min-h-screen:has(> nav.glass-navbar) > div.chat-panel .chat-contact-list {
-    flex-grow: 1;
-    overflow-y: auto;
-  }
-
-  /* Hide Chat FAB on Desktop since Chat is always in Right Sidebar */
-  main.min-h-screen:has(> nav.glass-navbar) > button.chat-fab-btn {
-    display: none !important;
-  }
 }
 

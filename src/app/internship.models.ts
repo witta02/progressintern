@@ -322,27 +322,27 @@ export interface EvaluationScore {
   id?: number;
   evaluationId?: number;
   criterionId: number;
-	score: number;
-	label?: string;
-	maxScore?: number;
+  score: number;
+  label?: string;
+  maxScore?: number;
 }
 
 export interface ChatMessage {
-	id?: number;
-	sender_id: number;
-	receiver_id: number;
-	message: string;
-	is_read?: boolean;
-	created_at?: string;
+  id?: number;
+  sender_id: number;
+  receiver_id: number;
+  message: string;
+  is_read?: boolean;
+  created_at?: string;
 }
 
 export interface ChatContact {
-	user_id: number;
-	name: string;
-	role: string;
-	profile_image: string;
-	online_status: string;
-	last_message: string;
-	last_message_time: string;
-	unread_count: number;
+  user_id: number;
+  name: string;
+  role: string;
+  profile_image: string;
+  online_status: string;
+  last_message: string;
+  last_message_time: string;
+  unread_count: number;
 }

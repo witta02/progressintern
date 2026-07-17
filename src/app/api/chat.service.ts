@@ -53,8 +53,16 @@ export class ChatService {
       this.socket.close();
     }
     
-    // Construct WS URL from HTTP URL
-    const wsUrl = this.apiUrl.replace(/^http/, 'ws') + `/chat/ws?userId=${userId}`;
+    // Construct WS URL from HTTP URL properly handling relative /api paths
+    let baseUrl = this.apiUrl;
+    if (baseUrl.startsWith('/')) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      baseUrl = `${protocol}//${window.location.host}${baseUrl}`;
+    } else {
+      baseUrl = baseUrl.replace(/^http/, 'ws');
+    }
+    
+    const wsUrl = `${baseUrl}/chat/ws?userId=${userId}`;
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onmessage = (event) => {

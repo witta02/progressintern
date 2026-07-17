@@ -1,9 +1,26 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
+import { map, delay } from 'rxjs/operators';
 import { ChatMessage, ChatContact } from '../internship.models';
 import { environment } from '../../environments/environment';
 import { ApiService } from '../core/services/api.service';
+
+const MOCK_CONTACTS: ChatContact[] = [
+  { user_id: 2, name: 'อ.ดร. สมชาย ใจดี', role: 'advisor', unread_count: 2, profile_image: '', online_status: 'online', last_message: 'กำลังดำเนินการครับอาจารย์', last_message_time: new Date().toISOString() },
+  { user_id: 3, name: 'HR ก้าวไกลจำกัด', role: 'company', unread_count: 0, profile_image: '', online_status: 'offline', last_message: '', last_message_time: new Date().toISOString() },
+  { user_id: 4, name: 'น.ส. เรียนดี ตั้งใจ', role: 'student', unread_count: 1, profile_image: '', online_status: 'AFK', last_message: 'รบกวนตรวจรายงานให้หน่อยค่ะ', last_message_time: new Date().toISOString() }
+];
+
+const MOCK_HISTORY: Record<number, ChatMessage[]> = {
+  2: [
+    { id: 1, sender_id: 2, receiver_id: 1, message: 'สวัสดีครับ ส่งเอกสารหรือยังครับ?', created_at: new Date(Date.now() - 3600000).toISOString() },
+    { id: 2, sender_id: 1, receiver_id: 2, message: 'กำลังดำเนินการครับอาจารย์', created_at: new Date(Date.now() - 1800000).toISOString() }
+  ],
+  3: [],
+  4: [
+    { id: 3, sender_id: 4, receiver_id: 1, message: 'รบกวนตรวจรายงานให้หน่อยค่ะ', created_at: new Date(Date.now() - 7200000).toISOString() }
+  ]
+};
 
 export interface ChatResponse<T> {
   status: number;
@@ -27,6 +44,11 @@ export class ChatService {
   private apiUrl = environment.apiUrl || 'http://localhost:8080/api';
 
   connect(userId: number): void {
+    if (environment.useMockData) {
+      console.log('Chat WebSocket connected (Mock Mode).');
+      return;
+    }
+
     if (this.socket) {
       this.socket.close();
     }
@@ -55,6 +77,26 @@ export class ChatService {
   }
 
   sendMessage(msg: ChatMessage): void {
+    if (environment.useMockData) {
+      // Simulate own message echoing back locally since we don't have a real WS
+      setTimeout(() => {
+        const localMsg = { ...msg, id: Date.now(), created_at: new Date().toISOString() };
+        this.messageSubject.next(localMsg);
+        
+        // Auto-reply simulation
+        setTimeout(() => {
+          this.messageSubject.next({
+            id: Date.now() + 1,
+            sender_id: msg.receiver_id,
+            receiver_id: msg.sender_id,
+            message: 'นี่คือข้อความตอบกลับอัตโนมัติ (Mock Data)',
+            created_at: new Date().toISOString()
+          });
+        }, 1500);
+      }, 50);
+      return;
+    }
+
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(msg));
     } else {
@@ -63,12 +105,18 @@ export class ChatService {
   }
 
   getContacts(): Observable<ChatContact[]> {
+    if (environment.useMockData) {
+      return of(MOCK_CONTACTS).pipe(delay(500));
+    }
     return this.api.get<ChatContact[]>('/chat/contacts').pipe(
       map(res => res.data || [])
     );
   }
 
   getHistory(userId: number): Observable<ChatMessage[]> {
+    if (environment.useMockData) {
+      return of(MOCK_HISTORY[userId] || []).pipe(delay(300));
+    }
     return this.api.get<ChatMessage[]>(`/chat/history/${userId}`).pipe(
       map(res => res.data || [])
     );

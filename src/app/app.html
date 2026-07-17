@@ -641,6 +641,29 @@
 
       <button
         type="button"
+        class="relative w-10 h-10 sm:w-12 sm:h-11 flex items-center justify-center bg-slate-100/60 hover:bg-brand-accent/10 hover:text-brand-accent rounded-xl sm:rounded-2xl text-slate-500 transition-all border border-transparent hover:border-brand-accent/20 mr-1 sm:mr-2"
+        (click)="toggleChat()"
+        title="แชท"
+      >
+        <svg
+          class="w-5 h-5 sm:w-6 sm:h-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+        >
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span
+          class="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-brand-accent text-white text-[10px] sm:text-xs font-black rounded-full flex items-center justify-center border-2 sm:border-4 border-white"
+          *ngIf="totalUnreadChatCount > 0"
+        >
+          {{ totalUnreadChatCount > 99 ? '99+' : totalUnreadChatCount }}
+        </span>
+      </button>
+
+      <button
+        type="button"
         class="relative w-10 h-10 sm:w-12 sm:h-11 flex items-center justify-center bg-slate-100/60 hover:bg-brand-accent/10 hover:text-brand-accent rounded-xl sm:rounded-2xl text-slate-500 transition-all border border-transparent hover:border-brand-accent/20"
         (click)="toggleNotificationPanel()"
       >

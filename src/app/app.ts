@@ -6,9 +6,11 @@ import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { environment } from '../environments/environment';
 import { InternshipDataService } from './internship-data.service';
+import { InternshipApiService } from './api/internship-api.service';
 import { NotificationHostComponent } from './notification-host.component';
 import { NotificationService } from './notification.service';
 import { ApiService } from './core/services/api.service';
+import { ChatService } from './api/chat.service';
 import {
   Application,
   ApplicationStatus,
@@ -29,7 +31,9 @@ import {
   Submission,
   SubmissionStatus,
   Evaluation,
-  EvaluationTemplate
+  EvaluationTemplate,
+  ChatContact,
+  ChatMessage
 } from './internship.models';
 
 @Component({
@@ -44,6 +48,8 @@ export class App {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly apiService = inject(ApiService);
+  private readonly api = inject(InternshipApiService);
+  protected readonly chatService = inject(ChatService);
   protected readonly useMockData = environment.useMockData;
   protected readonly schemaTables = DB_SCHEMA_TABLES;
 
@@ -59,6 +65,14 @@ export class App {
   protected initialized = false;
   protected apiRetrying = false;
   protected currentTime = new Date();
+
+  // Chat State
+  protected isChatOpen = false;
+  protected chatContacts: ChatContact[] = [];
+  protected activeChatUser: ChatContact | null = null;
+  protected chatMessages: ChatMessage[] = [];
+  protected newChatMessage = '';
+  protected totalUnreadChatCount = 0;
 
   constructor() {
     console.log('โปรเจคส่งที่ฝึกงานฮัฟ ส่องไรเอ่ยย');
@@ -83,6 +97,26 @@ export class App {
       const id = parseInt(saved, 10);
       if (!isNaN(id)) {
         this.currentUserId = id;
+
+        // Try to refresh token if we are using the API
+        if (!this.useMockData) {
+          try {
+            const refreshData = await firstValueFrom(this.api.refreshToken());
+            if (refreshData && refreshData.token) {
+              console.log('[App] Session token refreshed successfully.');
+            }
+          } catch (err: any) {
+            // If token expired/invalid (401/403), perform clean logout
+            if (err.status === 401 || err.status === 403) {
+              console.warn('[App] Session token expired or invalid, logging out.');
+              this.logout();
+              this.initialized = true;
+              this.cdr.markForCheck();
+              return;
+            }
+            console.warn('[App] Backend network/server error during refresh, keeping stored session.');
+          }
+        }
 
         // Also restore activeView pre-emptively to avoid dashboard tab flicker
         const savedView = localStorage.getItem('intern-manager-active-view-v1');
@@ -306,14 +340,28 @@ export class App {
   protected adminUserRoleFilter = '';
   protected adminUserStatusFilter = '';
 
-  protected adminQueryText = 'SELECT * FROM users';
+  protected adminQueryText = 'SELECT * FROM users;';
   protected adminQueryResults: any = null;
-  protected adminTables: string[] = [];
+  protected adminTables: any[] = [];
   protected selectedAdminTable = '';
   protected adminQueryError = '';
-  protected workbenchTab: 'query' | 'schema' = 'query';
+  protected workbenchTab: 'query' | 'schema' | 'history' = 'query';
   protected tableSchemaInfo: any = null;
   protected queryDuration = 0;
+  protected adminQueryResultSearch = '';
+  protected isExecutingQuery = false;
+  protected queryHistory: any[] = [];
+
+  protected readonly sqlPresets = [
+    { label: '-- เลือกคำสั่งตัวอย่าง (Presets) --', query: '' },
+    { label: 'ดึงข้อมูลนักศึกษาทั้งหมด (All Students)', query: "SELECT id, name, email, school, status FROM users WHERE role = 'student';" },
+    { label: 'ดึงข้อมูลบริษัททั้งหมด (All Companies)', query: "SELECT id, name, website, address, check_radius FROM companies;" },
+    { label: 'ดึงข้อมูลความสัมพันธ์การฝึกงาน (Internships)', query: "SELECT i.id, u.name as student, c.company_name as company, i.status FROM internships i JOIN users u ON i.student_id = u.id JOIN companies c ON i.company_id = c.id;" },
+    { label: 'ตรวจสอบเวลาลงชื่อเข้างานล่าสุด (Attendances)', query: "SELECT a.id, u.name, a.check_in_time, a.status, a.is_wfh FROM attendances a JOIN users u ON a.student_id = u.id ORDER BY a.check_in_time DESC LIMIT 50;" },
+    { label: 'นับจำนวนผู้ใช้แยกตามประเภท (Count Users by Role)', query: "SELECT role, COUNT(*) as count FROM users GROUP BY role;" },
+    { label: 'นับสถิติใบสมัครฝึกงาน (Application Stats)', query: "SELECT status, COUNT(*) as count FROM applications GROUP BY status;" },
+    { label: 'สถิติการเช็คอินที่สาย (Late Checks count)', query: "SELECT student_id, COUNT(*) as late_count FROM attendances WHERE status = 'late' GROUP BY student_id ORDER BY late_count DESC;" }
+  ];
 
   // ----------- Classroom Assignment System & UX Improvements -----------
   protected newAssignment = {
@@ -1346,6 +1394,7 @@ export class App {
     this.activeView = 'dashboard';
     this.loginError = '';
     this.notificationPanelOpen = false;
+    this.isChatOpen = false;
     this.selectedEvaluationInternshipId = null;
     this.notifications.info('คุณได้ออกจากระบบเรียบร้อยแล้ว', 'ออกจากระบบ');
     this.cdr.detectChanges();
@@ -3224,6 +3273,7 @@ export class App {
       }
     }
     this.setActiveView(targetView);
+    this.initChat();
     this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
     const comp = user.role === 'company' ? this.companies.find(c => c.userId === user.id) : undefined;
     this.profileDraft = {
@@ -3587,10 +3637,12 @@ export class App {
 
   protected async loadAdminTables(): Promise<void> {
     this.adminTables = await this.data.getAdminTables();
+    this.loadQueryHistory();
   }
 
   protected async executeAdminQuery(): Promise<void> {
-    if (!this.adminQueryText.trim()) {
+    const qText = this.adminQueryText.trim();
+    if (!qText) {
       this.notifications.warning('กรุณากรอกคำสั่ง SQL', 'จัดการฐานข้อมูล');
       return;
     }
@@ -3598,29 +3650,42 @@ export class App {
     this.adminQueryError = '';
     this.adminQueryResults = null;
     this.workbenchTab = 'query';
+    this.isExecutingQuery = true;
 
     const startTime = performance.now();
-    const res = await this.data.executeAdminQuery(this.adminQueryText.trim());
-    const endTime = performance.now();
-    this.queryDuration = Math.round(endTime - startTime);
+    try {
+      const res = await this.data.executeAdminQuery(qText);
+      const endTime = performance.now();
+      this.queryDuration = Math.round(endTime - startTime);
+      this.isExecutingQuery = false;
 
-    if (res && res.error) {
-      this.adminQueryError = res.error;
-      this.notifications.error(res.error, 'ผลการทำงานล้มเหลว');
-    } else {
-      this.adminQueryResults = res;
-      this.notifications.success('รันคำสั่ง SQL สำเร็จ', 'ผลการทำงาน');
-      // Refresh local database caches if write operation succeeded
-      if (res.type === 'exec') {
-        void this.data.refreshFromApi();
+      if (res && res.error) {
+        this.adminQueryError = res.error;
+        this.notifications.error(res.error, 'ผลการทำงานล้มเหลว');
+        this.saveQueryToHistory(qText, this.queryDuration, 'error');
+      } else {
+        this.adminQueryResults = res;
+        this.notifications.success('รันคำสั่ง SQL สำเร็จ', 'ผลการทำงาน');
+        this.saveQueryToHistory(qText, this.queryDuration, 'success');
+        
+        // Refresh local database caches if write operation succeeded
+        if (res.type === 'exec') {
+          void this.data.refreshFromApi();
+        }
       }
+    } catch (err: any) {
+      const endTime = performance.now();
+      this.queryDuration = Math.round(endTime - startTime);
+      this.isExecutingQuery = false;
+      this.adminQueryError = err?.message || 'Unknown query execution error';
+      this.notifications.error(this.adminQueryError, 'ผลการทำงานล้มเหลว');
+      this.saveQueryToHistory(qText, this.queryDuration, 'error');
     }
-    window.location.reload();
   }
 
   protected selectQuickTable(table: string): void {
     this.selectedAdminTable = table;
-    this.adminQueryText = `SELECT * FROM ${table} LIMIT 100`;
+    this.adminQueryText = `SELECT * FROM ${table} LIMIT 100;`;
     void this.executeAdminQuery();
   }
 
@@ -3629,15 +3694,22 @@ export class App {
     this.workbenchTab = 'schema';
     this.adminQueryError = '';
     this.tableSchemaInfo = null;
+    this.isExecutingQuery = true;
 
-    const res = await this.data.executeAdminQuery(`DESCRIBE ${tableName}`);
-    if (res && res.error) {
-      this.adminQueryError = res.error;
-      this.notifications.error(res.error, 'ไม่สามารถดึงโครงสร้างตารางได้');
-    } else {
-      this.tableSchemaInfo = res;
+    try {
+      const res = await this.data.executeAdminQuery(`DESCRIBE ${tableName};`);
+      this.isExecutingQuery = false;
+      if (res && res.error) {
+        this.adminQueryError = res.error;
+        this.notifications.error(res.error, 'ไม่สามารถดึงโครงสร้างตารางได้');
+      } else {
+        this.tableSchemaInfo = res;
+      }
+    } catch (err: any) {
+      this.isExecutingQuery = false;
+      this.adminQueryError = err?.message || 'Error describing table';
+      this.notifications.error(this.adminQueryError, 'ไม่สามารถดึงโครงสร้างตารางได้');
     }
-    window.location.reload();
   }
 
   protected exportToCSV(): void {
@@ -3664,11 +3736,90 @@ export class App {
     link.click();
     document.body.removeChild(link);
     this.notifications.success('ส่งออกผลลัพธ์เป็น CSV สำเร็จ', 'ส่งออก CSV');
-    window.location.reload();
   }
 
   protected getQueryResultRows(results: any): any[] {
-    return results?.data || [];
+    const rows = results?.data || [];
+    if (!this.adminQueryResultSearch.trim()) return rows;
+    const q = this.adminQueryResultSearch.toLowerCase().trim();
+    return rows.filter((row: any) => {
+      return Object.keys(row).some(key => {
+        const val = row[key];
+        return val !== null && String(val).toLowerCase().includes(q);
+      });
+    });
+  }
+
+  protected formatSQL(): void {
+    if (!this.adminQueryText.trim()) return;
+    const keywords = [
+      'select', 'from', 'where', 'and', 'or', 'join', 'left', 'right', 'inner', 'on',
+      'group by', 'order by', 'limit', 'insert', 'into', 'values', 'update', 'set',
+      'delete', 'create', 'table', 'alter', 'drop', 'index', 'primary key', 'foreign key',
+      'as', 'having', 'count', 'sum', 'avg', 'min', 'max', 'null', 'is', 'not', 'in', 'between', 'like'
+    ];
+    let sql = this.adminQueryText;
+    keywords.forEach(kw => {
+      const regex = new RegExp(`\\b${kw}\\b`, 'gi');
+      sql = sql.replace(regex, kw.toUpperCase());
+    });
+    this.adminQueryText = sql;
+    this.notifications.success('จัดรูปแบบ SQL สำเร็จ', 'Format SQL');
+  }
+
+  protected copyResultsToClipboard(): void {
+    if (!this.adminQueryResults || !this.adminQueryResults.data) return;
+    const jsonStr = JSON.stringify(this.adminQueryResults.data, null, 2);
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      this.notifications.success('คัดลอกข้อมูล JSON เรียบร้อย', 'คัดลอก JSON');
+    }).catch(err => {
+      this.notifications.error('คัดลอกล้มเหลว: ' + err, 'คัดลอก JSON');
+    });
+  }
+
+  protected loadQueryHistory(): void {
+    try {
+      const saved = localStorage.getItem('intern-manager-sql-history-v1');
+      this.queryHistory = saved ? JSON.parse(saved) : [];
+    } catch {
+      this.queryHistory = [];
+    }
+  }
+
+  protected saveQueryToHistory(query: string, duration: number, status: 'success' | 'error'): void {
+    const entry = {
+      query,
+      duration,
+      status,
+      timestamp: new Date().toISOString()
+    };
+    // Keep max 20 entries
+    this.queryHistory = [entry, ...this.queryHistory.slice(0, 19)];
+    try {
+      localStorage.setItem('intern-manager-sql-history-v1', JSON.stringify(this.queryHistory));
+    } catch {}
+  }
+
+  protected clearQueryHistory(): void {
+    this.queryHistory = [];
+    localStorage.removeItem('intern-manager-sql-history-v1');
+    this.notifications.success('ล้างประวัติคำสั่งเรียบร้อย', 'ประวัติการใช้งาน');
+  }
+
+  protected loadQueryFromHistory(query: string): void {
+    this.adminQueryText = query;
+    this.workbenchTab = 'query';
+    this.notifications.success('โหลดคำสั่ง SQL เรียบร้อย', 'ตัวแก้ไข SQL');
+  }
+
+  protected selectPresetQuery(event: Event): void {
+    const selectEl = event.target as HTMLSelectElement;
+    if (selectEl && selectEl.value) {
+      this.adminQueryText = selectEl.value;
+      this.notifications.success('โหลดคำสั่ง SQL Preset เรียบร้อย', 'Preset Query');
+      // Reset select dropdown
+      selectEl.value = '';
+    }
   }
 
   // ============================================================
@@ -4847,5 +4998,107 @@ export class App {
 
   protected trackByLabel(index: number, item: any): string {
     return item?.label ?? index;
+  }
+
+  protected get totalDatabaseSizeKB(): number {
+    if (!this.adminTables || this.adminTables.length === 0) return 0;
+    return this.adminTables.reduce((acc: number, t: any) => acc + (t.size_kb || 0), 0);
+  }
+
+  // ==================== Chat Methods ====================
+  protected initChat(): void {
+    if (this.currentUserId) {
+      this.chatService.connect(this.currentUserId);
+      this.loadChatContacts();
+      
+      this.chatService.messages$.subscribe(msg => {
+        // If the message belongs to the active chat
+        if (this.activeChatUser && 
+           (msg.sender_id === this.activeChatUser.user_id || msg.receiver_id === this.activeChatUser.user_id)) {
+          this.chatMessages.push(msg);
+          // Mark as read in UI by doing nothing extra, if it was sent to us we should tell server, 
+          // but for now getting history marks as read.
+          this.scrollToBottom();
+        } else {
+          // It's for someone else, update unread count
+          this.loadChatContacts();
+          if (!this.isChatOpen) {
+            this.notifications.info('คุณมีข้อความใหม่', 'ข้อความ');
+          }
+        }
+      });
+      
+      this.chatService.unreadCount$.subscribe(count => {
+        this.totalUnreadChatCount = count;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  protected toggleChat(): void {
+    this.isChatOpen = !this.isChatOpen;
+    if (this.isChatOpen) {
+      this.loadChatContacts();
+    }
+  }
+
+  protected async loadChatContacts(): Promise<void> {
+    try {
+      const contacts = await firstValueFrom(this.chatService.getContacts());
+      this.chatContacts = contacts;
+      this.chatService.updateTotalUnreadCount(this.chatContacts);
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.error('Failed to load contacts', e);
+    }
+  }
+
+  protected async openChatWithUser(contact: ChatContact): Promise<void> {
+    this.activeChatUser = contact;
+    this.chatMessages = [];
+    try {
+      const history = await firstValueFrom(this.chatService.getHistory(contact.user_id));
+      this.chatMessages = history;
+      // Also update local unread count
+      contact.unread_count = 0;
+      this.chatService.updateTotalUnreadCount(this.chatContacts);
+      this.cdr.detectChanges();
+      this.scrollToBottom();
+    } catch (e) {
+      console.error('Failed to load history', e);
+    }
+  }
+
+  protected closeActiveChat(): void {
+    this.activeChatUser = null;
+    this.loadChatContacts();
+  }
+
+  protected sendChatMessage(): void {
+    if (!this.newChatMessage.trim() || !this.activeChatUser || !this.currentUserId) return;
+    
+    const msg: ChatMessage = {
+      sender_id: this.currentUserId,
+      receiver_id: this.activeChatUser.user_id,
+      message: this.newChatMessage.trim()
+    };
+    
+    this.chatService.sendMessage(msg);
+    // Optimistically add to UI
+    this.chatMessages.push({
+      ...msg,
+      created_at: new Date().toISOString()
+    });
+    this.newChatMessage = '';
+    this.scrollToBottom();
+  }
+  
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      const el = document.getElementById('chat-messages-container');
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+      }
+    }, 50);
   }
 }

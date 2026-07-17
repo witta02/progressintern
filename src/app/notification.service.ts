@@ -34,7 +34,7 @@ export class NotificationService {
           const parsed = JSON.parse(saved);
           this.items = parsed.map((item: any) => ({
             ...item,
-            timestamp: new Date(item.timestamp)
+            timestamp: new Date(item.timestamp),
           }));
         }
       } catch (e) {
@@ -78,15 +78,15 @@ export class NotificationService {
       });
     }
   }
-  
+
   notify(
     message: string,
     type: NotificationType = 'info',
     title?: string,
-    durationMs = 3000
+    durationMs = 3000,
   ): void {
     const itemTitle = title || this.defaultTitle(type);
-    
+
     // Add to local history list
     const newItem: NotificationItem = {
       id: Math.random().toString(36).substring(2, 11),
@@ -94,9 +94,9 @@ export class NotificationService {
       message,
       type,
       timestamp: new Date(),
-      read: false
+      read: false,
     };
-    
+
     this.items.unshift(newItem);
     if (this.items.length > 50) {
       this.items.pop();
@@ -108,7 +108,7 @@ export class NotificationService {
       try {
         new Notification(itemTitle, {
           body: message,
-          icon: '/favicon.ico'
+          icon: '/favicon.ico',
         });
       } catch (err) {
         console.error('Error triggering native browser notification:', err);
@@ -125,13 +125,13 @@ export class NotificationService {
       didOpen: (toast) => {
         toast.onmouseenter = Swal.stopTimer;
         toast.onmouseleave = Swal.resumeTimer;
-      }
+      },
     });
 
     Toast.fire({
       icon: type,
       title: itemTitle,
-      text: message
+      text: message,
     });
   }
 
@@ -160,7 +160,7 @@ export class NotificationService {
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
       confirmButtonText: 'ยืนยัน',
-      cancelButtonText: 'ยกเลิก'
+      cancelButtonText: 'ยกเลิก',
     }).then((result) => result.isConfirmed);
   }
 
@@ -169,13 +169,13 @@ export class NotificationService {
       success: 'สำเร็จ',
       error: 'ผิดพลาด',
       warning: 'แจ้งเตือน',
-      info: 'ข้อมูล'
+      info: 'ข้อมูล',
     }[type];
   }
 
   // Compatibility and utility methods
   markAllRead(): void {
-    this.items.forEach(item => item.read = true);
+    this.items.forEach((item) => (item.read = true));
     this.saveToStorage();
   }
 
@@ -186,23 +186,23 @@ export class NotificationService {
 
   dismiss(id: string | number): void {
     const idStr = id.toString();
-    this.items = this.items.filter(item => item.id !== idStr);
+    this.items = this.items.filter((item) => item.id !== idStr);
     this.saveToStorage();
   }
 
   dismissToast(id: number): void {
     this.dismiss(id);
   }
-  
-  get toasts() { 
-    return () => this.items; 
+
+  get toasts() {
+    return () => this.items;
   }
-  
-  get history() { 
-    return () => this.items; 
+
+  get history() {
+    return () => this.items;
   }
-  
-  get unreadCount() { 
-    return () => this.items.filter(item => !item.read).length; 
+
+  get unreadCount() {
+    return () => this.items.filter((item) => !item.read).length;
   }
 }

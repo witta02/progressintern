@@ -44,9 +44,9 @@ export interface User {
   intro?: string;
   field?: string;
   school?: string;
-  number?: number;        // เลขที่
-  yearLevel?: string;     // ชั้นปี
-  classGroup?: string;    // กลุ่ม
+  number?: number; // เลขที่
+  yearLevel?: string; // ชั้นปี
+  classGroup?: string; // กลุ่ม
   profileImage?: string;
   resumeUrl?: string;
   onlineStatus?: string;
@@ -178,15 +178,50 @@ export interface LeaveRequest {
 
 /** Column reference for admin schema view */
 export const DB_SCHEMA_TABLES: { name: string; columns: string }[] = [
-  { name: 'users', columns: 'id, name, email, password, role, phone, profile_image, resume_url, created_at, updated_at' },
-  { name: 'companies', columns: 'id, user_id, company_name, description, address, website, contact_email, created_at, updated_at' },
-  { name: 'job_postings', columns: 'id, company_id, title, description, requirements, benefits, slots, status, created_at, updated_at' },
-  { name: 'applications', columns: 'id, student_id, job_posting_id, status, applied_at, updated_at' },
-  { name: 'internships', columns: 'id, student_id, company_id, job_posting_id, start_date, end_date, status, created_at, updated_at' },
-  { name: 'attendances', columns: 'id, internship_id, student_id, check_in_time, check_out_time, latitude, longitude, status, created_at' },
-  { name: 'logbooks', columns: 'id, internship_id, title, content, attachment_url, mentor_comment, status, created_at, updated_at' },
-  { name: 'evaluations', columns: 'id, internship_id, evaluator_id, score, feedback, evaluation_type, created_at, updated_at' },
-  { name: 'leave_requests', columns: 'id, internship_id, student_id, leave_type, start_date, end_date, reason, status, mentor_id, comment, created_at, approved_at' }
+  {
+    name: 'users',
+    columns:
+      'id, name, email, password, role, phone, profile_image, resume_url, created_at, updated_at',
+  },
+  {
+    name: 'companies',
+    columns:
+      'id, user_id, company_name, description, address, website, contact_email, created_at, updated_at',
+  },
+  {
+    name: 'job_postings',
+    columns:
+      'id, company_id, title, description, requirements, benefits, slots, status, created_at, updated_at',
+  },
+  {
+    name: 'applications',
+    columns: 'id, student_id, job_posting_id, status, applied_at, updated_at',
+  },
+  {
+    name: 'internships',
+    columns:
+      'id, student_id, company_id, job_posting_id, start_date, end_date, status, created_at, updated_at',
+  },
+  {
+    name: 'attendances',
+    columns:
+      'id, internship_id, student_id, check_in_time, check_out_time, latitude, longitude, status, created_at',
+  },
+  {
+    name: 'logbooks',
+    columns:
+      'id, internship_id, title, content, attachment_url, mentor_comment, status, created_at, updated_at',
+  },
+  {
+    name: 'evaluations',
+    columns:
+      'id, internship_id, evaluator_id, score, feedback, evaluation_type, created_at, updated_at',
+  },
+  {
+    name: 'leave_requests',
+    columns:
+      'id, internship_id, student_id, leave_type, start_date, end_date, reason, status, mentor_id, comment, created_at, approved_at',
+  },
 ];
 
 export interface School {
@@ -287,7 +322,27 @@ export interface EvaluationScore {
   id?: number;
   evaluationId?: number;
   criterionId: number;
-  score: number;
-  label?: string;
-  maxScore?: number;
+	score: number;
+	label?: string;
+	maxScore?: number;
+}
+
+export interface ChatMessage {
+	id?: number;
+	sender_id: number;
+	receiver_id: number;
+	message: string;
+	is_read?: boolean;
+	created_at?: string;
+}
+
+export interface ChatContact {
+	user_id: number;
+	name: string;
+	role: string;
+	profile_image: string;
+	online_status: string;
+	last_message: string;
+	last_message_time: string;
+	unread_count: number;
 }

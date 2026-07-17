@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   ApiApplication,
@@ -130,6 +130,21 @@ export class InternshipApiService {
           return mapUser(data);
         })
       );
+  }
+
+  refreshToken(): Observable<{ token: string }> {
+    if (!this.apiEnabled()) {
+      return of({ token: '' });
+    }
+
+    return this.http.get<any>(`${this.base}/auth/refresh`, this.authOptions()).pipe(
+      map((res) => res?.data),
+      tap((data) => {
+        if (data && data.token) {
+          this.setToken(data.token);
+        }
+      })
+    );
   }
 
   register(body: {
@@ -591,7 +606,7 @@ export class InternshipApiService {
     );
   }
 
-  getAdminTables(): Observable<string[]> {
+  getAdminTables(): Observable<any[]> {
     return this.http.get<any>(`${this.base}/admin/tables`, this.authOptions()).pipe(
       map((res) => res?.data || []),
       catchError(() => of([]))

@@ -15,18 +15,18 @@ export class ApiService {
   private apiUrl = environment.apiUrl;
   private readonly tokenKey = 'intern-manager-api-token-v1';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   get<T>(endpoint: string, params?: any): Observable<ApiResponse<T>> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         httpParams = httpParams.set(key, params[key]);
       });
     }
     return this.http.get<ApiResponse<T>>(`${this.apiUrl}${endpoint}`, {
       params: httpParams,
-      ...this.authOptions()
+      ...this.authOptions(),
     });
   }
 

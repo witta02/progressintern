@@ -777,7 +777,7 @@
                         <div class="flex-1 bg-slate-100/80 rounded-full h-1.5 overflow-hidden" *ngIf="getInternshipProgress(intern) as progress">
                           <div class="bg-gradient-to-r from-indigo-500 to-teal-400 h-full rounded-full" [style.width.%]="progress.percent"></div>
                         </div>
-                        <span class="text-xs font-black text-slate-700">{{ getInternshipProgress(intern)?.percent }}%</span>
+                        <span class="text-xs font-black text-slate-700">{{ getInternshipProgress(intern).percent }}%</span>
                       </div>
                     </td>                    
                     <td class="px-10 py-6">
@@ -1727,7 +1727,7 @@
                   </div>
                   <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner">
                     <div class="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all"
-                         [style.width.%]="getInternshipProgress(selectedInternshipDetail!)?.percent"></div>
+                         [style.width.%]="getInternshipProgress(selectedInternshipDetail!).percent"></div>
                   </div>
                   <div class="text-[10px] font-bold text-slate-400 mt-2">{{ getInternshipProgress(selectedInternshipDetail!).label }}</div>
                 </div>
@@ -4160,7 +4160,7 @@
                   <div>
                     <span class="font-black text-amber-900 text-lg tracking-widest">{{ code.code }}</span>
                     <div class="text-[10px] text-amber-600 font-bold mt-1">
-                      ใช้แล้ว {{ code.usedCount ?? 0 }} ครั้ง
+                      ใช้แล้ว {{ code.usedCount }} ครั้ง
                       <span *ngIf="code.expiresAt"> · หมดอายุ {{ formatTermDate(code.expiresAt) }}</span>
                     </div>
                   </div>
@@ -4259,7 +4259,7 @@
               <div>
                 <span class="font-black text-amber-900 text-lg tracking-widest">{{ code.code }}</span>
                 <div class="text-[10px] text-amber-600 font-bold mt-1">
-                  ใช้แล้ว {{ code.usedCount ?? 0 }} ครั้ง
+                  ใช้แล้ว {{ code.usedCount }} ครั้ง
                   <span *ngIf="code.expiresAt"> · หมดอายุ {{ formatTermDate(code.expiresAt) }}</span>
                 </div>
               </div>
@@ -4621,7 +4621,7 @@
                     <div *ngIf="c.companyName" class="text-xs text-amber-600 font-bold mt-0.5">{{ c.companyName }}</div>
                   </td>
                   <td class="px-6 py-4 font-bold text-slate-500">
-                    <span class="text-slate-800">{{ c.usedCount ?? 0 }}</span> / {{ c.maxUses ?? 'ไม่จำกัด' }}
+                    <span class="text-slate-800">{{ c.usedCount }}</span> / {{ c.maxUses ?? 'ไม่จำกัด' }}
               
                   </td>
                   <td class="px-6 py-4 font-bold text-slate-500">{{ formatTermDate(c.expiresAt) }}</td>
@@ -4705,26 +4705,65 @@
       <section *ngIf="activeView === 'schema' && currentUser?.role === 'admin'" class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Workbench Left Sidebar: Schemas Explorer -->
         <article class="glass-card rounded-[2.5rem] p-8 h-fit space-y-6">
-          <div class="border-b border-slate-100 pb-4">
-            <h3 class="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
-              Schemas Explorer
-            </h3>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">database: internship_db</p>
+          <div class="border-b border-slate-100 pb-4 flex justify-between items-center">
+            <div>
+              <h3 class="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
+                Schemas Explorer
+              </h3>
+              <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">database: internship_db</p>
+            </div>
+            <!-- Connected Dot & Refresh -->
+            <div class="flex flex-col items-end gap-1">
+              <span class="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Connected
+              </span>
+              <button (click)="loadAdminTables()" class="p-1 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-400 hover:text-slate-700" title="รีเฟรชรายชื่อตาราง">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 1 1 21.306 7H18"></path></svg>
+              </button>
+            </div>
           </div>
 
-          <div class="space-y-4">
-            <div *ngFor="let tbl of adminTables" class="border border-slate-100 rounded-2xl p-4 hover:border-blue-200 transition-all"
-                 [class.bg-blue-50/20]="selectedAdminTable === tbl" [class.border-blue-200]="selectedAdminTable === tbl">
-              <div class="flex items-center justify-between font-black text-sm text-slate-800 mb-3">
-                <span class="truncate">{{ tbl }}</span>
-                <span class="w-2.5 h-2.5 rounded-full bg-slate-300" [class.bg-blue-500]="selectedAdminTable === tbl"></span>
+          <!-- DB Global Stats -->
+          <div class="bg-indigo-50/20 border border-indigo-100/50 rounded-2xl p-4 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400 font-bold">ตารางทั้งหมด (Tables)</span>
+              <span class="font-black text-indigo-700">{{ adminTables.length }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400 font-bold">ขนาดดาต้าเบส (Total Size)</span>
+              <span class="font-black text-indigo-700">{{ totalDatabaseSizeKB | number:'1.0-2' }} KB</span>
+            </div>
+          </div>
+
+          <!-- Table Lists -->
+          <div class="space-y-3.5 max-h-[420px] overflow-y-auto pr-1 scrollbar-thin">
+            <div *ngFor="let tbl of adminTables" class="group border border-slate-100 hover:border-indigo-200 rounded-2xl p-4 transition-all"
+                 [class.bg-indigo-50/20]="selectedAdminTable === tbl.name" [class.border-indigo-200]="selectedAdminTable === tbl.name">
+              
+              <div class="flex items-center justify-between font-black text-slate-800 mb-2 text-xs">
+                <span class="truncate flex items-center gap-2">
+                  <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                  {{ tbl.name || tbl }}
+                </span>
+                <span class="w-2 h-2 rounded-full bg-slate-200" [class.bg-indigo-500]="selectedAdminTable === tbl.name"></span>
               </div>
-              <div class="grid grid-cols-2 gap-2">
-                <button (click)="selectQuickTable(tbl)" class="py-2 px-3 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border border-slate-100 text-center">
-                  🔍 View Data
+              
+              <!-- Table Sub-info -->
+              <div class="text-[10px] font-bold text-slate-400 mb-3 flex items-center gap-2">
+                <span>{{ tbl.rows ?? 0 }} แถว</span>
+                <span>•</span>
+                <span>{{ tbl.size_kb ?? 0 }} KB</span>
+                <span class="ml-auto bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] uppercase font-black">{{ tbl.engine || 'InnoDB' }}</span>
+              </div>
+
+              <!-- Quick actions -->
+              <div class="grid grid-cols-2 gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                <button (click)="selectQuickTable(tbl.name || tbl)" class="py-2 px-2 bg-white hover:bg-indigo-50 hover:text-indigo-600 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all border border-slate-200 text-center flex items-center justify-center gap-1 cursor-pointer">
+                  🔍 View
                 </button>
-                <button (click)="describeTable(tbl)" class="py-2 px-3 bg-slate-50 hover:bg-purple-50 hover:text-purple-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border border-slate-100 text-center">
+                <button (click)="describeTable(tbl.name || tbl)" class="py-2 px-2 bg-white hover:bg-purple-50 hover:text-purple-600 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all border border-slate-200 text-center flex items-center justify-center gap-1 cursor-pointer">
                   🛠 Columns
                 </button>
               </div>
@@ -4733,14 +4772,14 @@
         </article>
 
         <!-- Workbench Right Content: Editor, Tabs, & Results -->
-        <article class="glass-card rounded-[2.5rem] p-8 lg:col-span-3 space-y-6">
+        <article class="glass-card rounded-[2.5rem] p-8 lg:col-span-3 space-y-6 flex flex-col min-h-[500px]">
           <!-- Workbench Tab Bar -->
           <div class="flex p-1 bg-slate-100 rounded-xl" role="tablist">
             <button
               type="button"
-              class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all"
+              class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all cursor-pointer"
               [class.bg-white]="workbenchTab === 'query'"
-              [class.text-blue-600]="workbenchTab === 'query'"
+              [class.text-indigo-600]="workbenchTab === 'query'"
               [class.shadow-sm]="workbenchTab === 'query'"
               [class.text-slate-500]="workbenchTab !== 'query'"
               (click)="workbenchTab = 'query'"
@@ -4750,85 +4789,160 @@
             <button
               type="button"
               [disabled]="!tableSchemaInfo"
-              class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               [class.bg-white]="workbenchTab === 'schema'"
-              [class.text-blue-600]="workbenchTab === 'schema'"
+              [class.text-indigo-600]="workbenchTab === 'schema'"
               [class.shadow-sm]="workbenchTab === 'schema'"
               [class.text-slate-500]="workbenchTab !== 'schema'"
               (click)="workbenchTab = 'schema'"
             >
               🛠 Table Structure
             </button>
+            <button
+              type="button"
+              class="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all cursor-pointer"
+              [class.bg-white]="workbenchTab === 'history'"
+              [class.text-indigo-600]="workbenchTab === 'history'"
+              [class.shadow-sm]="workbenchTab === 'history'"
+              [class.text-slate-500]="workbenchTab !== 'history'"
+              (click)="workbenchTab = 'history'"
+            >
+              🕒 Query History ({{ queryHistory.length }})
+            </button>
           </div>
 
           <!-- TAB CONTENT: SQL QUERY EDITOR -->
-          <div *ngIf="workbenchTab === 'query'" class="space-y-6">
+          <div *ngIf="workbenchTab === 'query'" class="space-y-6 flex-1 flex flex-col">
+            <!-- Preset Selection -->
+            <div class="flex items-center gap-3">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">ดึงคำสั่งสำเร็จรูป:</label>
+              <select (change)="selectPresetQuery($event)" class="text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-slate-700 focus:bg-white focus:border-indigo-500 transition-colors w-full max-w-md">
+                <option *ngFor="let p of sqlPresets" [value]="p.query">{{ p.label }}</option>
+              </select>
+            </div>
+
+            <!-- Editor Wrapper -->
             <form (ngSubmit)="executeAdminQuery()" class="space-y-4">
-              <div class="space-y-2">
-                <textarea name="queryText" [(ngModel)]="adminQueryText" placeholder="SELECT * FROM users LIMIT 10;" rows="6" required
-                          class="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-brand-accent/15 focus:border-brand-accent font-mono text-sm text-slate-800 transition-all outline-none leading-relaxed"></textarea>
+              <div class="relative border border-slate-200 rounded-2xl overflow-hidden focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100 transition-all shadow-inner">
+                <!-- Editor Top Header bar -->
+                <div class="bg-slate-900 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                  </div>
+                  <span class="text-[9px] font-mono text-slate-500 uppercase tracking-widest">query_editor.sql</span>
+                </div>
+
+                <textarea name="queryText" [(ngModel)]="adminQueryText" placeholder="SELECT * FROM users;" rows="5" required
+                          class="w-full px-6 py-5 bg-slate-955 font-mono text-sm text-slate-100 transition-all outline-none leading-relaxed resize-y min-h-[140px] focus:ring-0 focus:border-0"></textarea>
               </div>
 
-              <div class="flex justify-between items-center">
-                <div class="text-xs font-bold text-slate-400">
-                  <span *ngIf="queryDuration > 0">Query took {{ queryDuration }} ms</span>
+              <!-- Controls Row -->
+              <div class="flex flex-wrap justify-between items-center gap-3">
+                <div class="text-xs font-bold text-slate-400 flex items-center gap-3">
+                  <span *ngIf="queryDuration > 0" class="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 font-black">
+                    ⏱️ Execution took {{ queryDuration }} ms
+                  </span>
+                  <span *ngIf="isExecutingQuery" class="flex items-center gap-1.5 text-indigo-600 font-black animate-pulse">
+                    <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+                    Executing Query...
+                  </span>
                 </div>
-                <button type="submit" class="px-6 py-3.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center gap-2">
-                  Execute Query
-                </button>
+                
+                <div class="flex items-center gap-2 ml-auto">
+                  <button type="button" (click)="formatSQL()" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer">
+                    ✨ Format SQL
+                  </button>
+                  <button type="button" (click)="adminQueryText = ''; adminQueryError = ''; adminQueryResults = null;" class="px-4 py-3 bg-white border border-rose-100 hover:bg-rose-50 text-rose-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer">
+                    🗑️ Clear
+                  </button>
+                  <button type="submit" [disabled]="isExecutingQuery" class="px-6 py-3.5 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                    ⚡ Execute Query
+                  </button>
+                </div>
               </div>
             </form>
 
+            <!-- Loading Skeleton Grid -->
+            <div *ngIf="isExecutingQuery" class="space-y-4 pt-4 border-t border-slate-100/60 flex-1 animate-pulse">
+              <div class="h-8 bg-slate-100 rounded-xl w-1/4"></div>
+              <div class="border border-slate-150 rounded-2xl overflow-hidden">
+                <div class="h-10 bg-slate-50 border-b border-slate-100"></div>
+                <div class="p-4 space-y-3">
+                  <div class="h-4 bg-slate-100 rounded w-full"></div>
+                  <div class="h-4 bg-slate-100 rounded w-5/6"></div>
+                  <div class="h-4 bg-slate-100 rounded w-4/6"></div>
+                </div>
+              </div>
+            </div>
+
             <!-- Error Notification -->
-            <div *ngIf="adminQueryError" class="bg-rose-50 border border-rose-100 rounded-2xl p-6 flex items-start gap-4">
+            <div *ngIf="adminQueryError && !isExecutingQuery" class="bg-rose-50 border border-rose-100 rounded-2xl p-6 flex items-start gap-4">
               <span class="text-rose-500 font-black text-xl">⚠️</span>
-              <div>
+              <div class="flex-1">
                 <h4 class="font-black text-rose-900 text-sm">Execution Error</h4>
-                <p class="text-xs text-rose-800 font-bold mt-1 font-mono leading-relaxed">{{ adminQueryError }}</p>
+                <p class="text-xs text-rose-800 font-bold mt-1 font-mono leading-relaxed bg-white border border-rose-100/50 p-4 rounded-xl shadow-inner max-h-[120px] overflow-y-auto">{{ adminQueryError }}</p>
               </div>
             </div>
 
             <!-- Exec Response (Affected rows) -->
-            <div *ngIf="adminQueryResults?.type === 'exec'" class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex items-start gap-4">
+            <div *ngIf="adminQueryResults?.type === 'exec' && !isExecutingQuery" class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex items-start gap-4">
               <span class="text-emerald-600 font-black text-xl">✓</span>
               <div>
                 <h4 class="font-black text-emerald-900 text-sm">Query Executed Successfully</h4>
-                <div class="text-xs text-emerald-800 font-bold mt-1 space-y-1">
-                  <div>Rows Affected: {{ adminQueryResults.rows_affected }}</div>
-                  <div *ngIf="adminQueryResults.last_insert_id > 0">Last Insert ID: {{ adminQueryResults.last_insert_id }}</div>
+                <div class="text-xs text-emerald-800 font-bold mt-1.5 space-y-1 bg-white border border-emerald-100/50 px-4 py-3 rounded-xl shadow-inner animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div>Rows Affected: <span class="font-black text-slate-800 font-mono">{{ adminQueryResults.rows_affected }}</span></div>
+                  <div *ngIf="adminQueryResults.last_insert_id > 0">Last Insert ID: <span class="font-black text-slate-800 font-mono">{{ adminQueryResults.last_insert_id }}</span></div>
+                  <div class="text-[10px] text-emerald-600 font-black pt-1">✓ ระบบประมวลผลและอัปเดตแคชฐานข้อมูลของเซิร์ฟเวอร์เรียบร้อยแล้ว</div>
                 </div>
               </div>
             </div>
 
             <!-- Select Query Results -->
-            <div *ngIf="adminQueryResults?.type === 'select'" class="space-y-4 pt-4 border-t border-slate-100">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="text-sm font-black text-slate-800">Result Grid ({{ getQueryResultRows(adminQueryResults).length }} rows)</h4>
+            <div *ngIf="adminQueryResults?.type === 'select' && !isExecutingQuery" class="space-y-4 pt-4 border-t border-slate-100/60 flex-1 flex flex-col animate-in fade-in duration-200">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <h4 class="text-sm font-black text-slate-800">Result Grid</h4>
+                  <span class="px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 font-bold text-[10px] text-slate-500">
+                    แสดง {{ getQueryResultRows(adminQueryResults).length }} / {{ adminQueryResults.data.length }} แถว
+                  </span>
                 </div>
-                <button (click)="exportToCSV()" class="px-4 py-2 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 border border-transparent hover:border-emerald-200 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all">
-                  📤 Export CSV
-                </button>
+                <!-- Inline search result & export actions -->
+                <div class="flex items-center gap-3 ml-auto">
+                  <input type="text" [(ngModel)]="adminQueryResultSearch" placeholder="🔍 ค้นหาในผลลัพธ์..."
+                         class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 transition-colors outline-none text-xs font-bold text-slate-800 placeholder:text-slate-300 w-44 sm:w-56">
+                  
+                  <button type="button" (click)="copyResultsToClipboard()" class="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5" title="Copy rows to clipboard as JSON">
+                    📋 Copy JSON
+                  </button>
+                  <button type="button" (click)="exportToCSV()" class="px-4 py-2 bg-white border border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 text-emerald-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5">
+                    📤 Export CSV
+                  </button>
+                </div>
               </div>
 
-              <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm max-h-[380px] scrollbar-thin">
+              <!-- Results Grid Table -->
+              <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm flex-1 max-h-[380px] scrollbar-thin">
                 <table class="w-full text-left border-collapse">
                   <thead>
-                    <tr class="bg-slate-50 border-b border-slate-100">
-                      <th class="px-4 py-3 border-r border-b border-slate-200 text-[10px] font-black text-slate-400 text-center w-12 bg-slate-100">#</th>
-                      <th *ngFor="let col of adminQueryResults.columns" class="px-6 py-3 border-r border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">{{ col }}</th>
+                    <tr class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                      <th class="px-4 py-3 border-r border-slate-200 text-[10px] font-black text-slate-400 text-center w-12 bg-slate-100">#</th>
+                      <th *ngFor="let col of adminQueryResults.columns" class="px-6 py-3 border-r border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50">{{ col }}</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-100/60 bg-white">
+                  <tbody class="divide-y divide-slate-100 bg-white">
                     <tr *ngFor="let row of getQueryResultRows(adminQueryResults); let idx = index" class="hover:bg-slate-50/40 transition-colors font-mono text-xs">
                       <td class="px-4 py-3 border-r border-slate-200 text-center font-bold text-slate-400 bg-slate-50/50">{{ idx + 1 }}</td>
                       <td *ngFor="let col of adminQueryResults.columns" class="px-6 py-3 border-r border-slate-200 text-slate-600 truncate max-w-xs" [title]="row[col] !== null ? row[col] : 'NULL'">
-                        {{ row[col] !== null ? row[col] : 'NULL' }}
+                        <!-- Display NULL values stylized -->
+                        <span *ngIf="row[col] === null" class="text-slate-300 font-bold italic">NULL</span>
+                        <span *ngIf="row[col] !== null">{{ row[col] }}</span>
                       </td>
                     </tr>
                     <tr *ngIf="getQueryResultRows(adminQueryResults).length === 0">
                       <td [attr.colspan]="adminQueryResults.columns.length + 1" class="px-6 py-12 text-center text-slate-400 font-bold">
-                        Empty Set (Query returned 0 rows)
+                        Empty Set (ไม่มีแถวข้อมูลที่ตรงกับการค้นหา)
                       </td>
                     </tr>
                   </tbody>
@@ -4838,26 +4952,78 @@
           </div>
 
           <!-- TAB CONTENT: TABLE STRUCTURE -->
-          <div *ngIf="workbenchTab === 'schema' && tableSchemaInfo" class="space-y-4">
-            <div>
-              <h4 class="text-sm font-black text-slate-800">Table Schema Details: {{ selectedAdminTable }}</h4>
+          <div *ngIf="workbenchTab === 'schema' && tableSchemaInfo" class="space-y-4 flex-1 animate-in fade-in duration-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-sm font-black text-slate-800">โครงสร้างตาราง (Table Schema): <code class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-mono text-xs font-black">{{ selectedAdminTable }}</code></h4>
+                <p class="text-[10px] font-bold text-slate-400 mt-1">คอลัมน์ ข้อกำหนด คีย์หลัก/รอง และค่าเริ่มต้น</p>
+              </div>
             </div>
 
             <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm">
               <table class="w-full text-left border-collapse">
                 <thead>
-                  <tr class="bg-slate-50 border-b border-slate-100">
-                    <th *ngFor="let col of tableSchemaInfo.columns" class="px-6 py-4 font-black uppercase text-slate-400 text-xs tracking-wider border-b border-slate-200">{{ col }}</th>
+                  <tr class="bg-slate-50 border-b border-slate-200">
+                    <th *ngFor="let col of tableSchemaInfo.columns" class="px-6 py-4 font-black uppercase text-slate-400 text-xs tracking-wider border-b border-slate-200 bg-slate-50">{{ col }}</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100/60 bg-white">
+                <tbody class="divide-y divide-slate-100 bg-white">
                   <tr *ngFor="let row of getQueryResultRows(tableSchemaInfo)" class="hover:bg-slate-50/40 transition-colors font-mono text-xs">
                     <td *ngFor="let col of tableSchemaInfo.columns" class="px-6 py-4 text-slate-600 font-bold">
-                      {{ row[col] !== null ? row[col] : 'NULL' }}
+                      <!-- Render NULL/Key badges -->
+                      <span *ngIf="col === 'Key' && row[col]" class="px-2 py-0.5 rounded text-[10px] font-black bg-indigo-50 border border-indigo-100 text-indigo-600 uppercase">{{ row[col] }}</span>
+                      <span *ngIf="col === 'Null' && row[col] === 'YES'" class="text-emerald-600 font-bold">YES</span>
+                      <span *ngIf="col === 'Null' && row[col] === 'NO'" class="text-slate-400">NO</span>
+                      <span *ngIf="col !== 'Key' && col !== 'Null'">
+                        <span *ngIf="row[col] === null || row[col] === ''" class="text-slate-300 font-bold italic">NULL</span>
+                        <span *ngIf="row[col] !== null && row[col] !== ''">{{ row[col] }}</span>
+                      </span>
                     </td>
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT: QUERY HISTORY -->
+          <div *ngIf="workbenchTab === 'history'" class="space-y-4 flex-1 flex flex-col animate-in fade-in duration-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-sm font-black text-slate-800">ประวัติคำสั่ง SQL ที่รันล่าสุด</h4>
+                <p class="text-[10px] font-bold text-slate-400 mt-1">ประวัติคำสั่ง 20 รายการล่าสุด บันทึกในบราวเซอร์เครื่องคุณ</p>
+              </div>
+              <button type="button" (click)="clearQueryHistory()" *ngIf="queryHistory.length > 0" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer">
+                🗑️ ล้างประวัติ
+              </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto space-y-3.5 max-h-[380px] scrollbar-thin">
+              <div *ngFor="let h of queryHistory" class="border border-slate-100/80 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/20 hover:bg-slate-50/50 transition-colors">
+                <div class="space-y-2 flex-1">
+                  <div class="flex items-center gap-2">
+                    <!-- Status Badge -->
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border"
+                          [class.bg-emerald-50]="h.status === 'success'" [class.text-emerald-700]="h.status === 'success'" [class.border-emerald-100]="h.status === 'success'"
+                          [class.bg-rose-50]="h.status === 'error'" [class.text-rose-700]="h.status === 'error'" [class.border-rose-100]="h.status === 'error'">
+                      {{ h.status === 'success' ? 'Success' : 'Failed' }}
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-bold">{{ h.timestamp | date:'short' }}</span>
+                    <span class="text-[10px] text-slate-400 font-bold">•</span>
+                    <span class="text-[10px] text-indigo-600 font-black">{{ h.duration }} ms</span>
+                  </div>
+                  <pre class="font-mono text-xs text-slate-700 bg-white border border-slate-100 p-3 rounded-xl max-h-[90px] overflow-y-auto leading-relaxed shadow-inner">{{ h.query }}</pre>
+                </div>
+                
+                <button type="button" (click)="loadQueryFromHistory(h.query)" class="px-4 py-2.5 bg-white border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 hover:border-indigo-200 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer whitespace-nowrap">
+                  🔌 Load to Editor
+                </button>
+              </div>
+
+              <!-- Empty State History -->
+              <div *ngIf="queryHistory.length === 0" class="py-16 text-center space-y-3">
+                <span class="text-4xl">📭</span>
+                <p class="text-slate-400 font-bold text-sm">ไม่มีประวัติคำสั่ง SQL ในเซสชันนี้</p>
+              </div>
             </div>
           </div>
         </article>
@@ -5712,3 +5878,104 @@
     </table>
   </div>
 </div>
+
+<!-- ======================================================= -->
+<!-- 💬 CHAT WIDGET -->
+<!-- ======================================================= -->
+<ng-container *ngIf="currentUserId">
+  <!-- FAB Button -->
+  <button class="chat-fab-btn group" (click)="toggleChat()" [class.has-unread]="totalUnreadChatCount > 0">
+    <div class="chat-fab-content">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px;">
+        <path fill-rule="evenodd" d="M4.804 21.644A6.707 6.707 0 0 0 6 21.75a6.721 6.721 0 0 0 3.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 0 1-.814 1.686.75.75 0 0 0 .44 1.223ZM8.25 10.875a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25ZM10.875 12a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875-1.125a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Z" clip-rule="evenodd" />
+      </svg>
+      <span class="chat-fab-text">แชท / ข้อความ</span>
+    </div>
+    <span class="chat-badge" *ngIf="totalUnreadChatCount > 0">{{ totalUnreadChatCount > 99 ? '99+' : totalUnreadChatCount }}</span>
+  </button>
+
+  <!-- Chat Panel -->
+  <div class="chat-panel glass-panel" *ngIf="isChatOpen">
+    
+    <!-- Contacts List View -->
+    <div class="chat-contacts-view" *ngIf="!activeChatUser">
+      <div class="chat-header">
+        <h3>ข้อความแชท</h3>
+        <button class="chat-close-btn" (click)="toggleChat()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="chat-contact-list">
+        <div class="chat-contact-item" *ngFor="let contact of chatContacts" (click)="openChatWithUser(contact)">
+          <div class="contact-avatar-wrapper">
+            <img [src]="contact.profile_image || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + contact.name" alt="avatar">
+            <span class="status-dot" [class.online]="contact.online_status === 'online'"></span>
+          </div>
+          <div class="contact-info">
+            <div class="contact-name-row">
+              <span class="contact-name">{{ contact.name }}</span>
+              <span class="contact-time" *ngIf="contact.last_message_time && contact.last_message_time !== '1970-01-01T00:00:00Z'">{{ contact.last_message_time | date:'HH:mm' }}</span>
+            </div>
+            <div class="contact-msg-row">
+              <span class="contact-last-msg" [class.unread]="contact.unread_count > 0">{{ contact.last_message || 'เริ่มแชทใหม่...' }}</span>
+              <span class="contact-unread" *ngIf="contact.unread_count > 0">{{ contact.unread_count }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="no-contacts-msg" *ngIf="chatContacts.length === 0">
+          <i class="fas fa-user-friends"></i>
+          <p>ไม่มีผู้ติดต่อให้เริ่มสนทนา</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Chat View -->
+    <div class="chat-thread-view" *ngIf="activeChatUser">
+      <div class="chat-header chat-header-active">
+        <button class="chat-back-btn" (click)="closeActiveChat()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+        </button>
+        <div class="chat-header-user">
+          <img [src]="activeChatUser.profile_image || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + activeChatUser.name" alt="avatar">
+          <div class="chat-header-user-info">
+            <h4>{{ activeChatUser.name }}</h4>
+            <span>{{ activeChatUser.role === 'student' ? 'นักศึกษา' : activeChatUser.role === 'advisor' ? 'อาจารย์' : 'สถานประกอบการ' }}</span>
+          </div>
+        </div>
+        <button class="chat-close-btn" (click)="toggleChat()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="chat-messages-container" id="chat-messages-container">
+        <div class="chat-msg" 
+             *ngFor="let msg of chatMessages" 
+             [class.sent]="msg.sender_id === currentUserId" 
+             [class.received]="msg.sender_id !== currentUserId">
+          <div class="msg-bubble">{{ msg.message }}</div>
+          <div class="msg-time">{{ msg.created_at | date:'HH:mm' }}</div>
+        </div>
+        <div class="no-messages-msg" *ngIf="chatMessages.length === 0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 48px; height: 48px; margin-bottom: 1rem; color: #94a3b8;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm3.675 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75z" />
+          </svg>
+          <p>เริ่มบทสนทนากับ {{ activeChatUser.name }}</p>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <input type="text" 
+               placeholder="พิมพ์ข้อความ..." 
+               [(ngModel)]="newChatMessage" 
+               (keyup.enter)="sendChatMessage()">
+        <button class="chat-send-btn" (click)="sendChatMessage()" [disabled]="!newChatMessage.trim()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px; transform: rotate(-45deg); margin-left: 2px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>

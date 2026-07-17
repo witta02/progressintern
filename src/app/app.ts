@@ -60,8 +60,6 @@ export class App {
   protected apiRetrying = false;
   protected currentTime = new Date();
 
-  protected currentTime = new Date();
-
   constructor() {
     console.log('โปรเจคส่งที่ฝึกงานฮัฟ ส่องไรเอ่ยย');
     this.applyRoleTheme(undefined);
@@ -1695,7 +1693,6 @@ export class App {
     this.activeView = 'dashboard';
     this.loginError = '';
     this.notificationPanelOpen = false;
-    this.isChatOpen = false;
     this.selectedEvaluationInternshipId = null;
     this.notifications.info('คุณได้ออกจากระบบเรียบร้อยแล้ว', 'ออกจากระบบ');
     this.cdr.detectChanges();

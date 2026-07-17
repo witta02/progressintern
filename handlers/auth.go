@@ -334,7 +334,7 @@ func LoginHandler(c *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": id,
 		"role":    role,
-		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days
+		"exp":     time.Now().Add(time.Hour * 24 * 3).Unix(), // 3 days
 	})
 
 	tString, err := token.SignedString(getJWTKey())
@@ -386,4 +386,36 @@ func firstNonEmpty(values ...sql.NullString) string {
 		}
 	}
 	return ""
+}
+
+// RefreshTokenHandler validates current token via middleware context and generates a new 3-day token
+func RefreshTokenHandler(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(401, gin.H{"status": 401, "error": "ไม่พบข้อมูลผู้ใช้งาน"})
+		return
+	}
+	role, _ := c.Get("role")
+
+	// สร้าง JWT Token ใหม่ — 3 days sliding expiration
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+		"role":    role,
+		"exp":     time.Now().Add(time.Hour * 24 * 3).Unix(), // 3 days
+	})
+
+	tString, err := token.SignedString(getJWTKey())
+	if err != nil {
+		fmt.Printf("❌ JWT refresh signing error: %v\n", err)
+		c.JSON(500, gin.H{"status": 500, "error": "สร้าง Token ไม่สำเร็จ"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"status":  200,
+		"message": "Token refreshed",
+		"data": gin.H{
+			"token": tString,
+		},
+	})
 }

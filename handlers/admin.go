@@ -293,23 +293,71 @@ func DeleteCodeHandler(c *gin.Context) {
 	})
 }
 
-// GetTablesHandler returns list of all tables in the current database
+// GetTablesHandler returns list of all tables with statistics in the current database
 func GetTablesHandler(c *gin.Context) {
-	rows, err := config.DB.Query("SHOW TABLES")
+	// Query table statistics from information_schema
+	query := `
+		SELECT 
+			table_name AS name, 
+			COALESCE(table_rows, 0) AS rows, 
+			ROUND(((data_length + index_length) / 1024), 2) AS size_kb,
+			COALESCE(engine, 'InnoDB') AS engine
+		FROM information_schema.tables 
+		WHERE table_schema = DATABASE()
+		ORDER BY table_name ASC
+	`
+	rows, err := config.DB.Query(query)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ดึงข้อมูลตารางล้มเหลว: " + err.Error()})
+		// Fallback to SHOW TABLES if information_schema query fails
+		fallbackRows, fallbackErr := config.DB.Query("SHOW TABLES")
+		if fallbackErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "ดึงข้อมูลตารางล้มเหลว: " + fallbackErr.Error()})
+			return
+		}
+		defer fallbackRows.Close()
+
+		type FallbackTable struct {
+			Name   string  `json:"name"`
+			Rows   int64   `json:"rows"`
+			SizeKB float64 `json:"size_kb"`
+			Engine string  `json:"engine"`
+		}
+
+		var tables []FallbackTable
+		for fallbackRows.Next() {
+			var table string
+			if err := fallbackRows.Scan(&table); err == nil {
+				tables = append(tables, FallbackTable{
+					Name:   table,
+					Rows:   0,
+					SizeKB: 0,
+					Engine: "InnoDB",
+				})
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  200,
+			"message": "ดึงข้อมูลตารางสำเร็จ (รูปแบบจำกัด)",
+			"data":    tables,
+		})
 		return
 	}
 	defer rows.Close()
 
-	var tables []string
+	type RichTable struct {
+		Name   string  `json:"name"`
+		Rows   int64   `json:"rows"`
+		SizeKB float64 `json:"size_kb"`
+		Engine string  `json:"engine"`
+	}
+
+	var tables []RichTable
 	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "การดึงข้อมูลผิดพลาด: " + err.Error()})
-			return
+		var r RichTable
+		if err := rows.Scan(&r.Name, &r.Rows, &r.SizeKB, &r.Engine); err == nil {
+			tables = append(tables, r)
 		}
-		tables = append(tables, table)
 	}
 
 	c.JSON(http.StatusOK, gin.H{

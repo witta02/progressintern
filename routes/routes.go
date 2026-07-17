@@ -36,6 +36,7 @@ func SetupRoutes(router *gin.Engine) {
 		authGroup.POST("/register", handlers.RegisterHandler)
 		authGroup.POST("/login", handlers.LoginHandler)
 		authGroup.GET("/validate-code", handlers.ValidateCodeHandler)
+		authGroup.GET("/refresh", middleware.AuthMiddleware(), handlers.RefreshTokenHandler)
 	}
 
 	// ========================================================
@@ -231,6 +232,22 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		companyMgmtGroup.POST("/employees/codes", handlers.CreateEmployeeCodeHandler)
 		companyMgmtGroup.GET("/employees/codes", handlers.GetCompanyCodesHandler)
+	}
+
+	// ========================================================
+	// 💬 Chat Routes
+	// ========================================================
+	chatGroup := router.Group("/api/chat")
+	{
+		// WebSocket connection doesn't use the standard auth middleware easily from JS WebSocket API
+		chatGroup.GET("/ws", handlers.ServeWS)
+	}
+
+	chatAuthGroup := router.Group("/api/chat")
+	chatAuthGroup.Use(middleware.AuthMiddleware())
+	{
+		chatAuthGroup.GET("/history/:userId", handlers.GetChatHistoryHandler)
+		chatAuthGroup.GET("/contacts", handlers.GetChatContactsHandler)
 	}
 }
 

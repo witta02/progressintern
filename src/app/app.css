@@ -1166,8 +1166,5 @@ summary {
 .theme-student { --theme-accent: 99, 102, 241; }
 .theme-advisor { --theme-accent: 139, 92, 246; }
 .theme-company { --theme-accent: 245, 158, 11; }
-.theme-admin { --theme-accent: 16, 185, 129;  !important;
-  }
-
-}
+.theme-admin { --theme-accent: 16, 185, 129; }
 

@@ -2584,7 +2584,7 @@ export class App {
         status = 'late';
       }
     } else {
-      if (now.getHours() >= 9 && now.getMinutes() >= 15) {
+      if (now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() >= 15)) {
         status = 'late';
       }
     }
@@ -2625,7 +2625,7 @@ export class App {
         new Date(a.checkInTime).toDateString() === todayStr,
     );
     if (checkedOutToday) {
-      this.notifications.warning('วันนี้คุณได้ลงเวลาไปแล้ว', 'ลงเวลา');
+      this.notifications.warning('วันนี้คุณได้ลงเวลาออกงานไปแล้ว', 'ลงเวลา');
       return;
     }
 

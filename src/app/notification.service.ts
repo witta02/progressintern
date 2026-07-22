@@ -84,6 +84,7 @@ export class NotificationService {
     type: NotificationType = 'info',
     title?: string,
     durationMs = 3000,
+    showPopup: boolean = true
   ): void {
     const itemTitle = title || this.defaultTitle(type);
 
@@ -104,51 +105,61 @@ export class NotificationService {
     this.saveToStorage();
 
     // Trigger native desktop/mobile notification if supported, permission granted, and tab backgrounded
-    if (this.hasNotificationSupport() && Notification.permission === 'granted') {
-      try {
-        new Notification(itemTitle, {
-          body: message,
-          icon: '/favicon.ico',
-        });
-      } catch (err) {
-        console.error('Error triggering native browser notification:', err);
+    if (showPopup) {
+      if (this.hasNotificationSupport() && Notification.permission === 'granted') {
+        try {
+          new Notification(itemTitle, {
+            body: message,
+            icon: '/favicon.ico',
+          });
+        } catch (err) {
+          console.error('Error triggering native browser notification:', err);
+        }
       }
+
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        showCloseButton: true,
+        timer: durationMs,
+        timerProgressBar: true,
+        customClass: {
+          popup: '!font-sans !bg-white/95 !backdrop-blur-xl !border !border-slate-200/60 !shadow-2xl !rounded-2xl !p-4 !mt-4 !mr-4',
+          title: '!text-slate-900 !font-black !text-sm !mt-1',
+          htmlContainer: '!text-slate-500 !font-bold !text-xs !mt-1',
+          timerProgressBar: '!bg-blue-600/30',
+          closeButton: '!text-slate-400 hover:!text-slate-700 hover:!bg-slate-100 !rounded-xl !transition-all !mt-2 !mr-2',
+          icon: '!border-0 !scale-75 !m-0 !mr-3'
+        },
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        },
+      });
+
+      Toast.fire({
+        icon: type,
+        title: itemTitle,
+        text: message,
+      });
     }
-
-    const Toast = Swal.mixin({
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      showCloseButton: true,
-      timer: durationMs,
-      timerProgressBar: true,
-      didOpen: (toast) => {
-        toast.onmouseenter = Swal.stopTimer;
-        toast.onmouseleave = Swal.resumeTimer;
-      },
-    });
-
-    Toast.fire({
-      icon: type,
-      title: itemTitle,
-      text: message,
-    });
   }
 
-  success(message: string, title?: string): void {
-    this.notify(message, 'success', title);
+  success(message: string, title?: string, showPopup: boolean = false): void {
+    this.notify(message, 'success', title, 3000, showPopup);
   }
 
-  error(message: string, title?: string): void {
-    this.notify(message, 'error', title, 5000);
+  error(message: string, title?: string, showPopup: boolean = true): void {
+    this.notify(message, 'error', title, 5000, showPopup);
   }
 
-  warning(message: string, title?: string): void {
-    this.notify(message, 'warning', title);
+  warning(message: string, title?: string, showPopup: boolean = true): void {
+    this.notify(message, 'warning', title, 3000, showPopup);
   }
 
-  info(message: string, title?: string): void {
-    this.notify(message, 'info', title);
+  info(message: string, title?: string, showPopup: boolean = false): void {
+    this.notify(message, 'info', title, 3000, showPopup);
   }
 
   confirm(title: string, text: string): Promise<boolean> {

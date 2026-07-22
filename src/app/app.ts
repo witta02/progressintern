@@ -54,6 +54,11 @@ export class App {
   private codeDebounceTimer: any = null;
   private pollingIntervalId: any = null;
   private knownAssignmentIds = new Set<number>();
+  private knownApplicationStatuses = new Map<number, string>();
+  private knownLeaveStatuses = new Map<number, string>();
+  private knownLogbookStatuses = new Map<number, string>();
+  private knownSubmissionStatuses = new Map<number, string>();
+  private knownInternshipStatuses = new Map<number, string>();
 
   protected currentUserId: number | null = null;
   protected initialized = false;
@@ -666,6 +671,14 @@ export class App {
 
   protected get attendances(): Attendance[] {
     return this.data.attendances;
+  }
+
+  protected get leaveRequests(): LeaveRequest[] {
+    return this.data.leaves;
+  }
+
+  protected get logbooks(): Logbook[] {
+    return this.data.logbooks;
   }
 
   protected get currentUser(): User | undefined {
@@ -2798,6 +2811,14 @@ export class App {
     return R * c; // in metres
   }
 
+  protected formatDistance(meters: number | null): string {
+    if (meters === null || meters === undefined || isNaN(meters)) return '-';
+    if (meters < 1000) {
+      return `${Math.round(meters)} เมตร`;
+    }
+    return `${(meters / 1000).toFixed(1)} กิโลเมตร`;
+  }
+
   private fetchCurrentLocationForDistance(): void {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       this.getPreciseLocation(
@@ -3248,6 +3269,37 @@ export class App {
   protected get isAllStudentsSelected(): boolean {
     if (this.pendingStudents.length === 0) return false;
     return this.pendingStudents.every((s) => this.selectedStudentIds[s.id]);
+  }
+
+  protected copyToClipboard(text: string, title: string = 'คัดลอกรหัสสำเร็จ'): void {
+    if (!text) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.notifications.success(`คัดลอก "${text}" เรียบร้อยแล้ว`, title);
+      }).catch(() => {
+        this.fallbackCopyTextToClipboard(text, title);
+      });
+    } else {
+      this.fallbackCopyTextToClipboard(text, title);
+    }
+  }
+
+  private fallbackCopyTextToClipboard(text: string, title: string): void {
+    if (typeof document === 'undefined') return;
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      this.notifications.success(`คัดลอก "${text}" เรียบร้อยแล้ว`, title);
+    } catch (err) {
+      this.notifications.error('ไม่สามารถคัดลอกข้อความได้', 'ข้อผิดพลาด');
+    }
+    document.body.removeChild(textArea);
   }
 
   protected async bulkApproveStudents(): Promise<void> {
@@ -3719,6 +3771,11 @@ export class App {
     if (!user) return;
 
     this.knownAssignmentIds = new Set(this.assignments.map((a) => a.id));
+    this.knownApplicationStatuses = new Map(this.applications.map((a) => [a.id, a.status]));
+    this.knownLeaveStatuses = new Map(this.leaveRequests.map((l) => [l.id, l.status]));
+    this.knownLogbookStatuses = new Map(this.logbooks.map((l) => [l.id, l.status]));
+    this.knownSubmissionStatuses = new Map(this.submissions.map((s) => [s.id, s.status]));
+    this.knownInternshipStatuses = new Map(this.internships.map((i) => [i.id, i.status]));
 
     if (typeof window !== 'undefined') {
       this.pollingIntervalId = setInterval(async () => {
@@ -3729,6 +3786,7 @@ export class App {
         try {
           await this.data.refreshFromApi();
           this.checkNewAssignments();
+          this.checkStateChanges();
         } catch (err) {
           console.error('[Notification Polling] Error checking assignments:', err);
         }
@@ -3752,6 +3810,7 @@ export class App {
     if (event.key === 'intern-manager-state-v2') {
       void this.data.refreshFromApi().then(() => {
         this.checkNewAssignments();
+        this.checkStateChanges();
         this.cdr.detectChanges();
       });
     }
@@ -3770,7 +3829,113 @@ export class App {
           this.notifications.info(
             `งานใหม่: "${ass.title}"\nมอบหมายโดย: ${creatorType}`,
             'ได้รับงานมอบหมายใหม่',
+            true
           );
+        }
+      }
+    }
+
+    if (foundNew) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  private checkStateChanges(): void {
+    let foundNew = false;
+    const user = this.currentUser;
+    if (!user) return;
+
+    for (const app of this.applications) {
+      if (!this.knownApplicationStatuses.has(app.id)) {
+        this.knownApplicationStatuses.set(app.id, app.status);
+        if (user.role === 'company' || user.role === 'advisor') {
+          foundNew = true;
+          this.notifications.info(`มีนักศึกษาส่งใบสมัครใหม่`, 'ใบสมัครใหม่', true);
+        }
+      } else {
+        const oldStatus = this.knownApplicationStatuses.get(app.id);
+        if (oldStatus !== app.status) {
+          this.knownApplicationStatuses.set(app.id, app.status);
+          if (user.role === 'student') {
+            foundNew = true;
+            const label = this.applicationStatusLabel(app.status);
+            this.notifications.info(`ใบสมัครของคุณถูกเปลี่ยนสถานะเป็น: ${label}`, 'อัปเดตใบสมัคร', true);
+          }
+        }
+      }
+    }
+
+    for (const leave of this.leaveRequests) {
+      if (!this.knownLeaveStatuses.has(leave.id)) {
+        this.knownLeaveStatuses.set(leave.id, leave.status);
+        if (user.role === 'company' || user.role === 'advisor') {
+          foundNew = true;
+          this.notifications.info(`มีคำขอลาใหม่จากนักศึกษา`, 'คำขอลาใหม่', true);
+        }
+      } else {
+        const oldStatus = this.knownLeaveStatuses.get(leave.id);
+        if (oldStatus !== leave.status) {
+          this.knownLeaveStatuses.set(leave.id, leave.status);
+          if (user.role === 'student' && leave.status !== 'pending') {
+            foundNew = true;
+            const statusTxt = leave.status === 'approved' ? 'อนุมัติแล้ว' : 'ถูกปฏิเสธ';
+            this.notifications.success(`คำขอลาของคุณ ${statusTxt}`, 'ผลการอนุมัติลา', true);
+          }
+        }
+      }
+    }
+
+    for (const log of this.logbooks) {
+      if (!this.knownLogbookStatuses.has(log.id)) {
+        this.knownLogbookStatuses.set(log.id, log.status);
+        if (user.role === 'company' || user.role === 'advisor') {
+          foundNew = true;
+          this.notifications.info(`นักศึกษาส่งบันทึกประจำวันใหม่`, 'บันทึกใหม่', true);
+        }
+      } else {
+        const oldStatus = this.knownLogbookStatuses.get(log.id);
+        if (oldStatus !== log.status) {
+          this.knownLogbookStatuses.set(log.id, log.status);
+          if (user.role === 'student' && log.status !== 'pending') {
+            foundNew = true;
+            const statusTxt = log.status === 'approved' ? 'อนุมัติแล้ว' : 'ถูกปฏิเสธ';
+            this.notifications.success(`บันทึกประจำวันของคุณ ${statusTxt}`, 'ผลการตรวจบันทึก', true);
+          }
+        }
+      }
+    }
+
+    for (const sub of this.submissions) {
+      if (!this.knownSubmissionStatuses.has(sub.id)) {
+        this.knownSubmissionStatuses.set(sub.id, sub.status);
+        if (user.role === 'company' || user.role === 'advisor') {
+          foundNew = true;
+          this.notifications.info(`นักศึกษาส่งงานใหม่`, 'ส่งงานใหม่', true);
+        }
+      } else {
+        const oldStatus = this.knownSubmissionStatuses.get(sub.id);
+        if (oldStatus !== sub.status) {
+          this.knownSubmissionStatuses.set(sub.id, sub.status);
+          if (user.role === 'student' && sub.status === 'graded') {
+            foundNew = true;
+            this.notifications.success(`งานของคุณได้รับการตรวจและให้คะแนนแล้ว`, 'ผลการตรวจงาน', true);
+          }
+        }
+      }
+    }
+
+    for (const intern of this.internships) {
+      if (!this.knownInternshipStatuses.has(intern.id)) {
+        this.knownInternshipStatuses.set(intern.id, intern.status);
+      } else {
+        const oldStatus = this.knownInternshipStatuses.get(intern.id);
+        if (oldStatus !== intern.status) {
+          this.knownInternshipStatuses.set(intern.id, intern.status);
+          if (user.role === 'student' && intern.status === 'terminated') {
+            foundNew = true;
+            const compName = this.companyName(intern.companyId) || 'บริษัท';
+            this.notifications.warning(`การฝึกงานของคุณกับ ${compName} ได้ถูกยกเลิก/สิ้นสุดแล้ว (Terminated)`, 'แจ้งเตือนการฝึกงาน', true);
+          }
         }
       }
     }

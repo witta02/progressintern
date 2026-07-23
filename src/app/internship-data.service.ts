@@ -117,14 +117,18 @@ export class InternshipDataService {
               this.enrollmentCodes = codes || [];
             } else if (payload.role === 'company') {
               try {
-                const companyCodes = await firstValueFrom(this.api.getCompanyCodes());
+                const companyCodes = await firstValueFrom(
+                  this.api.getCompanyCodes(),
+                );
                 this.enrollmentCodes = (companyCodes || []).map((c: any) => ({
                   id: c.id,
                   role: c.role,
                   code: c.code,
                   usedCount: c.used_count ?? 0,
                   maxUses: c.max_uses ?? undefined,
-                  expiresAt: c.expires_at ? new Date(c.expires_at).toISOString() : undefined,
+                  expiresAt: c.expires_at
+                    ? new Date(c.expires_at).toISOString()
+                    : undefined,
                   isActive: c.is_active,
                   companyId: c.company_id ?? undefined,
                   companyName: c.company_name ?? undefined,
@@ -160,9 +164,15 @@ export class InternshipDataService {
       advisorId: number;
     },
   ): void {
-    const payload = { ...student, role: 'student' as Role, status: 'active' as UserStatus };
+    const payload = {
+      ...student,
+      role: 'student' as Role,
+      status: 'active' as UserStatus,
+    };
     if (this.api.apiEnabled()) {
-      const code = student.school?.toLowerCase().includes('chula') ? 'CU-STU-2026' : 'BU-STU-2026';
+      const code = student.school?.toLowerCase().includes('chula')
+        ? 'CU-STU-2026'
+        : 'BU-STU-2026';
       void firstValueFrom(
         this.api.registerWithoutLogin({
           name: student.name,
@@ -179,7 +189,11 @@ export class InternshipDataService {
     }
     this.users = [
       ...this.users,
-      { ...payload, id: this.nextId(this.users), password: student.password || 'student123' },
+      {
+        ...payload,
+        id: this.nextId(this.users),
+        password: student.password || 'student123',
+      },
     ];
     this.persist();
   }
@@ -189,7 +203,10 @@ export class InternshipDataService {
     return this.users.some((user) => user.email.toLowerCase() === normalized);
   }
 
-  async login(email: string, password: string): Promise<User | { error: string }> {
+  async login(
+    email: string,
+    password: string,
+  ): Promise<User | { error: string }> {
     if (this.api.apiEnabled()) {
       try {
         const user = await firstValueFrom(this.api.login(email, password));
@@ -213,7 +230,8 @@ export class InternshipDataService {
     }
 
     const found = this.users.find(
-      (item) => item.email.toLowerCase() === email && item.password === password,
+      (item) =>
+        item.email.toLowerCase() === email && item.password === password,
     );
     if (!found) {
       return { error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' };
@@ -221,14 +239,18 @@ export class InternshipDataService {
     return found;
   }
 
-  async register(input: RegisterInput): Promise<{ user: User } | { error: string }> {
+  async register(
+    input: RegisterInput,
+  ): Promise<{ user: User } | { error: string }> {
     const name = input.name.trim();
     const email = input.email.trim().toLowerCase();
     const password = input.password;
     const code = input.code.trim();
 
     if (!name || !email || !password || !code) {
-      return { error: 'กรุณากรอกข้อมูลให้ครบถ้วน รวมถึงรหัสเชิญ/รหัสลงทะเบียน' };
+      return {
+        error: 'กรุณากรอกข้อมูลให้ครบถ้วน รวมถึงรหัสเชิญ/รหัสลงทะเบียน',
+      };
     }
 
     if (this.api.apiEnabled()) {
@@ -249,7 +271,9 @@ export class InternshipDataService {
         );
 
         if (!created) {
-          return { error: 'ลงทะเบียนไม่สำเร็จ ตรวจสอบการเชื่อมต่อ API หรืออีเมลอาจซ้ำ' };
+          return {
+            error: 'ลงทะเบียนไม่สำเร็จ ตรวจสอบการเชื่อมต่อ API หรืออีเมลอาจซ้ำ',
+          };
         }
 
         await this.refreshFromApi();
@@ -331,13 +355,23 @@ export class InternshipDataService {
     if (cleanCode === 'BU-STU-2026') {
       return {
         status: 200,
-        data: { code: cleanCode, role: 'student', school_name: 'Bangkok University', school_id: 1 },
+        data: {
+          code: cleanCode,
+          role: 'student',
+          school_name: 'Bangkok University',
+          school_id: 1,
+        },
       };
     }
     if (cleanCode === 'BU-ADV-2026') {
       return {
         status: 200,
-        data: { code: cleanCode, role: 'advisor', school_name: 'Bangkok University', school_id: 1 },
+        data: {
+          code: cleanCode,
+          role: 'advisor',
+          school_name: 'Bangkok University',
+          school_id: 1,
+        },
       };
     }
     if (cleanCode === 'CU-STU-2026') {
@@ -378,10 +412,14 @@ export class InternshipDataService {
     const user = this.users.find((u) => u.id === userId);
     if ((updates as any).removeCompany) {
       this.users = this.users.map((u) =>
-        u.id === userId ? { ...u, companyId: undefined, companyRole: undefined } : u,
+        u.id === userId
+          ? { ...u, companyId: undefined, companyRole: undefined }
+          : u,
       );
     } else {
-      this.users = this.users.map((u) => (u.id === userId ? { ...u, ...updates } : u));
+      this.users = this.users.map((u) =>
+        u.id === userId ? { ...u, ...updates } : u,
+      );
     }
 
     if (user && user.role === 'company') {
@@ -394,11 +432,18 @@ export class InternshipDataService {
               (updates as any).description !== undefined
                 ? (updates as any).description
                 : c.description,
-            address: (updates as any).address !== undefined ? (updates as any).address : c.address,
+            address:
+              (updates as any).address !== undefined
+                ? (updates as any).address
+                : c.address,
             latitude:
-              (updates as any).latitude !== undefined ? (updates as any).latitude : c.latitude,
+              (updates as any).latitude !== undefined
+                ? (updates as any).latitude
+                : c.latitude,
             longitude:
-              (updates as any).longitude !== undefined ? (updates as any).longitude : c.longitude,
+              (updates as any).longitude !== undefined
+                ? (updates as any).longitude
+                : c.longitude,
           };
         }
         return c;
@@ -408,7 +453,9 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async addJob(job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<void> {
+  async addJob(
+    job: Omit<JobPosting, 'id' | 'status' | 'createdAt' | 'updatedAt'>,
+  ): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.createJob(job));
       await this.refreshFromApi();
@@ -441,7 +488,9 @@ export class InternshipDataService {
       await this.refreshFromApi();
     } else {
       this.jobPostings = this.jobPostings.map((item) =>
-        item.id === id ? { ...item, ...job, updatedAt: new Date().toISOString() } : item,
+        item.id === id
+          ? { ...item, ...job, updatedAt: new Date().toISOString() }
+          : item,
       );
       this.persist();
     }
@@ -463,7 +512,9 @@ export class InternshipDataService {
     verificationStatus: VerificationStatus,
   ): Promise<void> {
     if (this.api.apiEnabled()) {
-      await firstValueFrom(this.api.patchAttendance(attendance, { verificationStatus }));
+      await firstValueFrom(
+        this.api.patchAttendance(attendance, { verificationStatus }),
+      );
       await this.refreshFromApi();
       return;
     }
@@ -480,7 +531,9 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async addApplication(application: Omit<Application, 'id' | 'updatedAt'>): Promise<void> {
+  async addApplication(
+    application: Omit<Application, 'id' | 'updatedAt'>,
+  ): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.createApplication(application));
       await this.refreshFromApi();
@@ -489,7 +542,8 @@ export class InternshipDataService {
 
     const existing = this.applications.find(
       (app) =>
-        app.studentId === application.studentId && app.jobPostingId === application.jobPostingId,
+        app.studentId === application.studentId &&
+        app.jobPostingId === application.jobPostingId,
     );
 
     if (existing) {
@@ -501,7 +555,11 @@ export class InternshipDataService {
     } else {
       this.applications = [
         ...this.applications,
-        { ...application, id: this.nextId(this.applications), appliedAt: new Date().toISOString() },
+        {
+          ...application,
+          id: this.nextId(this.applications),
+          appliedAt: new Date().toISOString(),
+        },
       ];
     }
     this.persist();
@@ -518,7 +576,9 @@ export class InternshipDataService {
     }
 
     this.applications = this.applications.map((item) =>
-      item.id === application.id ? { ...item, status, updatedAt: new Date().toISOString() } : item,
+      item.id === application.id
+        ? { ...item, status, updatedAt: new Date().toISOString() }
+        : item,
     );
     this.persist();
   }
@@ -550,7 +610,9 @@ export class InternshipDataService {
     status: 'active' | 'completed' | 'terminated',
   ): Promise<void> {
     if (this.api.apiEnabled()) {
-      await firstValueFrom(this.api.patchInternshipStatus(internshipId, status));
+      await firstValueFrom(
+        this.api.patchInternshipStatus(internshipId, status),
+      );
       await this.refreshFromApi();
       return;
     }
@@ -564,7 +626,9 @@ export class InternshipDataService {
       const internship = this.internships.find((i) => i.id === internshipId);
       if (internship) {
         this.jobPostings = this.jobPostings.map((job) =>
-          job.id === internship.jobPostingId ? { ...job, status: 'open', updatedAt: nowStr } : job,
+          job.id === internship.jobPostingId
+            ? { ...job, status: 'open', updatedAt: nowStr }
+            : job,
         );
       }
     }
@@ -596,9 +660,14 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async updateAttendance(attendanceId: number, updates: Partial<Attendance>): Promise<void> {
+  async updateAttendance(
+    attendanceId: number,
+    updates: Partial<Attendance>,
+  ): Promise<void> {
     if (this.api.apiEnabled()) {
-      const attendance = this.attendances.find((item) => item.id === attendanceId);
+      const attendance = this.attendances.find(
+        (item) => item.id === attendanceId,
+      );
       if (!attendance) {
         return;
       }
@@ -629,16 +698,26 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async setAttendanceStatus(attendance: Attendance, status: AttendanceStatus): Promise<void> {
+  async setAttendanceStatus(
+    attendance: Attendance,
+    status: AttendanceStatus,
+  ): Promise<void> {
     await this.updateAttendance(attendance.id, { status });
   }
 
   async addLogbook(
-    logbook: Omit<Logbook, 'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'> & {
+    logbook: Omit<
+      Logbook,
+      'id' | 'createdAt' | 'updatedAt' | 'mentorComment' | 'status'
+    > & {
       workDate?: string;
     },
   ): Promise<void> {
-    const payload = { ...logbook, status: 'pending' as LogbookStatus, workDate: logbook.workDate };
+    const payload = {
+      ...logbook,
+      status: 'pending' as LogbookStatus,
+      workDate: logbook.workDate,
+    };
 
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.createLogbook(payload));
@@ -646,7 +725,10 @@ export class InternshipDataService {
       return;
     }
 
-    this.logbooks = [...this.logbooks, { ...payload, id: this.nextId(this.logbooks) }];
+    this.logbooks = [
+      ...this.logbooks,
+      { ...payload, id: this.nextId(this.logbooks) },
+    ];
     this.persist();
   }
 
@@ -656,14 +738,20 @@ export class InternshipDataService {
     mentorComment?: string,
   ): Promise<void> {
     if (this.api.apiEnabled()) {
-      await firstValueFrom(this.api.patchLogbook(logbook.id, { status, mentorComment }));
+      await firstValueFrom(
+        this.api.patchLogbook(logbook.id, { status, mentorComment }),
+      );
       await this.refreshFromApi();
       return;
     }
 
     this.logbooks = this.logbooks.map((item) =>
       item.id === logbook.id
-        ? { ...item, status, mentorComment: mentorComment ?? item.mentorComment }
+        ? {
+            ...item,
+            status,
+            mentorComment: mentorComment ?? item.mentorComment,
+          }
         : item,
     );
     this.persist();
@@ -676,7 +764,9 @@ export class InternshipDataService {
     workDate?: string,
   ): Promise<void> {
     if (this.api.apiEnabled()) {
-      await firstValueFrom(this.api.updateLogbook(id, { title, content, workDate }));
+      await firstValueFrom(
+        this.api.updateLogbook(id, { title, content, workDate }),
+      );
       await this.refreshFromApi();
       return;
     }
@@ -726,9 +816,13 @@ export class InternshipDataService {
     return this.evaluationTemplates;
   }
 
-  async createEvaluationTemplate(template: Omit<EvaluationTemplate, 'id'>): Promise<any> {
+  async createEvaluationTemplate(
+    template: Omit<EvaluationTemplate, 'id'>,
+  ): Promise<any> {
     if (this.api.apiEnabled()) {
-      const res = await firstValueFrom(this.api.createEvaluationTemplate(template));
+      const res = await firstValueFrom(
+        this.api.createEvaluationTemplate(template),
+      );
       await this.refreshFromApi();
       return res;
     }
@@ -751,7 +845,9 @@ export class InternshipDataService {
     criteria: EvaluationCriterion[],
   ): Promise<void> {
     if (this.api.apiEnabled()) {
-      await firstValueFrom(this.api.updateEvaluationTemplate(id, name, criteria));
+      await firstValueFrom(
+        this.api.updateEvaluationTemplate(id, name, criteria),
+      );
       await this.refreshFromApi();
       return;
     }
@@ -767,17 +863,24 @@ export class InternshipDataService {
       await this.refreshFromApi();
       return;
     }
-    this.evaluationTemplates = this.evaluationTemplates.filter((t) => t.id !== id);
+    this.evaluationTemplates = this.evaluationTemplates.filter(
+      (t) => t.id !== id,
+    );
     this.persist();
   }
 
-  async saveEvaluationScores(evalId: number, scores: EvaluationScore[]): Promise<void> {
+  async saveEvaluationScores(
+    evalId: number,
+    scores: EvaluationScore[],
+  ): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.saveEvaluationScores(evalId, scores));
       await this.refreshFromApi();
       return;
     }
-    this.evaluationScores = this.evaluationScores.filter((s) => s.evaluationId !== evalId);
+    this.evaluationScores = this.evaluationScores.filter(
+      (s) => s.evaluationId !== evalId,
+    );
     const newScores = scores.map((s) => ({
       ...s,
       id: this.nextId(this.evaluationScores),
@@ -799,7 +902,10 @@ export class InternshipDataService {
   }
 
   async addLeave(
-    leave: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>,
+    leave: Omit<
+      LeaveRequest,
+      'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'
+    >,
   ): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.createLeave(leave));
@@ -836,7 +942,8 @@ export class InternshipDataService {
             ...l,
             status,
             comment,
-            approvedAt: status === 'approved' ? new Date().toISOString() : undefined,
+            approvedAt:
+              status === 'approved' ? new Date().toISOString() : undefined,
           }
         : l,
     );
@@ -845,7 +952,10 @@ export class InternshipDataService {
 
   async updateLeave(
     id: number,
-    leave: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'>,
+    leave: Omit<
+      LeaveRequest,
+      'id' | 'status' | 'createdAt' | 'updatedAt' | 'approvedAt'
+    >,
   ): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.updateLeave(id, leave));
@@ -853,7 +963,9 @@ export class InternshipDataService {
       return;
     }
 
-    this.leaves = this.leaves.map((l) => (l.id === id ? { ...l, ...leave } : l));
+    this.leaves = this.leaves.map((l) =>
+      l.id === id ? { ...l, ...leave } : l,
+    );
     this.persist();
   }
 
@@ -895,8 +1007,9 @@ export class InternshipDataService {
         description:
           'กรุณาสรุปสิ่งที่ได้เรียนรู้และทักษะที่ใช้ในการทำงานของสัปดาห์แรก พร้อมแนบไฟล์รายงาน PDF',
         dueDate:
-          new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] +
-          'T23:59:59Z',
+          new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0] + 'T23:59:59Z',
         points: 100,
         creatorId: 1001,
         creatorRole: 'advisor',
@@ -908,8 +1021,9 @@ export class InternshipDataService {
         description:
           'ออกแบบหน้าจอหลักของระบบจัดการตามโจทย์ที่ได้รับ โดยใช้ Figma หรือ Sketch และส่งลิงก์งาน',
         dueDate:
-          new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] +
-          'T18:00:00Z',
+          new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0] + 'T18:00:00Z',
         points: 100,
         creatorId: 2001,
         creatorRole: 'company',
@@ -960,7 +1074,14 @@ export class InternshipDataService {
         usedCount: 0,
         isActive: true,
       },
-      { id: 5, role: 'company', code: 'COMP-INV-2026', maxUses: 10, usedCount: 0, isActive: true },
+      {
+        id: 5,
+        role: 'company',
+        code: 'COMP-INV-2026',
+        maxUses: 10,
+        usedCount: 0,
+        isActive: true,
+      },
     ];
     this.tickets = [
       {
@@ -969,7 +1090,8 @@ export class InternshipDataService {
         user_name: 'สมชาย รักเรียน',
         user_role: 'student',
         title: 'ปัญหาระบบระบุพิกัด GPS',
-        description: 'กดปุ่มปักหมุดพิกัดแล้วเข็มหมุดไม่เลื่อนตามตำแหน่งปัจจุบันครับ',
+        description:
+          'กดปุ่มปักหมุดพิกัดแล้วเข็มหมุดไม่เลื่อนตามตำแหน่งปัจจุบันครับ',
         status: 'open',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -980,9 +1102,12 @@ export class InternshipDataService {
         user_name: 'บริษัท เทคโซลูชั่นส์',
         user_role: 'company',
         title: 'แก้ไขข้อมูลที่อยู่บริษัทไม่ได้',
-        description: 'พยายามแก้ไขข้อมูลที่อยู่แล้วระบบไม่ยอมเซฟครับ รบกวนตรวจสอบให้หน่อยค่ะ',
+        description:
+          'พยายามแก้ไขข้อมูลที่อยู่แล้วระบบไม่ยอมเซฟครับ รบกวนตรวจสอบให้หน่อยค่ะ',
         status: 'resolved',
-        created_at: new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date(
+          new Date().getTime() - 24 * 60 * 60 * 1000,
+        ).toISOString(),
         updated_at: new Date().toISOString(),
       },
     ];
@@ -995,7 +1120,9 @@ export class InternshipDataService {
         await this.refreshFromApi();
         return res;
       } catch (err: any) {
-        return { error: err?.error?.error || err?.message || 'เพิ่มสถานศึกษาล้มเหลว' };
+        return {
+          error: err?.error?.error || err?.message || 'เพิ่มสถานศึกษาล้มเหลว',
+        };
       }
     }
 
@@ -1036,15 +1163,20 @@ export class InternshipDataService {
         await this.refreshFromApi();
         return res;
       } catch (err: any) {
-        return { error: err?.error?.error || err?.message || 'สร้างรหัสเชิญล้มเหลว' };
+        return {
+          error: err?.error?.error || err?.message || 'สร้างรหัสเชิญล้มเหลว',
+        };
       }
     }
 
     const schoolName = this.schools.find((s) => s.id === body.schoolId)?.name;
     const matchedComp = this.companies.find((c) => c.id === body.companyId);
-    const resolvedCompanyName = matchedComp?.companyName || body.companyName?.trim();
-    const resolvedCompanyAddress = matchedComp?.address || body.companyAddress?.trim();
-    const resolvedCompanyDescription = matchedComp?.description || body.companyDescription?.trim();
+    const resolvedCompanyName =
+      matchedComp?.companyName || body.companyName?.trim();
+    const resolvedCompanyAddress =
+      matchedComp?.address || body.companyAddress?.trim();
+    const resolvedCompanyDescription =
+      matchedComp?.description || body.companyDescription?.trim();
 
     const code: EnrollmentCode = {
       id: this.nextId(this.enrollmentCodes),
@@ -1088,7 +1220,9 @@ export class InternshipDataService {
         await this.refreshFromApi();
         return res;
       } catch (err: any) {
-        return { error: err?.error?.error || err?.message || 'แก้ไขรหัสเชิญล้มเหลว' };
+        return {
+          error: err?.error?.error || err?.message || 'แก้ไขรหัสเชิญล้มเหลว',
+        };
       }
     }
 
@@ -1115,7 +1249,9 @@ export class InternshipDataService {
         await this.refreshFromApi();
         return res;
       } catch (err: any) {
-        return { error: err?.error?.error || err?.message || 'ลบรหัสเชิญล้มเหลว' };
+        return {
+          error: err?.error?.error || err?.message || 'ลบรหัสเชิญล้มเหลว',
+        };
       }
     }
 
@@ -1148,7 +1284,9 @@ export class InternshipDataService {
       try {
         return await firstValueFrom(this.api.executeAdminQuery(query));
       } catch (err: any) {
-        return { error: err?.error?.error || err?.message || 'Query execution failed' };
+        return {
+          error: err?.error?.error || err?.message || 'Query execution failed',
+        };
       }
     }
 
@@ -1157,18 +1295,31 @@ export class InternshipDataService {
       let targetTable = '';
       if (clean.includes('FROM USERS')) targetTable = 'users';
       else if (clean.includes('FROM COMPANIES')) targetTable = 'companies';
-      else if (clean.includes('FROM JOB_POSTINGS') || clean.includes('FROM JOBS'))
+      else if (
+        clean.includes('FROM JOB_POSTINGS') ||
+        clean.includes('FROM JOBS')
+      )
         targetTable = 'jobPostings';
-      else if (clean.includes('FROM APPLICATIONS')) targetTable = 'applications';
+      else if (clean.includes('FROM APPLICATIONS'))
+        targetTable = 'applications';
       else if (clean.includes('FROM INTERNSHIPS')) targetTable = 'internships';
-      else if (clean.includes('FROM ATTENDANCES') || clean.includes('FROM ATTENDANCE'))
+      else if (
+        clean.includes('FROM ATTENDANCES') ||
+        clean.includes('FROM ATTENDANCE')
+      )
         targetTable = 'attendances';
       else if (clean.includes('FROM LOGBOOKS')) targetTable = 'logbooks';
       else if (clean.includes('FROM EVALUATIONS')) targetTable = 'evaluations';
-      else if (clean.includes('FROM LEAVE_REQUESTS') || clean.includes('FROM LEAVES'))
+      else if (
+        clean.includes('FROM LEAVE_REQUESTS') ||
+        clean.includes('FROM LEAVES')
+      )
         targetTable = 'leaves';
       else if (clean.includes('FROM SCHOOLS')) targetTable = 'schools';
-      else if (clean.includes('FROM ENROLLMENT_CODES') || clean.includes('FROM CODES'))
+      else if (
+        clean.includes('FROM ENROLLMENT_CODES') ||
+        clean.includes('FROM CODES')
+      )
         targetTable = 'enrollmentCodes';
 
       if (targetTable) {
@@ -1201,7 +1352,10 @@ export class InternshipDataService {
     return Math.max(0, ...items.map((item) => item.id || 0)) + 1;
   }
 
-  async deleteOtherApplications(studentId: number, keepAppId: number): Promise<void> {
+  async deleteOtherApplications(
+    studentId: number,
+    keepAppId: number,
+  ): Promise<void> {
     if (this.api.apiEnabled()) {
       return;
     }
@@ -1252,17 +1406,31 @@ export class InternshipDataService {
     try {
       const state = JSON.parse(rawState) as Partial<InternshipDataService>;
       this.users = Array.isArray(state.users) ? state.users : this.users;
-      this.companies = Array.isArray(state.companies) ? state.companies : this.companies;
-      this.jobPostings = Array.isArray(state.jobPostings) ? state.jobPostings : this.jobPostings;
+      this.companies = Array.isArray(state.companies)
+        ? state.companies
+        : this.companies;
+      this.jobPostings = Array.isArray(state.jobPostings)
+        ? state.jobPostings
+        : this.jobPostings;
       this.applications = Array.isArray(state.applications)
         ? state.applications
         : this.applications;
-      this.internships = Array.isArray(state.internships) ? state.internships : this.internships;
-      this.attendances = Array.isArray(state.attendances) ? state.attendances : this.attendances;
-      this.logbooks = Array.isArray(state.logbooks) ? state.logbooks : this.logbooks;
-      this.evaluations = Array.isArray(state.evaluations) ? state.evaluations : this.evaluations;
+      this.internships = Array.isArray(state.internships)
+        ? state.internships
+        : this.internships;
+      this.attendances = Array.isArray(state.attendances)
+        ? state.attendances
+        : this.attendances;
+      this.logbooks = Array.isArray(state.logbooks)
+        ? state.logbooks
+        : this.logbooks;
+      this.evaluations = Array.isArray(state.evaluations)
+        ? state.evaluations
+        : this.evaluations;
       this.leaves = Array.isArray(state.leaves) ? state.leaves : this.leaves;
-      this.schools = Array.isArray(state.schools) ? state.schools : this.schools;
+      this.schools = Array.isArray(state.schools)
+        ? state.schools
+        : this.schools;
       this.enrollmentCodes = Array.isArray(state.enrollmentCodes)
         ? state.enrollmentCodes
         : this.enrollmentCodes;
@@ -1272,15 +1440,25 @@ export class InternshipDataService {
       this.evaluationScores = Array.isArray(state.evaluationScores)
         ? state.evaluationScores
         : this.evaluationScores;
-      this.assignments = Array.isArray(state.assignments) ? state.assignments : this.assignments;
-      this.submissions = Array.isArray(state.submissions) ? state.submissions : this.submissions;
-      this.tickets = Array.isArray(state.tickets) ? state.tickets : this.tickets;
+      this.assignments = Array.isArray(state.assignments)
+        ? state.assignments
+        : this.assignments;
+      this.submissions = Array.isArray(state.submissions)
+        ? state.submissions
+        : this.submissions;
+      this.tickets = Array.isArray(state.tickets)
+        ? state.tickets
+        : this.tickets;
     } catch {
       localStorage.removeItem(this.storageKey);
     }
   }
 
-  async addCompany(name: string, description?: string, address?: string): Promise<any> {
+  async addCompany(
+    name: string,
+    description?: string,
+    address?: string,
+  ): Promise<any> {
     if (this.api.apiEnabled()) {
       try {
         const res = await firstValueFrom(
@@ -1289,7 +1467,9 @@ export class InternshipDataService {
         await this.refreshFromApi();
         return res;
       } catch (err: any) {
-        return { error: err?.error?.error || err?.message || 'เพิ่มบริษัทล้มเหลว' };
+        return {
+          error: err?.error?.error || err?.message || 'เพิ่มบริษัทล้มเหลว',
+        };
       }
     }
 
@@ -1306,14 +1486,25 @@ export class InternshipDataService {
     return company;
   }
 
-  async addTicket(title: string, description: string, currentUser?: any): Promise<any> {
+  async addTicket(
+    title: string,
+    description: string,
+    currentUser?: any,
+  ): Promise<any> {
     if (this.api.apiEnabled()) {
       try {
-        const res = await firstValueFrom(this.api.createTicket({ title, description }));
+        const res = await firstValueFrom(
+          this.api.createTicket({ title, description }),
+        );
         await this.refreshFromApi();
         return res;
       } catch (err: any) {
-        return { error: err?.error?.error || err?.message || 'สร้างคำขอความช่วยเหลือล้มเหลว' };
+        return {
+          error:
+            err?.error?.error ||
+            err?.message ||
+            'สร้างคำขอความช่วยเหลือล้มเหลว',
+        };
       }
     }
 
@@ -1333,10 +1524,16 @@ export class InternshipDataService {
     return ticket;
   }
 
-  async replyToTicket(ticketId: number, message: string, currentUser?: any): Promise<any> {
+  async replyToTicket(
+    ticketId: number,
+    message: string,
+    currentUser?: any,
+  ): Promise<any> {
     if (this.api.apiEnabled()) {
       try {
-        const res = await firstValueFrom(this.api.replyTicket(ticketId, message));
+        const res = await firstValueFrom(
+          this.api.replyTicket(ticketId, message),
+        );
         await this.refreshFromApi();
         return res;
       } catch (err: any) {
@@ -1347,19 +1544,28 @@ export class InternshipDataService {
     return { status: 200, message: 'ตอบกลับเรียบร้อย (Mock)' };
   }
 
-  async updateTicketStatus(ticketId: number, status: 'open' | 'resolved' | 'closed'): Promise<any> {
+  async updateTicketStatus(
+    ticketId: number,
+    status: 'open' | 'resolved' | 'closed',
+  ): Promise<any> {
     if (this.api.apiEnabled()) {
       try {
-        const res = await firstValueFrom(this.api.updateTicketStatus(ticketId, status));
+        const res = await firstValueFrom(
+          this.api.updateTicketStatus(ticketId, status),
+        );
         await this.refreshFromApi();
         return res;
       } catch (err: any) {
-        return { error: err?.error?.error || err?.message || 'ปรับปรุงสถานะล้มเหลว' };
+        return {
+          error: err?.error?.error || err?.message || 'ปรับปรุงสถานะล้มเหลว',
+        };
       }
     }
 
     this.tickets = this.tickets.map((t) =>
-      t.id === ticketId ? { ...t, status, updated_at: new Date().toISOString() } : t,
+      t.id === ticketId
+        ? { ...t, status, updated_at: new Date().toISOString() }
+        : t,
     );
     this.persist();
     return { status: 200, message: 'ปรับปรุงสถานะเรียบร้อย' };
@@ -1435,12 +1641,19 @@ export class InternshipDataService {
     const nowStr = new Date().toISOString();
     const idx = this.submissions.findIndex(
       (s) =>
-        s.assignmentId === submission['assignmentId'] && s.studentId === submission['studentId'],
+        s.assignmentId === submission['assignmentId'] &&
+        s.studentId === submission['studentId'],
     );
 
     let status: SubmissionStatus = 'submitted';
-    const ass = this.assignments.find((a) => a.id === submission['assignmentId']);
-    if (ass && ass.dueDate && new Date().getTime() > new Date(ass.dueDate).getTime()) {
+    const ass = this.assignments.find(
+      (a) => a.id === submission['assignmentId'],
+    );
+    if (
+      ass &&
+      ass.dueDate &&
+      new Date().getTime() > new Date(ass.dueDate).getTime()
+    ) {
       status = 'late';
     }
 
@@ -1472,7 +1685,11 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async gradeSubmission(id: number, score: number, feedback: string): Promise<void> {
+  async gradeSubmission(
+    id: number,
+    score: number,
+    feedback: string,
+  ): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.gradeSubmission(id, score, feedback));
       await this.refreshFromApi();
@@ -1494,7 +1711,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async acceptSubmission(assignmentId: number, studentId: number): Promise<void> {
+  async acceptSubmission(
+    assignmentId: number,
+    studentId: number,
+  ): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.acceptSubmission(assignmentId));
       await this.refreshFromApi();
@@ -1527,7 +1747,10 @@ export class InternshipDataService {
     this.persist();
   }
 
-  async ignoreSubmission(assignmentId: number, studentId: number): Promise<void> {
+  async ignoreSubmission(
+    assignmentId: number,
+    studentId: number,
+  ): Promise<void> {
     if (this.api.apiEnabled()) {
       await firstValueFrom(this.api.ignoreSubmission(assignmentId));
       await this.refreshFromApi();

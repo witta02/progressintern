@@ -100,7 +100,9 @@ export class App {
           } catch (err: any) {
             // If token expired/invalid (401/403), perform clean logout
             if (err.status === 401 || err.status === 403) {
-              console.warn('[App] Session token expired or invalid, logging out.');
+              console.warn(
+                '[App] Session token expired or invalid, logging out.',
+              );
               this.logout();
               this.initialized = true;
               this.cdr.markForCheck();
@@ -139,7 +141,9 @@ export class App {
         }
       }
       if (!loaded) {
-        console.warn('[App] API not reachable after 3 attempts. Showing error state.');
+        console.warn(
+          '[App] API not reachable after 3 attempts. Showing error state.',
+        );
       }
     }
 
@@ -155,7 +159,9 @@ export class App {
       } else {
         // API failed to load – keep the user logged in with their stored ID
         // so they don't have to re-login every time there is a transient network hiccup.
-        console.warn('[App] API not reachable on startup — keeping stored session alive.');
+        console.warn(
+          '[App] API not reachable on startup — keeping stored session alive.',
+        );
         const savedView = localStorage.getItem('intern-manager-active-view-v1');
         if (savedView) this.activeView = savedView;
       }
@@ -216,9 +222,11 @@ export class App {
     );
 
     const observeElements = () => {
-      document.querySelectorAll('.reveal-on-scroll:not(.visible)').forEach((el) => {
-        observer.observe(el);
-      });
+      document
+        .querySelectorAll('.reveal-on-scroll:not(.visible)')
+        .forEach((el) => {
+          observer.observe(el);
+        });
     };
 
     const mutObserver = new MutationObserver(() => {
@@ -421,7 +429,8 @@ export class App {
     { label: '-- เลือกคำสั่งตัวอย่าง (Presets) --', query: '' },
     {
       label: 'ดึงข้อมูลนักศึกษาทั้งหมด (All Students)',
-      query: "SELECT id, name, email, school, status FROM users WHERE role = 'student';",
+      query:
+        "SELECT id, name, email, school, status FROM users WHERE role = 'student';",
     },
     {
       label: 'ดึงข้อมูลบริษัททั้งหมด (All Companies)',
@@ -443,7 +452,8 @@ export class App {
     },
     {
       label: 'นับสถิติใบสมัครฝึกงาน (Application Stats)',
-      query: 'SELECT status, COUNT(*) as count FROM applications GROUP BY status;',
+      query:
+        'SELECT status, COUNT(*) as count FROM applications GROUP BY status;',
     },
     {
       label: 'สถิติการเช็คอินที่สาย (Late Checks count)',
@@ -502,8 +512,11 @@ export class App {
   protected internshipDetailOpen = false;
   protected internshipTableSearch = '';
   protected internshipTableStatusFilter = '';
-  protected advisorStudentFilter: 'my' | 'school_all' | 'school_unassigned' | 'other_schools' =
-    'my';
+  protected advisorStudentFilter:
+    | 'my'
+    | 'school_all'
+    | 'school_unassigned'
+    | 'other_schools' = 'my';
   protected showAddStudentModal = false;
   protected addStudentModalTab: 'pick' | 'create' = 'pick';
   protected pickStudentSearchQuery = '';
@@ -515,7 +528,10 @@ export class App {
   protected advisorStudentSearch = '';
 
   // Custom Class Groups created by the advisor
-  protected advisorCustomClassGroups: { yearLevel: string; classGroup: string }[] = [];
+  protected advisorCustomClassGroups: {
+    yearLevel: string;
+    classGroup: string;
+  }[] = [];
   protected newGroupYearLevel = '';
   protected newGroupClassGroup = '';
 
@@ -580,7 +596,9 @@ export class App {
       if (user.role === 'admin') return true;
 
       if (user.role === 'advisor') {
-        const advisorSchool = this.data.schools.find((s) => s.name === user.school);
+        const advisorSchool = this.data.schools.find(
+          (s) => s.name === user.school,
+        );
         return (
           ass.creatorId === user.id ||
           (ass.schoolId !== undefined && ass.schoolId === advisorSchool?.id)
@@ -597,14 +615,18 @@ export class App {
             (i) =>
               i.companyId === company.id &&
               i.status === 'active' &&
-              (ass.studentId === i.studentId || ass.jobPostingId === i.jobPostingId),
+              (ass.studentId === i.studentId ||
+                ass.jobPostingId === i.jobPostingId),
           )
         );
       }
 
       if (user.role === 'student') {
-        const studentSchool = this.data.schools.find((s) => s.name === user.school);
-        const matchesSchool = ass.schoolId !== undefined && ass.schoolId === studentSchool?.id;
+        const studentSchool = this.data.schools.find(
+          (s) => s.name === user.school,
+        );
+        const matchesSchool =
+          ass.schoolId !== undefined && ass.schoolId === studentSchool?.id;
 
         const activeInternship = this.internships.find(
           (i) => i.studentId === user.id && i.status === 'active',
@@ -615,7 +637,11 @@ export class App {
           ass.companyId === activeInternship.companyId;
 
         if (matchesSchool) {
-          return ass.studentId === undefined || ass.studentId === null || ass.studentId === user.id;
+          return (
+            ass.studentId === undefined ||
+            ass.studentId === null ||
+            ass.studentId === user.id
+          );
         }
 
         if (matchesCompany) {
@@ -719,12 +745,22 @@ export class App {
       ];
     }
 
-    return [`${this.users.length} users`, `${this.internships.length} internships`];
+    return [
+      `${this.users.length} users`,
+      `${this.internships.length} internships`,
+    ];
   }
 
   protected get availableViews(): string[] {
     const viewsByRole: Record<Role, string[]> = {
-      admin: ['dashboard', 'admin_users', 'admin_codes', 'company_school', 'tickets', 'edit'],
+      admin: [
+        'dashboard',
+        'admin_users',
+        'admin_codes',
+        'company_school',
+        'tickets',
+        'edit',
+      ],
       advisor: [
         'dashboard',
         'students',
@@ -995,21 +1031,31 @@ export class App {
   }
 
   protected get currentCompany(): Company | undefined {
-    return this.currentUser ? this.data.companyForUser(this.currentUser.id) : undefined;
+    return this.currentUser
+      ? this.data.companyForUser(this.currentUser.id)
+      : undefined;
   }
 
   protected get currentCompanyId(): number | undefined {
-    return this.currentUser ? this.data.companyIdForUser(this.currentUser.id) : undefined;
+    return this.currentUser
+      ? this.data.companyIdForUser(this.currentUser.id)
+      : undefined;
   }
 
   /** True if this is a company user with admin sub-role (first registrant). Full company permissions. */
   protected get isCompanyAdmin(): boolean {
-    return this.currentUser?.role === 'company' && this.currentUser?.companyRole === 'admin';
+    return (
+      this.currentUser?.role === 'company' &&
+      this.currentUser?.companyRole === 'admin'
+    );
   }
 
   /** True if this is a company user with employee sub-role (subsequent registrant). Limited permissions. */
   protected get isCompanyEmployee(): boolean {
-    return this.currentUser?.role === 'company' && this.currentUser?.companyRole === 'employee';
+    return (
+      this.currentUser?.role === 'company' &&
+      this.currentUser?.companyRole === 'employee'
+    );
   }
 
   protected get managedStudents(): User[] {
@@ -1040,7 +1086,8 @@ export class App {
     }
     if (filter === 'other_schools') {
       return this.users.filter(
-        (u) => u.role === 'student' && !this.isSameSchool(u.school, user.school),
+        (u) =>
+          u.role === 'student' && !this.isSameSchool(u.school, user.school),
       );
     }
 
@@ -1048,7 +1095,9 @@ export class App {
     return this.users.filter(
       (u) =>
         u.role === 'student' &&
-        (u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id),
+        (u.advisorIds
+          ? u.advisorIds.includes(user.id)
+          : u.advisorId === user.id),
     );
   }
 
@@ -1058,7 +1107,9 @@ export class App {
     return this.users.filter(
       (u) =>
         u.role === 'student' &&
-        (u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id),
+        (u.advisorIds
+          ? u.advisorIds.includes(user.id)
+          : u.advisorId === user.id),
     );
   }
 
@@ -1088,11 +1139,15 @@ export class App {
       (u) =>
         u.role === 'company' &&
         u.id !== this.currentUserId &&
-        (u.companyId === company.id || this.data.companyIdForUser(u.id) === company.id),
+        (u.companyId === company.id ||
+          this.data.companyIdForUser(u.id) === company.id),
     );
   }
 
-  protected async changeEmployeeRole(emp: User, newRole: 'admin' | 'employee'): Promise<void> {
+  protected async changeEmployeeRole(
+    emp: User,
+    newRole: 'admin' | 'employee',
+  ): Promise<void> {
     try {
       await this.data.updateUser(emp.id, { companyRole: newRole });
       this.notifications.success(
@@ -1100,11 +1155,17 @@ export class App {
         'จัดการพนักงาน',
       );
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการพนักงาน');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'จัดการพนักงาน',
+      );
     }
   }
 
-  protected async changeEmployeeStatus(emp: User, newStatus: any): Promise<void> {
+  protected async changeEmployeeStatus(
+    emp: User,
+    newStatus: any,
+  ): Promise<void> {
     try {
       await this.data.updateUser(emp.id, { status: newStatus });
       this.notifications.success(
@@ -1112,12 +1173,17 @@ export class App {
         'จัดการพนักงาน',
       );
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการพนักงาน');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'จัดการพนักงาน',
+      );
     }
   }
 
   protected async removeEmployeeFromCompany(emp: User): Promise<void> {
-    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบพนักงาน ${emp.name} ออกจากบริษัท?`)) {
+    if (
+      !confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบพนักงาน ${emp.name} ออกจากบริษัท?`)
+    ) {
       return;
     }
     try {
@@ -1127,7 +1193,10 @@ export class App {
         'จัดการพนักงาน',
       );
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการพนักงาน');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'จัดการพนักงาน',
+      );
     }
   }
 
@@ -1156,7 +1225,9 @@ export class App {
     try {
       if (this.data.api.apiEnabled()) {
         // Use dedicated company employee code endpoint
-        const res = await firstValueFrom(this.data.api.createEmployeeCode(codeStr));
+        const res = await firstValueFrom(
+          this.data.api.createEmployeeCode(codeStr),
+        );
         if (res && res.error) {
           this.notifications.error(res.error, 'สร้างรหัสเชิญพนักงานล้มเหลว');
         } else {
@@ -1193,7 +1264,10 @@ export class App {
         }
       }
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'สร้างรหัสพนักงาน');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'สร้างรหัสพนักงาน',
+      );
     } finally {
       this.employeeInviteLoading = false;
     }
@@ -1260,7 +1334,9 @@ export class App {
     return this.users.filter(
       (u) =>
         u.role === 'student' &&
-        !(u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id) &&
+        !(u.advisorIds
+          ? u.advisorIds.includes(user.id)
+          : u.advisorId === user.id) &&
         (u.name.toLowerCase().includes(query) ||
           u.email.toLowerCase().includes(query) ||
           (u.school && u.school.toLowerCase().includes(query))),
@@ -1272,7 +1348,9 @@ export class App {
     if (!user || user.role !== 'advisor') return [];
     return this.users.filter(
       (u) =>
-        u.role === 'student' && this.isSameSchool(u.school, user.school) && u.status === 'pending',
+        u.role === 'student' &&
+        this.isSameSchool(u.school, user.school) &&
+        u.status === 'pending',
     );
   }
 
@@ -1298,7 +1376,9 @@ export class App {
       .filter((i) => i.companyId === companyId && i.status === 'active')
       .map((i) => i.id);
     return this.attendances.filter(
-      (a) => internshipIds.includes(a.internshipId) && a.verificationStatus === 'pending',
+      (a) =>
+        internshipIds.includes(a.internshipId) &&
+        a.verificationStatus === 'pending',
     );
   }
 
@@ -1312,7 +1392,9 @@ export class App {
     if (!user || user.role !== 'student') return undefined;
     const todayStr = new Date().toDateString();
     return this.attendances.find(
-      (a) => a.studentId === user.id && new Date(a.checkInTime).toDateString() === todayStr,
+      (a) =>
+        a.studentId === user.id &&
+        new Date(a.checkInTime).toDateString() === todayStr,
     );
   }
 
@@ -1340,7 +1422,8 @@ export class App {
         .filter(
           (internship) =>
             internship.jobPostingId === job.id &&
-            (internship.status === 'active' || internship.status === 'completed'),
+            (internship.status === 'active' ||
+              internship.status === 'completed'),
         )
         .sort(
           (a, b) =>
@@ -1353,7 +1436,9 @@ export class App {
         const lastFillingInternship = jobInternships[job.slots - 1];
         const filledTime = lastFillingInternship
           ? new Date(
-              lastFillingInternship.createdAt || lastFillingInternship.updatedAt || 0,
+              lastFillingInternship.createdAt ||
+                lastFillingInternship.updatedAt ||
+                0,
             ).getTime()
           : 0;
         if (now - filledTime >= oneDay) {
@@ -1378,7 +1463,9 @@ export class App {
     });
 
     if (this.currentUser?.role === 'company' && this.currentCompanyId) {
-      return filteredList.filter((job) => job.companyId === this.currentCompanyId);
+      return filteredList.filter(
+        (job) => job.companyId === this.currentCompanyId,
+      );
     }
 
     return filteredList;
@@ -1399,7 +1486,9 @@ export class App {
     if (user?.role === 'admin') {
       list = this.applications;
     } else if (user?.role === 'student') {
-      list = this.applications.filter((application) => application.studentId === user.id);
+      list = this.applications.filter(
+        (application) => application.studentId === user.id,
+      );
     } else if (user?.role === 'company' && this.currentCompanyId) {
       const companyJobIds = this.jobPostings
         .filter((job) => job.companyId === this.currentCompanyId)
@@ -1439,10 +1528,15 @@ export class App {
       });
     } else {
       const studentIds = this.managedStudents.map((student) => student.id);
-      list = this.applications.filter((application) => studentIds.includes(application.studentId));
+      list = this.applications.filter((application) =>
+        studentIds.includes(application.studentId),
+      );
     }
 
-    if (this.applicationStatusFilter && this.applicationStatusFilter !== 'all') {
+    if (
+      this.applicationStatusFilter &&
+      this.applicationStatusFilter !== 'all'
+    ) {
       list = list.filter((app) => app.status === this.applicationStatusFilter);
     }
     return list;
@@ -1455,14 +1549,18 @@ export class App {
     if (user?.role === 'admin') {
       list = this.internships;
     } else if (user?.role === 'student') {
-      list = this.internships.filter((internship) => internship.studentId === user.id);
+      list = this.internships.filter(
+        (internship) => internship.studentId === user.id,
+      );
     } else if (user?.role === 'company' && this.currentCompanyId) {
       list = this.internships.filter(
         (internship) => internship.companyId === this.currentCompanyId,
       );
     } else {
       const studentIds = this.managedStudents.map((student) => student.id);
-      list = this.internships.filter((internship) => studentIds.includes(internship.studentId));
+      list = this.internships.filter((internship) =>
+        studentIds.includes(internship.studentId),
+      );
     }
 
     // Load manually dismissed internship IDs from localStorage
@@ -1514,20 +1612,26 @@ export class App {
   }
 
   protected get visibleAttendances(): Attendance[] {
-    const internshipIds = this.visibleInternships.map((internship) => internship.id);
+    const internshipIds = this.visibleInternships.map(
+      (internship) => internship.id,
+    );
     let list = this.attendances.filter((attendance) =>
       internshipIds.includes(attendance.internshipId),
     );
 
     if (this.attendanceStudentFilterId) {
-      list = list.filter((a) => a.studentId === Number(this.attendanceStudentFilterId));
+      list = list.filter(
+        (a) => a.studentId === Number(this.attendanceStudentFilterId),
+      );
     }
 
     return list;
   }
 
   protected get activeInternship(): Internship | undefined {
-    return this.visibleInternships.find((internship) => internship.status === 'active');
+    return this.visibleInternships.find(
+      (internship) => internship.status === 'active',
+    );
   }
 
   protected get selectedEvaluationInternship(): Internship | undefined {
@@ -1537,8 +1641,12 @@ export class App {
   }
 
   protected get visibleLogbooks(): Logbook[] {
-    const internshipIds = this.visibleInternships.map((internship) => internship.id);
-    let list = this.data.logbooks.filter((logbook) => internshipIds.includes(logbook.internshipId));
+    const internshipIds = this.visibleInternships.map(
+      (internship) => internship.id,
+    );
+    let list = this.data.logbooks.filter((logbook) =>
+      internshipIds.includes(logbook.internshipId),
+    );
     if (this.logbookStatusFilter && this.logbookStatusFilter !== 'all') {
       list = list.filter((l) => l.status === this.logbookStatusFilter);
     }
@@ -1546,8 +1654,12 @@ export class App {
   }
 
   protected get visibleLeaves(): LeaveRequest[] {
-    const internshipIds = this.visibleInternships.map((internship) => internship.id);
-    let list = this.data.leaves.filter((leave) => internshipIds.includes(leave.internshipId));
+    const internshipIds = this.visibleInternships.map(
+      (internship) => internship.id,
+    );
+    let list = this.data.leaves.filter((leave) =>
+      internshipIds.includes(leave.internshipId),
+    );
     if (this.leaveStatusFilter && this.leaveStatusFilter !== 'all') {
       list = list.filter((l) => l.status === this.leaveStatusFilter);
     }
@@ -1555,7 +1667,9 @@ export class App {
   }
 
   protected get visibleEvaluations() {
-    const internshipIds = this.visibleInternships.map((internship) => internship.id);
+    const internshipIds = this.visibleInternships.map(
+      (internship) => internship.id,
+    );
     return this.data.evaluations.filter((evaluation) =>
       internshipIds.includes(evaluation.internshipId),
     );
@@ -1579,7 +1693,10 @@ export class App {
     const result = await this.data.login(email, this.loginForm.password);
 
     if (!result || 'error' in result) {
-      const msg = result && 'error' in result ? result.error : 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+      const msg =
+        result && 'error' in result
+          ? result.error
+          : 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
       this.loginError = msg;
       this.notifications.error(msg, 'เข้าสู่ระบบไม่สำเร็จ');
       this.loginLoading = false;
@@ -1596,12 +1713,16 @@ export class App {
 
     if (this.registerForm.password !== this.registerForm.confirmPassword) {
       this.registerError = 'รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน';
-      this.notifications.error('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน', 'สมัครสมาชิก');
+      this.notifications.error(
+        'รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน',
+        'สมัครสมาชิก',
+      );
       return;
     }
 
     if (!this.registerForm.role) {
-      this.registerError = 'กรุณากรอกรหัสสมัครเรียนหรือรหัสเชิญที่ถูกต้องก่อนสมัครสมาชิก';
+      this.registerError =
+        'กรุณากรอกรหัสสมัครเรียนหรือรหัสเชิญที่ถูกต้องก่อนสมัครสมาชิก';
       this.notifications.error('กรุณากรอกรหัสเชิญที่ถูกต้อง', 'สมัครสมาชิก');
       return;
     }
@@ -1616,10 +1737,16 @@ export class App {
       role: this.registerForm.role as RegisterRole,
       phone: this.registerForm.phone || undefined,
       school: this.registerForm.school || undefined,
-      companyName: this.isRegisterCompany ? this.registerForm.companyName : undefined,
-      description: this.isRegisterCompany ? this.registerForm.description : undefined,
+      companyName: this.isRegisterCompany
+        ? this.registerForm.companyName
+        : undefined,
+      description: this.isRegisterCompany
+        ? this.registerForm.description
+        : undefined,
       address: this.isRegisterCompany ? this.registerForm.address : undefined,
-      contactEmail: this.isRegisterCompany ? this.registerForm.contactEmail : undefined,
+      contactEmail: this.isRegisterCompany
+        ? this.registerForm.contactEmail
+        : undefined,
     });
 
     this.registerLoading = false;
@@ -1633,7 +1760,10 @@ export class App {
     this.resetRegisterForm();
     this.authMode = 'login';
     await this.finishLogin(result.user);
-    this.notifications.success(`ยินดีต้อนรับ ${result.user.name}`, 'สมัครสมาชิกสำเร็จ');
+    this.notifications.success(
+      `ยินดีต้อนรับ ${result.user.name}`,
+      'สมัครสมาชิกสำเร็จ',
+    );
   }
 
   protected onCodeChange(code: string): void {
@@ -1659,7 +1789,8 @@ export class App {
       this.validatingCode = false;
 
       if (!res || 'error' in res) {
-        this.codeValidationError = res?.error || 'รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง';
+        this.codeValidationError =
+          res?.error || 'รหัสสมัครเรียนหรือรหัสเชิญไม่ถูกต้อง';
         this.cdr.markForCheck();
         return;
       }
@@ -1668,7 +1799,8 @@ export class App {
       const role = data.role;
       const school_name = data.school_name ?? data.schoolName;
       const company_name = data.company_name ?? data.companyName;
-      const skip_company_fields = data.skip_company_fields ?? data.skipCompanyFields;
+      const skip_company_fields =
+        data.skip_company_fields ?? data.skipCompanyFields;
 
       this.registerForm.role = role as RegisterRole;
       if (school_name) {
@@ -1720,10 +1852,22 @@ export class App {
       // Default fallback (Indigo theme)
       root.style.setProperty('--color-brand-accent', '#6366f1');
       root.style.setProperty('--color-brand-accent-teal', '#0ea5e9');
-      root.style.setProperty('--color-brand-accent-teal-dim', 'rgba(14, 165, 233, 0.1)');
-      root.style.setProperty('--color-brand-accent-indigo-dim', 'rgba(99, 102, 241, 0.1)');
-      root.style.setProperty('--shadow-glow-teal', '0 0 20px rgba(14, 165, 233, 0.15)');
-      root.style.setProperty('--shadow-glow-indigo', '0 0 20px rgba(99, 102, 241, 0.15)');
+      root.style.setProperty(
+        '--color-brand-accent-teal-dim',
+        'rgba(14, 165, 233, 0.1)',
+      );
+      root.style.setProperty(
+        '--color-brand-accent-indigo-dim',
+        'rgba(99, 102, 241, 0.1)',
+      );
+      root.style.setProperty(
+        '--shadow-glow-teal',
+        '0 0 20px rgba(14, 165, 233, 0.15)',
+      );
+      root.style.setProperty(
+        '--shadow-glow-indigo',
+        '0 0 20px rgba(99, 102, 241, 0.15)',
+      );
       return;
     }
 
@@ -1776,7 +1920,10 @@ export class App {
       root.style.setProperty('--color-brand-accent', theme.accent);
       root.style.setProperty('--color-brand-accent-teal', theme.accentTeal);
       root.style.setProperty('--color-brand-accent-teal-dim', theme.tealDim);
-      root.style.setProperty('--color-brand-accent-indigo-dim', theme.indigoDim);
+      root.style.setProperty(
+        '--color-brand-accent-indigo-dim',
+        theme.indigoDim,
+      );
       root.style.setProperty('--shadow-glow-teal', theme.glowTeal);
       root.style.setProperty('--shadow-glow-indigo', theme.glowIndigo);
     }
@@ -1799,7 +1946,10 @@ export class App {
         this.notifications.error('ยังไม่สามารถเชื่อมต่อ Server ได้', 'Error');
       }
     } catch (err: any) {
-      this.notifications.error(`เชื่อมต่อล้มเหลว: ${err.message || err}`, 'Error');
+      this.notifications.error(
+        `เชื่อมต่อล้มเหลว: ${err.message || err}`,
+        'Error',
+      );
     }
     this.cdr.detectChanges();
   }
@@ -1827,7 +1977,8 @@ export class App {
 
     if (this.activeView === 'jobs' && user?.role === 'student') {
       const hasActiveInternship = this.internships.some(
-        (internship) => internship.studentId === user.id && internship.status === 'active',
+        (internship) =>
+          internship.studentId === user.id && internship.status === 'active',
       );
       if (hasActiveInternship) {
         alert('คุณมีสถานที่ฝึกงานแล้ว ไม่สามารถดูหรือสมัครตำแหน่งงานเพิ่มได้');
@@ -1841,14 +1992,17 @@ export class App {
     }
 
     if (this.activeView === 'evaluations') {
-      this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
+      this.selectedEvaluationInternshipId =
+        this.visibleInternships[0]?.id ?? null;
       this.evaluationType = user?.role === 'advisor' ? 'advisor' : 'mentor';
       void this.loadEvaluationTemplates();
     }
 
     if (this.activeView === 'edit' && user) {
       const comp =
-        user.role === 'company' ? this.companies.find((c) => c.userId === user.id) : undefined;
+        user.role === 'company'
+          ? this.companies.find((c) => c.userId === user.id)
+          : undefined;
       this.profileDraft = {
         name: user.name,
         email: user.email,
@@ -1931,11 +2085,16 @@ export class App {
   }
 
   protected jobName(jobPostingId: number): string {
-    return this.jobPostings.find((job) => job.id === jobPostingId)?.title ?? '-';
+    return (
+      this.jobPostings.find((job) => job.id === jobPostingId)?.title ?? '-'
+    );
   }
 
   protected companyName(companyId: number): string {
-    return this.companies.find((company) => company.id === companyId)?.companyName ?? '-';
+    return (
+      this.companies.find((company) => company.id === companyId)?.companyName ??
+      '-'
+    );
   }
 
   protected internshipJobTitle(internship: Internship): string {
@@ -1962,7 +2121,8 @@ export class App {
 
     // Check if student already has an active internship
     const hasActiveInternship = this.internships.some(
-      (internship) => internship.studentId === user.id && internship.status === 'active',
+      (internship) =>
+        internship.studentId === user.id && internship.status === 'active',
     );
     if (hasActiveInternship) {
       return false;
@@ -1993,7 +2153,10 @@ export class App {
   protected async applyJob(job: JobPosting): Promise<void> {
     const user = this.currentUser;
     if (user?.status !== 'active') {
-      this.notifications.warning('บัญชีของคุณยังไม่ได้รับการอนุมัติ', 'สมัครงาน');
+      this.notifications.warning(
+        'บัญชีของคุณยังไม่ได้รับการอนุมัติ',
+        'สมัครงาน',
+      );
       return;
     }
 
@@ -2022,7 +2185,10 @@ export class App {
       this.setActiveView('applications');
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ส่งใบสมัคร');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'ส่งใบสมัคร',
+      );
     }
   }
 
@@ -2035,11 +2201,15 @@ export class App {
     if (status === 'approved') {
       const hasActiveInternship = this.internships.some(
         (internship) =>
-          internship.studentId === application.studentId && internship.status === 'active',
+          internship.studentId === application.studentId &&
+          internship.status === 'active',
       );
       if (hasActiveInternship) {
         alert('นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว');
-        this.notifications.error('นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว', 'แจ้งเตือน');
+        this.notifications.error(
+          'นักศึกษาคนนี้ มีสถานที่ฝึกงานแล้ว',
+          'แจ้งเตือน',
+        );
         try {
           await this.data.updateApplicationStatus(application, 'rejected');
         } catch (e) {
@@ -2054,9 +2224,15 @@ export class App {
       const label = this.applicationStatusLabel(status);
 
       if (status === 'rejected') {
-        this.notifications.warning(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+        this.notifications.warning(
+          `ใบสมัครของ ${student} → ${label}`,
+          'การสมัคร',
+        );
       } else if (status === 'approved') {
-        this.notifications.success(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
+        this.notifications.success(
+          `ใบสมัครของ ${student} → ${label}`,
+          'การสมัคร',
+        );
       } else {
         this.notifications.info(`ใบสมัครของ ${student} → ${label}`, 'การสมัคร');
       }
@@ -2064,15 +2240,22 @@ export class App {
       if (
         status !== 'approved' ||
         !this.useMockData ||
-        this.internships.some((internship) => internship.studentId === application.studentId)
+        this.internships.some(
+          (internship) => internship.studentId === application.studentId,
+        )
       ) {
         window.location.reload();
         return;
       }
 
-      const job = this.jobPostings.find((item) => item.id === application.jobPostingId);
+      const job = this.jobPostings.find(
+        (item) => item.id === application.jobPostingId,
+      );
       if (!job) {
-        this.notifications.warning('ไม่พบตำแหน่งงานที่เชื่อมกับใบสมัคร', 'ฝึกงาน');
+        this.notifications.warning(
+          'ไม่พบตำแหน่งงานที่เชื่อมกับใบสมัคร',
+          'ฝึกงาน',
+        );
         window.location.reload();
         return;
       }
@@ -2085,11 +2268,20 @@ export class App {
         endDate: '2026-09-30',
         status: 'active',
       });
-      await this.data.deleteOtherApplications(application.studentId, application.id);
-      this.notifications.success(`สร้างฝึกงานให้ ${student} ตำแหน่ง ${job.title} แล้ว`, 'ฝึกงาน');
+      await this.data.deleteOtherApplications(
+        application.studentId,
+        application.id,
+      );
+      this.notifications.success(
+        `สร้างฝึกงานให้ ${student} ตำแหน่ง ${job.title} แล้ว`,
+        'ฝึกงาน',
+      );
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'การสมัคร');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'การสมัคร',
+      );
     }
   }
 
@@ -2097,19 +2289,28 @@ export class App {
     const user = this.currentUser;
     if (!user) return;
     if (!this.newStudent.name.trim() || !this.newStudent.email.trim()) {
-      this.notifications.warning('กรุณากรอกชื่อนักศึกษาและอีเมล', 'เพิ่มนักศึกษา');
+      this.notifications.warning(
+        'กรุณากรอกชื่อนักศึกษาและอีเมล',
+        'เพิ่มนักศึกษา',
+      );
       return;
     }
 
     if (
-      this.users.some((u) => u.email.toLowerCase() === this.newStudent.email.trim().toLowerCase())
+      this.users.some(
+        (u) =>
+          u.email.toLowerCase() === this.newStudent.email.trim().toLowerCase(),
+      )
     ) {
       this.notifications.error('อีเมลนี้มีอยู่ในระบบแล้ว', 'เพิ่มนักศึกษา');
       return;
     }
 
     if (this.newStudent.password.trim().length < 6) {
-      this.notifications.warning('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'เพิ่มนักศึกษา');
+      this.notifications.warning(
+        'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',
+        'เพิ่มนักศึกษา',
+      );
       return;
     }
 
@@ -2121,7 +2322,10 @@ export class App {
       advisorId: user.id,
       school: user.school,
     });
-    this.notifications.success(`สร้างบัญชีนักศึกษา ${name} แล้ว`, 'เพิ่มนักศึกษา');
+    this.notifications.success(
+      `สร้างบัญชีนักศึกษา ${name} แล้ว`,
+      'เพิ่มนักศึกษา',
+    );
     this.newStudent = { name: '', email: '', password: 'student123' };
     this.showAddStudentModal = false;
   }
@@ -2135,20 +2339,32 @@ export class App {
     }
     try {
       await this.data.updateUser(student.id, updates);
-      this.notifications.success(`อนุมัติผู้ใช้ ${student.name} เรียบร้อยแล้ว`, 'จัดการผู้ใช้');
+      this.notifications.success(
+        `อนุมัติผู้ใช้ ${student.name} เรียบร้อยแล้ว`,
+        'จัดการผู้ใช้',
+      );
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการผู้ใช้');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'จัดการผู้ใช้',
+      );
     }
   }
 
   protected async rejectStudent(student: User): Promise<void> {
     try {
       await this.data.updateUser(student.id, { status: 'rejected' });
-      this.notifications.warning(`ปฏิเสธบัญชีของ ${student.name} แล้ว`, 'จัดการผู้ใช้');
+      this.notifications.warning(
+        `ปฏิเสธบัญชีของ ${student.name} แล้ว`,
+        'จัดการผู้ใช้',
+      );
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการผู้ใช้');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'จัดการผู้ใช้',
+      );
     }
   }
 
@@ -2156,14 +2372,20 @@ export class App {
     const user = this.currentUser;
     if (!user) return;
     try {
-      await this.data.updateUser(student.id, { school: user.school, status: 'active' });
+      await this.data.updateUser(student.id, {
+        school: user.school,
+        status: 'active',
+      });
       this.notifications.success(
         `แก้ไขโรงเรียนและรับ ${student.name} เข้าสังกัดแล้ว`,
         'จัดการนักศึกษา',
       );
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการนักศึกษา');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'จัดการนักศึกษา',
+      );
     }
   }
 
@@ -2202,7 +2424,10 @@ export class App {
       this.notifications.success('บันทึกข้อมูลส่วนตัวแล้ว', 'โปรไฟล์');
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'โปรไฟล์');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'โปรไฟล์',
+      );
     }
   }
 
@@ -2210,8 +2435,16 @@ export class App {
     onSuccess: (pos: GeolocationPosition) => void,
     onFailure: (err: any) => void,
   ): void {
-    const optionsHigh = { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 };
-    const optionsLow = { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 };
+    const optionsHigh = {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 10000,
+    };
+    const optionsLow = {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 60000,
+    };
 
     let completed = false;
 
@@ -2338,12 +2571,18 @@ export class App {
           this.profileDraft.latitude = position.coords.latitude.toFixed(6);
           this.profileDraft.longitude = position.coords.longitude.toFixed(6);
           if (this.leafletMap && this.leafletMarker && this.leafletCircle) {
-            const latlng = [position.coords.latitude, position.coords.longitude];
+            const latlng = [
+              position.coords.latitude,
+              position.coords.longitude,
+            ];
             this.leafletMarker.setLatLng(latlng);
             this.leafletCircle.setLatLng(latlng);
             this.leafletMap.setView(latlng, 15);
           }
-          this.notifications.success('ปักหมุดพิกัดปัจจุบันเรียบร้อยแล้ว', 'ตำแหน่ง');
+          this.notifications.success(
+            'ปักหมุดพิกัดปัจจุบันเรียบร้อยแล้ว',
+            'ตำแหน่ง',
+          );
         },
         (error) => {
           Swal.close();
@@ -2351,7 +2590,10 @@ export class App {
         },
       );
     } else {
-      this.notifications.error('เบราว์เซอร์ของคุณไม่สนับสนุนการดึงตำแหน่ง', 'ตำแหน่ง');
+      this.notifications.error(
+        'เบราว์เซอร์ของคุณไม่สนับสนุนการดึงตำแหน่ง',
+        'ตำแหน่ง',
+      );
     }
   }
 
@@ -2425,8 +2667,10 @@ export class App {
       await this.data.updateJob(this.selectedJobToEdit.id, {
         companyId: this.selectedJobToEdit.companyId,
         title,
-        description: this.editJobForm.description.trim() || 'รายละเอียดงานฝึกงาน',
-        requirements: this.editJobForm.requirements.trim() || 'พร้อมเรียนรู้งาน',
+        description:
+          this.editJobForm.description.trim() || 'รายละเอียดงานฝึกงาน',
+        requirements:
+          this.editJobForm.requirements.trim() || 'พร้อมเรียนรู้งาน',
         benefits: this.editJobForm.benefits.trim() || undefined,
         checkinTime: ensureSeconds(this.editJobForm.checkinTime),
         checkoutTime: ensureSeconds(this.editJobForm.checkoutTime),
@@ -2436,10 +2680,16 @@ export class App {
       });
 
       this.selectedJobToEdit = null;
-      this.notifications.success(`แก้ไขประกาศตำแหน่ง ${title} แล้ว`, 'ตำแหน่งงาน');
+      this.notifications.success(
+        `แก้ไขประกาศตำแหน่ง ${title} แล้ว`,
+        'ตำแหน่งงาน',
+      );
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ตำแหน่งงาน');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'ตำแหน่งงาน',
+      );
     }
   }
 
@@ -2447,10 +2697,16 @@ export class App {
     if (confirm(`คุณแน่ใจหรือไม่ที่จะลบประกาศรับสมัครงาน "${job.title}"?`)) {
       try {
         await this.data.deleteJob(job.id);
-        this.notifications.warning(`ลบประกาศรับสมัครงาน "${job.title}" แล้ว`, 'ตำแหน่งงาน');
+        this.notifications.warning(
+          `ลบประกาศรับสมัครงาน "${job.title}" แล้ว`,
+          'ตำแหน่งงาน',
+        );
         window.location.reload();
       } catch (err: any) {
-        this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ตำแหน่งงาน');
+        this.notifications.error(
+          `เกิดข้อผิดพลาด: ${err.message || err}`,
+          'ตำแหน่งงาน',
+        );
       }
     }
   }
@@ -2469,7 +2725,9 @@ export class App {
     // Check if already checked in today
     const todayStr = new Date().toDateString();
     const checkedInToday = this.attendances.some(
-      (a) => a.studentId === user.id && new Date(a.checkInTime).toDateString() === todayStr,
+      (a) =>
+        a.studentId === user.id &&
+        new Date(a.checkInTime).toDateString() === todayStr,
     );
     if (checkedInToday) {
       this.notifications.warning('วันนี้คุณได้ลงเวลาไปแล้ว', 'ลงเวลา');
@@ -2477,7 +2735,10 @@ export class App {
     }
 
     if (this.hasOpenAttendance()) {
-      this.notifications.warning('มีรายการ check in ที่ยังไม่ได้ check out', 'ลงเวลา');
+      this.notifications.warning(
+        'มีรายการ check in ที่ยังไม่ได้ check out',
+        'ลงเวลา',
+      );
       return;
     }
 
@@ -2500,7 +2761,10 @@ export class App {
         },
         (error) => {
           Swal.close();
-          console.error('[App] Geolocation check-in error — trying IP fallback', error);
+          console.error(
+            '[App] Geolocation check-in error — trying IP fallback',
+            error,
+          );
           if (isWfh) {
             this.executeCheckIn(undefined, undefined, isWfh);
           } else if (error.code === 1) {
@@ -2531,7 +2795,11 @@ export class App {
     }
   }
 
-  private async executeCheckIn(lat?: number, lon?: number, isWfh: boolean = false): Promise<void> {
+  private async executeCheckIn(
+    lat?: number,
+    lon?: number,
+    isWfh: boolean = false,
+  ): Promise<void> {
     const user = this.currentUser;
     if (!user || !this.activeInternship) return;
 
@@ -2562,7 +2830,11 @@ export class App {
         return;
       }
 
-      if (lat === undefined || lon === undefined || this.companyDistance === null) {
+      if (
+        lat === undefined ||
+        lon === undefined ||
+        this.companyDistance === null
+      ) {
         Swal.fire({
           title: 'ไม่สามารถตรวจสอบตำแหน่งได้',
           text: 'ระบบต้องการพิกัดตำแหน่ง GPS เพื่อทำการเช็คอิน กรุณาอนุญาตการเข้าถึงตำแหน่งของคุณ',
@@ -2586,7 +2858,9 @@ export class App {
     }
 
     const now = new Date();
-    const job = this.jobPostings.find((j) => j.id === this.activeInternship?.jobPostingId);
+    const job = this.jobPostings.find(
+      (j) => j.id === this.activeInternship?.jobPostingId,
+    );
     let status: AttendanceStatus = 'present';
 
     if (job?.latedTime) {
@@ -2597,7 +2871,10 @@ export class App {
         status = 'late';
       }
     } else {
-      if (now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() >= 15)) {
+      if (
+        now.getHours() > 9 ||
+        (now.getHours() === 9 && now.getMinutes() >= 15)
+      ) {
         status = 'late';
       }
     }
@@ -2644,11 +2921,15 @@ export class App {
 
     const openAttendance = this.attendances.find(
       (attendance) =>
-        attendance.internshipId === this.activeInternship?.id && !attendance.checkOutTime,
+        attendance.internshipId === this.activeInternship?.id &&
+        !attendance.checkOutTime,
     );
 
     if (!openAttendance) {
-      this.notifications.warning('ยังไม่มีรายการ check in ที่เปิดอยู่', 'ลงเวลา');
+      this.notifications.warning(
+        'ยังไม่มีรายการ check in ที่เปิดอยู่',
+        'ลงเวลา',
+      );
       return;
     }
 
@@ -2671,7 +2952,10 @@ export class App {
         },
         (error) => {
           Swal.close();
-          console.error('[App] Geolocation check-out error — trying IP fallback', error);
+          console.error(
+            '[App] Geolocation check-out error — trying IP fallback',
+            error,
+          );
           if (error.code === 1) {
             this.handleGeolocationError(error, true);
           } else {
@@ -2687,7 +2971,8 @@ export class App {
                   confirmButtonText: 'ลงเวลาต่อ',
                   cancelButtonText: 'ยกเลิก',
                 }).then((result) => {
-                  if (result.isConfirmed) this.executeCheckOut(openAttendance.id);
+                  if (result.isConfirmed)
+                    this.executeCheckOut(openAttendance.id);
                 });
               }
             });
@@ -2699,13 +2984,20 @@ export class App {
     }
   }
 
-  private executeCheckOut(attendanceId: number, lat?: number, lon?: number): void {
+  private executeCheckOut(
+    attendanceId: number,
+    lat?: number,
+    lon?: number,
+  ): void {
     this.data.updateAttendance(attendanceId, {
       checkOutTime: new Date().toISOString(),
       checkoutLatitude: lat,
       checkoutLongitude: lon,
     });
-    this.notifications.success('Check out แล้ว' + (lat ? ' พร้อมพิกัด GPS' : ''), 'ลงเวลา');
+    this.notifications.success(
+      'Check out แล้ว' + (lat ? ' พร้อมพิกัด GPS' : ''),
+      'ลงเวลา',
+    );
   }
 
   protected setAttendanceVerification(
@@ -2715,9 +3007,15 @@ export class App {
     this.data.setAttendanceVerification(attendance, status);
     const student = this.userName(attendance.studentId);
     if (status === 'approved') {
-      this.notifications.success(`อนุมัติการลงเวลาของ ${student} แล้ว`, 'อนุมัติ');
+      this.notifications.success(
+        `อนุมัติการลงเวลาของ ${student} แล้ว`,
+        'อนุมัติ',
+      );
     } else {
-      this.notifications.warning(`ปฏิเสธการลงเวลาของ ${student} แล้ว (เปลี่ยนเป็น ขาด)`, 'ปฏิเสธ');
+      this.notifications.warning(
+        `ปฏิเสธการลงเวลาของ ${student} แล้ว (เปลี่ยนเป็น ขาด)`,
+        'ปฏิเสธ',
+      );
     }
   }
 
@@ -2796,7 +3094,12 @@ export class App {
     );
   }
 
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
     const R = 6371e3; // metres
     const phi1 = (lat1 * Math.PI) / 180;
     const phi2 = (lat2 * Math.PI) / 180;
@@ -2805,7 +3108,10 @@ export class App {
 
     const a =
       Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-      Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      Math.cos(phi1) *
+        Math.cos(phi2) *
+        Math.sin(deltaLambda / 2) *
+        Math.sin(deltaLambda / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c; // in metres
@@ -2827,7 +3133,10 @@ export class App {
           this.currentLongitude = position.coords.longitude;
         },
         (error) => {
-          console.error('[App] Error getting location for check-in preview', error);
+          console.error(
+            '[App] Error getting location for check-in preview',
+            error,
+          );
           this.getIpLocation().then((coords) => {
             if (coords) {
               this.currentLatitude = coords.lat;
@@ -2855,7 +3164,10 @@ export class App {
   protected async addAssignment(): Promise<void> {
     const user = this.currentUser;
     if (!user) return;
-    if (!this.newAssignment.title.trim() || !this.newAssignment.description.trim()) {
+    if (
+      !this.newAssignment.title.trim() ||
+      !this.newAssignment.description.trim()
+    ) {
       this.notifications.warning('กรุณากรอกหัวข้อและคำอธิบายงาน', 'มอบหมายงาน');
       return;
     }
@@ -2883,9 +3195,15 @@ export class App {
       companyId,
     };
 
-    if (this.newAssignment.targetType === 'student' && this.newAssignment.studentId) {
+    if (
+      this.newAssignment.targetType === 'student' &&
+      this.newAssignment.studentId
+    ) {
       payload.studentId = Number(this.newAssignment.studentId);
-    } else if (this.newAssignment.targetType === 'position' && this.newAssignment.jobPostingId) {
+    } else if (
+      this.newAssignment.targetType === 'position' &&
+      this.newAssignment.jobPostingId
+    ) {
       payload.jobPostingId = Number(this.newAssignment.jobPostingId);
     }
 
@@ -2936,7 +3254,10 @@ export class App {
   protected async saveEditAssignment(id: number): Promise<void> {
     const user = this.currentUser;
     if (!user) return;
-    if (!this.editAssignmentForm.title.trim() || !this.editAssignmentForm.description.trim()) {
+    if (
+      !this.editAssignmentForm.title.trim() ||
+      !this.editAssignmentForm.description.trim()
+    ) {
       this.notifications.warning('กรุณากรอกหัวข้อและคำอธิบายงาน', 'แก้ไขงาน');
       return;
     }
@@ -2952,7 +3273,10 @@ export class App {
       creatorRole: user.role,
     };
 
-    if (this.editAssignmentForm.targetType === 'student' && this.editAssignmentForm.studentId) {
+    if (
+      this.editAssignmentForm.targetType === 'student' &&
+      this.editAssignmentForm.studentId
+    ) {
       payload.studentId = Number(this.editAssignmentForm.studentId);
     } else if (
       this.editAssignmentForm.targetType === 'position' &&
@@ -2993,8 +3317,14 @@ export class App {
     const user = this.currentUser;
     if (!user) return;
 
-    if (!this.assignmentSubmitForm.content.trim() && !this.assignmentSubmitForm.fileName) {
-      this.notifications.warning('กรุณากรอกรายละเอียดหรืออัปโหลดไฟล์ส่งงาน', 'ส่งงาน');
+    if (
+      !this.assignmentSubmitForm.content.trim() &&
+      !this.assignmentSubmitForm.fileName
+    ) {
+      this.notifications.warning(
+        'กรุณากรอกรายละเอียดหรืออัปโหลดไฟล์ส่งงาน',
+        'ส่งงาน',
+      );
       return;
     }
 
@@ -3063,9 +3393,13 @@ export class App {
   protected async gradeSubmission(): Promise<void> {
     if (!this.selectedSubmissionForGrading) return;
     try {
-      const assignment = this.getAssignmentById(this.selectedSubmissionForGrading.assignmentId);
+      const assignment = this.getAssignmentById(
+        this.selectedSubmissionForGrading.assignmentId,
+      );
       const maxPoints = assignment?.points || 100;
-      const scaledScore = parseFloat(((this.gradeForm.score / 100) * maxPoints).toFixed(2));
+      const scaledScore = parseFloat(
+        ((this.gradeForm.score / 100) * maxPoints).toFixed(2),
+      );
 
       await this.data.gradeSubmission(
         this.selectedSubmissionForGrading.id,
@@ -3075,7 +3409,10 @@ export class App {
       this.notifications.success('ให้คะแนนและส่งคืนเรียบร้อย', 'สำเร็จ');
       this.selectedSubmissionForGrading = null;
     } catch (err: any) {
-      this.notifications.error('บันทึกผลการตรวจล้มเหลว: ' + err.message, 'ผิดพลาด');
+      this.notifications.error(
+        'บันทึกผลการตรวจล้มเหลว: ' + err.message,
+        'ผิดพลาด',
+      );
     }
   }
 
@@ -3083,15 +3420,22 @@ export class App {
     return this.submissions.filter((s) => s.assignmentId === assignmentId);
   }
 
-  protected getCompletedSubmissionsForAssignment(assignmentId: number): Submission[] {
+  protected getCompletedSubmissionsForAssignment(
+    assignmentId: number,
+  ): Submission[] {
     return this.submissions.filter(
       (s) =>
         s.assignmentId === assignmentId &&
-        (s.status === 'submitted' || s.status === 'late' || s.status === 'graded'),
+        (s.status === 'submitted' ||
+          s.status === 'late' ||
+          s.status === 'graded'),
     );
   }
 
-  protected getStudentSubmission(assignmentId: number, studentId: number): Submission | undefined {
+  protected getStudentSubmission(
+    assignmentId: number,
+    studentId: number,
+  ): Submission | undefined {
     return this.submissions.find(
       (s) => s.assignmentId === assignmentId && s.studentId === studentId,
     );
@@ -3102,7 +3446,9 @@ export class App {
     if (!user || user.role !== 'student') return 0;
 
     const companyAssList = this.assignments.filter(
-      (a) => (a.companyId !== undefined && a.companyId !== null) || a.creatorRole === 'company',
+      (a) =>
+        (a.companyId !== undefined && a.companyId !== null) ||
+        a.creatorRole === 'company',
     );
     let count = 0;
     for (const ass of companyAssList) {
@@ -3153,7 +3499,10 @@ export class App {
     if (!studentId) return;
     try {
       await this.data.acceptSubmission(assignmentId, studentId);
-      this.notifications.success('ยอมรับงานสำเร็จและเริ่มจับเวลาแล้ว', 'สำเร็จ');
+      this.notifications.success(
+        'ยอมรับงานสำเร็จและเริ่มจับเวลาแล้ว',
+        'สำเร็จ',
+      );
       this.selectAssignmentForDetails(assignmentId);
     } catch (err: any) {
       this.notifications.error('ยอมรับงานล้มเหลว: ' + err.message, 'ผิดพลาด');
@@ -3192,7 +3541,10 @@ export class App {
             this.profileDraft.resumeUrl = res.data.file_path;
             this.notifications.success('อัปโหลดไฟล์เรซูเมสำเร็จ', 'สำเร็จ');
           } else {
-            this.notifications.error(res.error || 'อัปโหลดไฟล์เรซูเมล้มเหลว', 'ผิดพลาด');
+            this.notifications.error(
+              res.error || 'อัปโหลดไฟล์เรซูเมล้มเหลว',
+              'ผิดพลาด',
+            );
           }
           this.cdr.markForCheck();
         },
@@ -3227,7 +3579,9 @@ export class App {
     if (!user || !user.school) return [];
     return this.users.filter(
       (u) =>
-        u.role === 'advisor' && this.isSameSchool(u.school, user.school) && u.status === 'active',
+        u.role === 'advisor' &&
+        this.isSameSchool(u.school, user.school) &&
+        u.status === 'active',
     );
   }
 
@@ -3253,7 +3607,9 @@ export class App {
   }
 
   /** Resolve student name via evaluation → internship → student */
-  protected evaluationStudentName(evaluation: { internshipId: number }): string {
+  protected evaluationStudentName(evaluation: {
+    internshipId: number;
+  }): string {
     const internship = this.internshipFor(evaluation.internshipId);
     return internship ? this.userName(internship.studentId) : '-';
   }
@@ -3271,14 +3627,20 @@ export class App {
     return this.pendingStudents.every((s) => this.selectedStudentIds[s.id]);
   }
 
-  protected copyToClipboard(text: string, title: string = 'คัดลอกรหัสสำเร็จ'): void {
+  protected copyToClipboard(
+    text: string,
+    title: string = 'คัดลอกรหัสสำเร็จ',
+  ): void {
     if (!text) return;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        this.notifications.success(`คัดลอก "${text}" เรียบร้อยแล้ว`, title);
-      }).catch(() => {
-        this.fallbackCopyTextToClipboard(text, title);
-      });
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          this.notifications.success(`คัดลอก "${text}" เรียบร้อยแล้ว`, title);
+        })
+        .catch(() => {
+          this.fallbackCopyTextToClipboard(text, title);
+        });
     } else {
       this.fallbackCopyTextToClipboard(text, title);
     }
@@ -3308,7 +3670,10 @@ export class App {
       .filter((id) => this.selectedStudentIds[id]);
 
     if (selectedIds.length === 0) {
-      this.notifications.warning('กรุณาเลือกนักศึกษาอย่างน้อย 1 คน', 'เลือกรายการ');
+      this.notifications.warning(
+        'กรุณาเลือกนักศึกษาอย่างน้อย 1 คน',
+        'เลือกรายการ',
+      );
       return;
     }
 
@@ -3330,7 +3695,10 @@ export class App {
           }
         }
         this.selectedStudentIds = {};
-        this.notifications.success(`อนุมัติผู้ใช้ทั้งหมด ${count} คนสำเร็จ`, 'สำเร็จ');
+        this.notifications.success(
+          `อนุมัติผู้ใช้ทั้งหมด ${count} คนสำเร็จ`,
+          'สำเร็จ',
+        );
       }
     });
   }
@@ -3344,7 +3712,9 @@ export class App {
 
   protected get isAllAttendancesSelected(): boolean {
     if (this.pendingAttendances.length === 0) return false;
-    return this.pendingAttendances.every((a) => this.selectedAttendanceIds[a.id]);
+    return this.pendingAttendances.every(
+      (a) => this.selectedAttendanceIds[a.id],
+    );
   }
 
   protected async bulkApproveAttendances(): Promise<void> {
@@ -3353,7 +3723,10 @@ export class App {
       .filter((id) => this.selectedAttendanceIds[id]);
 
     if (selectedIds.length === 0) {
-      this.notifications.warning('กรุณาเลือกรายการลงเวลาอย่างน้อย 1 รายการ', 'เลือกรายการ');
+      this.notifications.warning(
+        'กรุณาเลือกรายการลงเวลาอย่างน้อย 1 รายการ',
+        'เลือกรายการ',
+      );
       return;
     }
 
@@ -3375,7 +3748,10 @@ export class App {
           }
         }
         this.selectedAttendanceIds = {};
-        this.notifications.success(`อนุมัติเวลางานสำเร็จ ${count} รายการ`, 'สำเร็จ');
+        this.notifications.success(
+          `อนุมัติเวลางานสำเร็จ ${count} รายการ`,
+          'สำเร็จ',
+        );
       }
     });
   }
@@ -3391,16 +3767,25 @@ export class App {
 
       this.uploadingWorkFile = true;
       // Show temporary uploading notification
-      this.notifications.success('กำลังอัปโหลดไฟล์ส่งงาน: ' + file.name, 'อัปโหลด');
+      this.notifications.success(
+        'กำลังอัปโหลดไฟล์ส่งงาน: ' + file.name,
+        'อัปโหลด',
+      );
 
       this.apiService.post<any>('/upload', formData).subscribe({
         next: (res) => {
           this.uploadingWorkFile = false;
           if (res && res.status === 200 && res.data) {
             this.assignmentSubmitForm.filePath = res.data.file_path;
-            this.notifications.success('อัปโหลดไฟล์ส่งงานสำเร็จ: ' + file.name, 'สำเร็จ');
+            this.notifications.success(
+              'อัปโหลดไฟล์ส่งงานสำเร็จ: ' + file.name,
+              'สำเร็จ',
+            );
           } else {
-            this.notifications.error(res.error || 'อัปโหลดไฟล์ส่งงานล้มเหลว', 'ผิดพลาด');
+            this.notifications.error(
+              res.error || 'อัปโหลดไฟล์ส่งงานล้มเหลว',
+              'ผิดพลาด',
+            );
           }
           this.cdr.markForCheck();
         },
@@ -3421,7 +3806,10 @@ export class App {
         console.error('Error creating object URL for work file:', e);
       }
 
-      this.notifications.success('เลือกไฟล์ส่งงานแล้ว: ' + file.name + ' (จำลอง)', 'สำเร็จ');
+      this.notifications.success(
+        'เลือกไฟล์ส่งงานแล้ว: ' + file.name + ' (จำลอง)',
+        'สำเร็จ',
+      );
     }
   }
 
@@ -3448,7 +3836,10 @@ export class App {
       this.notifications.success('ส่งบันทึกแล้ว (รออนุมัติ)', 'บันทึก');
       this.cdr.detectChanges();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'บันทึก');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`,
+        'บันทึก',
+      );
     }
   }
 
@@ -3465,7 +3856,10 @@ export class App {
 
   protected async submitEditLogbook(): Promise<void> {
     if (!this.editingLogbook) return;
-    if (!this.editLogbookForm.title.trim() || !this.editLogbookForm.content.trim()) {
+    if (
+      !this.editLogbookForm.title.trim() ||
+      !this.editLogbookForm.content.trim()
+    ) {
       this.notifications.warning('กรุณากรอกหัวข้อและเนื้อหาบันทึก', 'บันทึก');
       return;
     }
@@ -3481,7 +3875,10 @@ export class App {
       this.notifications.success('แก้ไขบันทึกเรียบร้อยแล้ว', 'บันทึก');
       this.cdr.detectChanges();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'บันทึก');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`,
+        'บันทึก',
+      );
     }
   }
 
@@ -3492,19 +3889,27 @@ export class App {
         this.notifications.success('ลบบันทึกเรียบร้อยแล้ว', 'บันทึก');
         this.cdr.detectChanges();
       } catch (err: any) {
-        this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'บันทึก');
+        this.notifications.error(
+          `เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`,
+          'บันทึก',
+        );
       }
     }
   }
 
-  protected async reviewLogbook(logbook: Logbook, status: LogbookStatus): Promise<void> {
+  protected async reviewLogbook(
+    logbook: Logbook,
+    status: LogbookStatus,
+  ): Promise<void> {
     try {
       await this.data.updateLogbookStatus(
         logbook,
         status,
         status === 'approved' ? 'รับรองโดย mentor' : 'ต้องแก้ไขและส่งใหม่',
       );
-      const student = this.userName(this.internshipFor(logbook.internshipId)?.studentId || 0);
+      const student = this.userName(
+        this.internshipFor(logbook.internshipId)?.studentId || 0,
+      );
       const label = this.logbookStatusLabel(status);
 
       if (status === 'approved') {
@@ -3513,7 +3918,10 @@ export class App {
         this.notifications.warning(`บันทึกของ ${student} → ${label}`, 'บันทึก');
       }
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'บันทึก');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'บันทึก',
+      );
     }
   }
 
@@ -3542,7 +3950,10 @@ export class App {
       this.notifications.success('ส่งคำขอลาแล้ว (รออนุมัติ)', 'การลา');
       this.cdr.detectChanges();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'การลา');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`,
+        'การลา',
+      );
     }
   }
 
@@ -3578,7 +3989,10 @@ export class App {
       this.notifications.success('แก้ไขคำขอลาเรียบร้อยแล้ว', 'การลา');
       this.cdr.detectChanges();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'การลา');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`,
+        'การลา',
+      );
     }
   }
 
@@ -3589,7 +4003,10 @@ export class App {
         this.notifications.success('ลบคำขอลาเรียบร้อยแล้ว', 'การลา');
         this.cdr.detectChanges();
       } catch (err: any) {
-        this.notifications.error(`เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`, 'การลา');
+        this.notifications.error(
+          `เกิดข้อผิดพลาด: ${this.extractErrorMessage(err)}`,
+          'การลา',
+        );
       }
     }
   }
@@ -3609,14 +4026,20 @@ export class App {
       }
       this.cdr.detectChanges();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'การลา');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'การลา',
+      );
     }
   }
 
   protected async addEvaluation(): Promise<void> {
     const user = this.currentUser;
     if (!user || !this.selectedEvaluationInternship) {
-      this.notifications.warning('กรุณาเลือกนักศึกษาที่ต้องการประเมิน', 'ประเมินผล');
+      this.notifications.warning(
+        'กรุณาเลือกนักศึกษาที่ต้องการประเมิน',
+        'ประเมินผล',
+      );
       return;
     }
 
@@ -3637,17 +4060,24 @@ export class App {
       });
       this.evaluationFeedback = '';
       this.evaluationScore = 85;
-      this.notifications.success(`บันทึกการประเมิน ${student} คะแนน ${score}`, 'ประเมินผล');
+      this.notifications.success(
+        `บันทึกการประเมิน ${student} คะแนน ${score}`,
+        'ประเมินผล',
+      );
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ประเมินผล');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'ประเมินผล',
+      );
     }
   }
 
   protected hasOpenAttendance(): boolean {
     return this.attendances.some(
       (attendance) =>
-        attendance.internshipId === this.activeInternship?.id && !attendance.checkOutTime,
+        attendance.internshipId === this.activeInternship?.id &&
+        !attendance.checkOutTime,
     );
   }
 
@@ -3655,7 +4085,10 @@ export class App {
     return this.internships.find((internship) => internship.id === id);
   }
 
-  protected evaluatorLabel(evaluation: { evaluatorId: number; evaluationType: string }): string {
+  protected evaluatorLabel(evaluation: {
+    evaluatorId: number;
+    evaluationType: string;
+  }): string {
     return `${this.userName(evaluation.evaluatorId)} (${evaluation.evaluationType})`;
   }
 
@@ -3680,7 +4113,10 @@ export class App {
     this.presetCompanyName = '';
   }
 
-  private async finishLogin(user: User, showNotification = true): Promise<void> {
+  private async finishLogin(
+    user: User,
+    showNotification = true,
+  ): Promise<void> {
     this.currentUserId = user.id;
     this.applyRoleTheme(user.role);
     if (typeof localStorage !== 'undefined') {
@@ -3710,9 +4146,12 @@ export class App {
       }
     }
     this.setActiveView(targetView);
-    this.selectedEvaluationInternshipId = this.visibleInternships[0]?.id ?? null;
+    this.selectedEvaluationInternshipId =
+      this.visibleInternships[0]?.id ?? null;
     const comp =
-      user.role === 'company' ? this.companies.find((c) => c.userId === user.id) : undefined;
+      user.role === 'company'
+        ? this.companies.find((c) => c.userId === user.id)
+        : undefined;
     this.profileDraft = {
       name: user.name,
       email: user.email,
@@ -3737,7 +4176,9 @@ export class App {
 
     // Notify student if they have any terminated internships that haven't been acknowledged yet
     if (user.role === 'student') {
-      const myInternships = this.internships.filter((i) => i.studentId === user.id);
+      const myInternships = this.internships.filter(
+        (i) => i.studentId === user.id,
+      );
       myInternships.forEach((internship) => {
         if (internship.status === 'terminated') {
           const notifiedKey = `notified_terminated_internship_${internship.id}`;
@@ -3771,11 +4212,21 @@ export class App {
     if (!user) return;
 
     this.knownAssignmentIds = new Set(this.assignments.map((a) => a.id));
-    this.knownApplicationStatuses = new Map(this.applications.map((a) => [a.id, a.status]));
-    this.knownLeaveStatuses = new Map(this.leaveRequests.map((l) => [l.id, l.status]));
-    this.knownLogbookStatuses = new Map(this.logbooks.map((l) => [l.id, l.status]));
-    this.knownSubmissionStatuses = new Map(this.submissions.map((s) => [s.id, s.status]));
-    this.knownInternshipStatuses = new Map(this.internships.map((i) => [i.id, i.status]));
+    this.knownApplicationStatuses = new Map(
+      this.applications.map((a) => [a.id, a.status]),
+    );
+    this.knownLeaveStatuses = new Map(
+      this.leaveRequests.map((l) => [l.id, l.status]),
+    );
+    this.knownLogbookStatuses = new Map(
+      this.logbooks.map((l) => [l.id, l.status]),
+    );
+    this.knownSubmissionStatuses = new Map(
+      this.submissions.map((s) => [s.id, s.status]),
+    );
+    this.knownInternshipStatuses = new Map(
+      this.internships.map((i) => [i.id, i.status]),
+    );
 
     if (typeof window !== 'undefined') {
       this.pollingIntervalId = setInterval(async () => {
@@ -3788,7 +4239,10 @@ export class App {
           this.checkNewAssignments();
           this.checkStateChanges();
         } catch (err) {
-          console.error('[Notification Polling] Error checking assignments:', err);
+          console.error(
+            '[Notification Polling] Error checking assignments:',
+            err,
+          );
         }
       }, 30000); // 30 seconds
 
@@ -3825,11 +4279,12 @@ export class App {
         this.knownAssignmentIds.add(ass.id);
         if (ass.creatorId !== this.currentUserId) {
           foundNew = true;
-          const creatorType = ass.creatorRole === 'company' ? 'พี่เลี้ยง/บริษัท' : 'อาจารย์';
+          const creatorType =
+            ass.creatorRole === 'company' ? 'พี่เลี้ยง/บริษัท' : 'อาจารย์';
           this.notifications.info(
             `งานใหม่: "${ass.title}"\nมอบหมายโดย: ${creatorType}`,
             'ได้รับงานมอบหมายใหม่',
-            true
+            true,
           );
         }
       }
@@ -3850,7 +4305,11 @@ export class App {
         this.knownApplicationStatuses.set(app.id, app.status);
         if (user.role === 'company' || user.role === 'advisor') {
           foundNew = true;
-          this.notifications.info(`มีนักศึกษาส่งใบสมัครใหม่`, 'ใบสมัครใหม่', true);
+          this.notifications.info(
+            `มีนักศึกษาส่งใบสมัครใหม่`,
+            'ใบสมัครใหม่',
+            true,
+          );
         }
       } else {
         const oldStatus = this.knownApplicationStatuses.get(app.id);
@@ -3859,7 +4318,11 @@ export class App {
           if (user.role === 'student') {
             foundNew = true;
             const label = this.applicationStatusLabel(app.status);
-            this.notifications.info(`ใบสมัครของคุณถูกเปลี่ยนสถานะเป็น: ${label}`, 'อัปเดตใบสมัคร', true);
+            this.notifications.info(
+              `ใบสมัครของคุณถูกเปลี่ยนสถานะเป็น: ${label}`,
+              'อัปเดตใบสมัคร',
+              true,
+            );
           }
         }
       }
@@ -3870,7 +4333,11 @@ export class App {
         this.knownLeaveStatuses.set(leave.id, leave.status);
         if (user.role === 'company' || user.role === 'advisor') {
           foundNew = true;
-          this.notifications.info(`มีคำขอลาใหม่จากนักศึกษา`, 'คำขอลาใหม่', true);
+          this.notifications.info(
+            `มีคำขอลาใหม่จากนักศึกษา`,
+            'คำขอลาใหม่',
+            true,
+          );
         }
       } else {
         const oldStatus = this.knownLeaveStatuses.get(leave.id);
@@ -3878,8 +4345,13 @@ export class App {
           this.knownLeaveStatuses.set(leave.id, leave.status);
           if (user.role === 'student' && leave.status !== 'pending') {
             foundNew = true;
-            const statusTxt = leave.status === 'approved' ? 'อนุมัติแล้ว' : 'ถูกปฏิเสธ';
-            this.notifications.success(`คำขอลาของคุณ ${statusTxt}`, 'ผลการอนุมัติลา', true);
+            const statusTxt =
+              leave.status === 'approved' ? 'อนุมัติแล้ว' : 'ถูกปฏิเสธ';
+            this.notifications.success(
+              `คำขอลาของคุณ ${statusTxt}`,
+              'ผลการอนุมัติลา',
+              true,
+            );
           }
         }
       }
@@ -3890,7 +4362,11 @@ export class App {
         this.knownLogbookStatuses.set(log.id, log.status);
         if (user.role === 'company' || user.role === 'advisor') {
           foundNew = true;
-          this.notifications.info(`นักศึกษาส่งบันทึกประจำวันใหม่`, 'บันทึกใหม่', true);
+          this.notifications.info(
+            `นักศึกษาส่งบันทึกประจำวันใหม่`,
+            'บันทึกใหม่',
+            true,
+          );
         }
       } else {
         const oldStatus = this.knownLogbookStatuses.get(log.id);
@@ -3898,8 +4374,13 @@ export class App {
           this.knownLogbookStatuses.set(log.id, log.status);
           if (user.role === 'student' && log.status !== 'pending') {
             foundNew = true;
-            const statusTxt = log.status === 'approved' ? 'อนุมัติแล้ว' : 'ถูกปฏิเสธ';
-            this.notifications.success(`บันทึกประจำวันของคุณ ${statusTxt}`, 'ผลการตรวจบันทึก', true);
+            const statusTxt =
+              log.status === 'approved' ? 'อนุมัติแล้ว' : 'ถูกปฏิเสธ';
+            this.notifications.success(
+              `บันทึกประจำวันของคุณ ${statusTxt}`,
+              'ผลการตรวจบันทึก',
+              true,
+            );
           }
         }
       }
@@ -3918,7 +4399,11 @@ export class App {
           this.knownSubmissionStatuses.set(sub.id, sub.status);
           if (user.role === 'student' && sub.status === 'graded') {
             foundNew = true;
-            this.notifications.success(`งานของคุณได้รับการตรวจและให้คะแนนแล้ว`, 'ผลการตรวจงาน', true);
+            this.notifications.success(
+              `งานของคุณได้รับการตรวจและให้คะแนนแล้ว`,
+              'ผลการตรวจงาน',
+              true,
+            );
           }
         }
       }
@@ -3934,7 +4419,11 @@ export class App {
           if (user.role === 'student' && intern.status === 'terminated') {
             foundNew = true;
             const compName = this.companyName(intern.companyId) || 'บริษัท';
-            this.notifications.warning(`การฝึกงานของคุณกับ ${compName} ได้ถูกยกเลิก/สิ้นสุดแล้ว (Terminated)`, 'แจ้งเตือนการฝึกงาน', true);
+            this.notifications.warning(
+              `การฝึกงานของคุณกับ ${compName} ได้ถูกยกเลิก/สิ้นสุดแล้ว (Terminated)`,
+              'แจ้งเตือนการฝึกงาน',
+              true,
+            );
           }
         }
       }
@@ -3960,7 +4449,10 @@ export class App {
     });
   }
 
-  protected getInternshipProgress(internship: Internship): { percent: number; label: string } {
+  protected getInternshipProgress(internship: Internship): {
+    percent: number;
+    label: string;
+  } {
     const start = new Date(internship.startDate).getTime();
     const end = new Date(internship.endDate).getTime();
     const now = new Date().getTime();
@@ -3979,7 +4471,10 @@ export class App {
     let percent = Math.min(Math.round((elapsed / total) * 100), 100);
     if (percent < 0) percent = 0;
 
-    const remainingDays = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
+    const remainingDays = Math.max(
+      0,
+      Math.ceil((end - now) / (1000 * 60 * 60 * 24)),
+    );
     const totalDays = Math.ceil(total / (1000 * 60 * 60 * 24));
 
     let label = `ผ่านไปแล้ว ${percent}%`;
@@ -4047,7 +4542,9 @@ export class App {
     );
   }
 
-  protected verificationStatusLabel(status: 'pending' | 'approved' | 'rejected'): string {
+  protected verificationStatusLabel(
+    status: 'pending' | 'approved' | 'rejected',
+  ): string {
     return {
       pending: 'รอตรวจสอบ',
       approved: 'อนุมัติแล้ว',
@@ -4076,8 +4573,10 @@ export class App {
         u.email.toLowerCase().includes(query) ||
         (u.school && u.school.toLowerCase().includes(query));
 
-      const matchesRole = !this.adminUserRoleFilter || u.role === this.adminUserRoleFilter;
-      const matchesStatus = !this.adminUserStatusFilter || u.status === this.adminUserStatusFilter;
+      const matchesRole =
+        !this.adminUserRoleFilter || u.role === this.adminUserRoleFilter;
+      const matchesStatus =
+        !this.adminUserStatusFilter || u.status === this.adminUserStatusFilter;
 
       return matchesQuery && matchesRole && matchesStatus;
     });
@@ -4085,7 +4584,10 @@ export class App {
 
   protected async toggleUserStatus(user: User, newStatus: any): Promise<void> {
     if (user.id === this.currentUserId) {
-      this.notifications.warning('คุณไม่สามารถเปลี่ยนสถานะของตนเองได้', 'จัดการผู้ใช้');
+      this.notifications.warning(
+        'คุณไม่สามารถเปลี่ยนสถานะของตนเองได้',
+        'จัดการผู้ใช้',
+      );
       return;
     }
     try {
@@ -4096,7 +4598,10 @@ export class App {
       );
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'จัดการผู้ใช้');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'จัดการผู้ใช้',
+      );
     }
   }
 
@@ -4110,7 +4615,10 @@ export class App {
     if (res && res.error) {
       this.notifications.error(res.error, 'จัดการสถานศึกษา');
     } else {
-      this.notifications.success(`เพิ่มสถานศึกษา ${name} สำเร็จ`, 'จัดการสถานศึกษา');
+      this.notifications.success(
+        `เพิ่มสถานศึกษา ${name} สำเร็จ`,
+        'จัดการสถานศึกษา',
+      );
       this.adminSchoolInput.name = '';
     }
     window.location.reload();
@@ -4145,7 +4653,9 @@ export class App {
           : null,
       role: this.adminCodeForm.role,
       code: this.adminCodeForm.code.trim().toUpperCase(),
-      maxUses: this.adminCodeForm.maxUses ? Number(this.adminCodeForm.maxUses) : null,
+      maxUses: this.adminCodeForm.maxUses
+        ? Number(this.adminCodeForm.maxUses)
+        : null,
       expiresAt: this.adminCodeForm.expiresAt
         ? new Date(this.adminCodeForm.expiresAt).toISOString()
         : null,
@@ -4166,7 +4676,10 @@ export class App {
     if (res && res.error) {
       this.notifications.error(res.error, 'จัดการรหัสเชิญ');
     } else {
-      this.notifications.success(`สร้างรหัสเชิญ ${body.code} สำเร็จ`, 'จัดการรหัสเชิญ');
+      this.notifications.success(
+        `สร้างรหัสเชิญ ${body.code} สำเร็จ`,
+        'จัดการรหัสเชิญ',
+      );
       this.adminCodeForm.code = '';
       this.adminCodeForm.companyId = null;
       this.adminCodeForm.maxUses = null;
@@ -4184,7 +4697,9 @@ export class App {
       id: code.id,
       code: code.code,
       maxUses: code.maxUses || null,
-      expiresAt: code.expiresAt ? new Date(code.expiresAt).toISOString().slice(0, 10) : null,
+      expiresAt: code.expiresAt
+        ? new Date(code.expiresAt).toISOString().slice(0, 10)
+        : null,
       isActive: code.isActive,
     };
   }
@@ -4201,7 +4716,9 @@ export class App {
     }
     const body = {
       code: this.editCodeForm.code.trim().toUpperCase(),
-      maxUses: this.editCodeForm.maxUses ? Number(this.editCodeForm.maxUses) : null,
+      maxUses: this.editCodeForm.maxUses
+        ? Number(this.editCodeForm.maxUses)
+        : null,
       expiresAt: this.editCodeForm.expiresAt
         ? new Date(this.editCodeForm.expiresAt).toISOString()
         : null,
@@ -4211,7 +4728,10 @@ export class App {
     if (res && res.error) {
       this.notifications.error(res.error, 'จัดการรหัสเชิญ');
     } else {
-      this.notifications.success(`อัปเดตรหัสเชิญเรียบร้อยแล้ว`, 'จัดการรหัสเชิญ');
+      this.notifications.success(
+        `อัปเดตรหัสเชิญเรียบร้อยแล้ว`,
+        'จัดการรหัสเชิญ',
+      );
       this.selectedCodeToEdit = null;
     }
     window.location.reload();
@@ -4223,7 +4743,10 @@ export class App {
       if (res && res.error) {
         this.notifications.error(res.error, 'จัดการรหัสเชิญ');
       } else {
-        this.notifications.success(`ลบรหัสเชิญ "${code.code}" สำเร็จ`, 'จัดการรหัสเชิญ');
+        this.notifications.success(
+          `ลบรหัสเชิญ "${code.code}" สำเร็จ`,
+          'จัดการรหัสเชิญ',
+        );
       }
       window.location.reload();
     }
@@ -4302,12 +4825,16 @@ export class App {
     } catch (err: any) {
       this.isExecutingQuery = false;
       this.adminQueryError = err?.message || 'Error describing table';
-      this.notifications.error(this.adminQueryError, 'ไม่สามารถดึงโครงสร้างตารางได้');
+      this.notifications.error(
+        this.adminQueryError,
+        'ไม่สามารถดึงโครงสร้างตารางได้',
+      );
     }
   }
 
   protected exportToCSV(): void {
-    if (!this.adminQueryResults || this.adminQueryResults.type !== 'select') return;
+    if (!this.adminQueryResults || this.adminQueryResults.type !== 'select')
+      return;
     const columns = this.adminQueryResults.columns;
     const rows = this.adminQueryResults.data;
 
@@ -4327,7 +4854,10 @@ export class App {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `${this.selectedAdminTable || 'query_results'}.csv`);
+    link.setAttribute(
+      'download',
+      `${this.selectedAdminTable || 'query_results'}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -4404,7 +4934,10 @@ export class App {
     navigator.clipboard
       .writeText(jsonStr)
       .then(() => {
-        this.notifications.success('คัดลอกข้อมูล JSON เรียบร้อย', 'คัดลอก JSON');
+        this.notifications.success(
+          'คัดลอกข้อมูล JSON เรียบร้อย',
+          'คัดลอก JSON',
+        );
       })
       .catch((err) => {
         this.notifications.error('คัดลอกล้มเหลว: ' + err, 'คัดลอก JSON');
@@ -4420,7 +4953,11 @@ export class App {
     }
   }
 
-  protected saveQueryToHistory(query: string, duration: number, status: 'success' | 'error'): void {
+  protected saveQueryToHistory(
+    query: string,
+    duration: number,
+    status: 'success' | 'error',
+  ): void {
     const entry = {
       query,
       duration,
@@ -4430,14 +4967,20 @@ export class App {
     // Keep max 20 entries
     this.queryHistory = [entry, ...this.queryHistory.slice(0, 19)];
     try {
-      localStorage.setItem('intern-manager-sql-history-v1', JSON.stringify(this.queryHistory));
+      localStorage.setItem(
+        'intern-manager-sql-history-v1',
+        JSON.stringify(this.queryHistory),
+      );
     } catch {}
   }
 
   protected clearQueryHistory(): void {
     this.queryHistory = [];
     localStorage.removeItem('intern-manager-sql-history-v1');
-    this.notifications.success('ล้างประวัติคำสั่งเรียบร้อย', 'ประวัติการใช้งาน');
+    this.notifications.success(
+      'ล้างประวัติคำสั่งเรียบร้อย',
+      'ประวัติการใช้งาน',
+    );
   }
 
   protected loadQueryFromHistory(query: string): void {
@@ -4450,7 +4993,10 @@ export class App {
     const selectEl = event.target as HTMLSelectElement;
     if (selectEl && selectEl.value) {
       this.adminQueryText = selectEl.value;
-      this.notifications.success('โหลดคำสั่ง SQL Preset เรียบร้อย', 'Preset Query');
+      this.notifications.success(
+        'โหลดคำสั่ง SQL Preset เรียบร้อย',
+        'Preset Query',
+      );
       // Reset select dropdown
       selectEl.value = '';
     }
@@ -4518,11 +5064,16 @@ export class App {
       late: list.filter((a) => a.status === 'late').length,
       absent: list.filter((a) => a.status === 'absent').length,
       earlyLeave: list.filter((a) => a.status === 'early_leave').length,
-      pendingVerify: list.filter((a) => a.verificationStatus === 'pending').length,
+      pendingVerify: list.filter((a) => a.verificationStatus === 'pending')
+        .length,
       approved: list.filter((a) => a.verificationStatus === 'approved').length,
       open: list.filter((a) => !a.checkOutTime).length,
       recent: [...list]
-        .sort((a, b) => new Date(b.checkInTime).getTime() - new Date(a.checkInTime).getTime())
+        .sort(
+          (a, b) =>
+            new Date(b.checkInTime).getTime() -
+            new Date(a.checkInTime).getTime(),
+        )
         .slice(0, 10),
     };
   }
@@ -4534,7 +5085,9 @@ export class App {
     rejected: number;
     recent: Logbook[];
   } {
-    const list = this.data.logbooks.filter((l) => l.internshipId === internshipId);
+    const list = this.data.logbooks.filter(
+      (l) => l.internshipId === internshipId,
+    );
     return {
       total: list.length,
       approved: list.filter((l) => l.status === 'approved').length,
@@ -4542,7 +5095,9 @@ export class App {
       rejected: list.filter((l) => l.status === 'rejected').length,
       recent: [...list]
         .sort(
-          (a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime(),
+          (a, b) =>
+            new Date(b.createdAt || '').getTime() -
+            new Date(a.createdAt || '').getTime(),
         )
         .slice(0, 5),
     };
@@ -4555,7 +5110,9 @@ export class App {
     approved: number;
     leaves: LeaveRequest[];
   } {
-    const list = this.data.leaves.filter((l) => l.internshipId === internshipId);
+    const list = this.data.leaves.filter(
+      (l) => l.internshipId === internshipId,
+    );
     return {
       total: list.length,
       sick: list.filter((l) => l.leaveType === 'sick').length,
@@ -4573,7 +5130,9 @@ export class App {
     average: number | null;
     averageMaxScore: number;
   } {
-    const evals = this.data.evaluations.filter((e) => e.internshipId === internshipId);
+    const evals = this.data.evaluations.filter(
+      (e) => e.internshipId === internshipId,
+    );
     const mentor = evals.find((e) => e.evaluationType === 'mentor');
     const advisor = evals.find((e) => e.evaluationType === 'advisor');
 
@@ -4582,7 +5141,9 @@ export class App {
 
     const mentorPct = mentor ? (mentor.score / mMax) * 100 : null;
     const advisorPct = advisor ? (advisor.score / aMax) * 100 : null;
-    const percentages = [mentorPct, advisorPct].filter((p): p is number => p != null);
+    const percentages = [mentorPct, advisorPct].filter(
+      (p): p is number => p != null,
+    );
 
     return {
       mentorScore: mentor?.score ?? null,
@@ -4590,7 +5151,9 @@ export class App {
       advisorScore: advisor?.score ?? null,
       advisorMaxScore: aMax,
       average: percentages.length
-        ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length)
+        ? Math.round(
+            percentages.reduce((a, b) => a + b, 0) / percentages.length,
+          )
         : null,
       averageMaxScore: 100,
     };
@@ -4598,19 +5161,27 @@ export class App {
 
   protected get detailStudent(): User | undefined {
     return this.selectedInternshipDetail
-      ? this.users.find((u) => u.id === this.selectedInternshipDetail!.studentId)
+      ? this.users.find(
+          (u) => u.id === this.selectedInternshipDetail!.studentId,
+        )
       : undefined;
   }
 
   protected get detailJob(): JobPosting | undefined {
     return this.selectedInternshipDetail
-      ? this.jobPostings.find((j) => j.id === this.selectedInternshipDetail!.jobPostingId)
+      ? this.jobPostings.find(
+          (j) => j.id === this.selectedInternshipDetail!.jobPostingId,
+        )
       : undefined;
   }
 
-  protected get detailCompany(): import('./internship.models').Company | undefined {
+  protected get detailCompany():
+    | import('./internship.models').Company
+    | undefined {
     return this.selectedInternshipDetail
-      ? this.companies.find((c) => c.id === this.selectedInternshipDetail!.companyId)
+      ? this.companies.find(
+          (c) => c.id === this.selectedInternshipDetail!.companyId,
+        )
       : undefined;
   }
 
@@ -4620,19 +5191,25 @@ export class App {
     const internship = [...this.internships]
       .filter((i) => i.studentId === studentId)
       .sort(
-        (a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime(),
+        (a, b) =>
+          new Date(b.createdAt || '').getTime() -
+          new Date(a.createdAt || '').getTime(),
       )[0];
     if (internship) {
       this.openInternshipDetail(internship);
     } else {
-      this.notifications.info('ยังไม่มีข้อมูลการฝึกงานของนักศึกษาคนนี้', 'ข้อมูลนักศึกษา');
+      this.notifications.info(
+        'ยังไม่มีข้อมูลการฝึกงานของนักศึกษาคนนี้',
+        'ข้อมูลนักศึกษา',
+      );
     }
   }
 
   protected studentAdvisorName(studentId: number): string | null {
     const student = this.users.find((u) => u.id === studentId);
     if (!student) return null;
-    const ids = student.advisorIds || (student.advisorId ? [student.advisorId] : []);
+    const ids =
+      student.advisorIds || (student.advisorId ? [student.advisorId] : []);
     if (ids.length === 0) return null;
     const advNames = this.users
       .filter((u) => ids.includes(u.id) && u.role === 'advisor')
@@ -4669,12 +5246,18 @@ export class App {
       if (this.data.api.apiEnabled()) {
         this.data.api.updateUser(studentId, { advisorId } as any).subscribe({
           next: () => {
-            this.notifications.success(`รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว`, 'สำเร็จ');
+            this.notifications.success(
+              `รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว`,
+              'สำเร็จ',
+            );
             this.data.refreshFromApi();
             this.showAddStudentModal = false;
           },
           error: (err) => {
-            this.notifications.error(`เกิดข้อผิดพลาด: ${err.message}`, 'ล้มเหลว');
+            this.notifications.error(
+              `เกิดข้อผิดพลาด: ${err.message}`,
+              'ล้มเหลว',
+            );
           },
         });
       } else {
@@ -4686,7 +5269,10 @@ export class App {
         }
         student.advisorId = student.advisorIds[0];
         this.data.persist();
-        this.notifications.success(`รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว (Mock)`, 'สำเร็จ');
+        this.notifications.success(
+          `รับนักศึกษา ${student.name} เข้ากลุ่มแล้ว (Mock)`,
+          'สำเร็จ',
+        );
         this.showAddStudentModal = false;
       }
     }
@@ -4696,27 +5282,44 @@ export class App {
     const student = this.users.find((u) => u.id === studentId);
     if (!student) return;
 
-    if (confirm(`คุณแน่ใจหรือไม่ที่จะนำนักศึกษา "${student.name}" ออกจากความดูแลของคุณ?`)) {
+    if (
+      confirm(
+        `คุณแน่ใจหรือไม่ที่จะนำนักศึกษา "${student.name}" ออกจากความดูแลของคุณ?`,
+      )
+    ) {
       if (this.data.api.apiEnabled()) {
         this.data.api.updateUser(studentId, { advisorId: 0 } as any).subscribe({
           next: () => {
-            this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว`, 'สำเร็จ');
+            this.notifications.success(
+              `นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว`,
+              'สำเร็จ',
+            );
             this.data.refreshFromApi();
           },
           error: (err) => {
-            this.notifications.error(`เกิดข้อผิดพลาด: ${err.message}`, 'ล้มเหลว');
+            this.notifications.error(
+              `เกิดข้อผิดพลาด: ${err.message}`,
+              'ล้มเหลว',
+            );
           },
         });
       } else {
         if (student.advisorIds) {
-          student.advisorIds = student.advisorIds.filter((id) => id !== this.currentUser?.id);
+          student.advisorIds = student.advisorIds.filter(
+            (id) => id !== this.currentUser?.id,
+          );
         } else if (student.advisorId === this.currentUser?.id) {
           delete student.advisorId;
         }
         student.advisorId =
-          student.advisorIds && student.advisorIds.length > 0 ? student.advisorIds[0] : undefined;
+          student.advisorIds && student.advisorIds.length > 0
+            ? student.advisorIds[0]
+            : undefined;
         this.data.persist();
-        this.notifications.success(`นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว`, 'สำเร็จ');
+        this.notifications.success(
+          `นำนักศึกษา ${student.name} ออกจากกลุ่มแล้ว`,
+          'สำเร็จ',
+        );
       }
     }
   }
@@ -4733,7 +5336,9 @@ export class App {
 
   protected loadCustomClassGroups(): void {
     if (!this.currentUserId) return;
-    const saved = localStorage.getItem(`advisor_custom_groups_${this.currentUserId}`);
+    const saved = localStorage.getItem(
+      `advisor_custom_groups_${this.currentUserId}`,
+    );
     if (saved) {
       try {
         this.advisorCustomClassGroups = JSON.parse(saved);
@@ -4757,7 +5362,10 @@ export class App {
     const yl = this.newGroupYearLevel.trim();
     const cg = this.newGroupClassGroup.trim();
     if (!yl || !cg) {
-      this.notifications.warning('กรุณากรอกชั้นปีและกลุ่ม/ห้องเรียน', 'เพิ่มกลุ่ม');
+      this.notifications.warning(
+        'กรุณากรอกชั้นปีและกลุ่ม/ห้องเรียน',
+        'เพิ่มกลุ่ม',
+      );
       return;
     }
 
@@ -4773,15 +5381,24 @@ export class App {
     this.saveCustomClassGroups();
     this.newGroupYearLevel = '';
     this.newGroupClassGroup = '';
-    this.notifications.success(`เพิ่มกลุ่ม/ห้องเรียน ${yl}${cg} สำเร็จ`, 'เพิ่มกลุ่ม');
+    this.notifications.success(
+      `เพิ่มกลุ่ม/ห้องเรียน ${yl}${cg} สำเร็จ`,
+      'เพิ่มกลุ่ม',
+    );
   }
 
-  protected removeCustomClassGroup(g: { yearLevel: string; classGroup: string }): void {
+  protected removeCustomClassGroup(g: {
+    yearLevel: string;
+    classGroup: string;
+  }): void {
     this.advisorCustomClassGroups = this.advisorCustomClassGroups.filter(
-      (item) => !(item.yearLevel === g.yearLevel && item.classGroup === g.classGroup),
+      (item) =>
+        !(item.yearLevel === g.yearLevel && item.classGroup === g.classGroup),
     );
     this.saveCustomClassGroups();
-    if (this.selectedClassGroupFilter === `custom:${g.yearLevel}|${g.classGroup}`) {
+    if (
+      this.selectedClassGroupFilter === `custom:${g.yearLevel}|${g.classGroup}`
+    ) {
       this.selectedClassGroupFilter = 'my_students';
     }
     this.notifications.success('ลบกลุ่ม/ห้องเรียนสำเร็จ', 'ลบกลุ่ม');
@@ -4812,7 +5429,12 @@ export class App {
       groupsMap.get(key)!.push(student);
     }
 
-    const result: { label: string; yearLevel: string; classGroup: string; students: User[] }[] = [];
+    const result: {
+      label: string;
+      yearLevel: string;
+      classGroup: string;
+      students: User[];
+    }[] = [];
     groupsMap.forEach((students, key) => {
       const firstStu = students[0];
       result.push({
@@ -4855,7 +5477,9 @@ export class App {
     const myStudents = this.users.filter(
       (u) =>
         u.role === 'student' &&
-        (u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id),
+        (u.advisorIds
+          ? u.advisorIds.includes(user.id)
+          : u.advisorId === user.id),
     );
 
     let base: User[];
@@ -4872,7 +5496,9 @@ export class App {
       );
     } else {
       base = sameSchoolStudents.filter(
-        (s) => `${s.yearLevel || ''}${s.classGroup || ''}` === this.selectedClassGroupFilter,
+        (s) =>
+          `${s.yearLevel || ''}${s.classGroup || ''}` ===
+          this.selectedClassGroupFilter,
       );
     }
 
@@ -4900,7 +5526,9 @@ export class App {
   protected async setOnlineStatus(status: string): Promise<void> {
     if (!this.currentUserId) return;
     try {
-      await this.data.updateUser(this.currentUserId, { onlineStatus: status } as any);
+      await this.data.updateUser(this.currentUserId, {
+        onlineStatus: status,
+      } as any);
       this.notifications.success(
         `เปลี่ยนสถานะเป็น ${status === 'online' ? 'Online' : status === 'AFK' ? 'AFK' : 'Offline'} สำเร็จ`,
         'สถานะออนไลน์',
@@ -4915,8 +5543,12 @@ export class App {
   protected showStudentDetail(student: User): void {
     this.selectedStudentForDetail = student;
     this.studentDetailInternship =
-      this.internships.find((i) => i.studentId === student.id && i.status === 'active') || null;
-    this.studentDetailAttendances = this.attendances.filter((a) => a.studentId === student.id);
+      this.internships.find(
+        (i) => i.studentId === student.id && i.status === 'active',
+      ) || null;
+    this.studentDetailAttendances = this.attendances.filter(
+      (a) => a.studentId === student.id,
+    );
     const studentInternshipIds = this.internships
       .filter((i) => i.studentId === student.id)
       .map((i) => i.id);
@@ -4940,17 +5572,22 @@ export class App {
     return this.attendances.filter(
       (a) =>
         a.studentId === studentId &&
-        (a.status === 'present' || a.status === 'late' || a.status === 'early_leave'),
+        (a.status === 'present' ||
+          a.status === 'late' ||
+          a.status === 'early_leave'),
     ).length;
   }
 
   protected getStudentLateDaysCount(studentId: number): number {
-    return this.attendances.filter((a) => a.studentId === studentId && a.status === 'late').length;
+    return this.attendances.filter(
+      (a) => a.studentId === studentId && a.status === 'late',
+    ).length;
   }
 
   protected getStudentAbsentDaysCount(studentId: number): number {
-    return this.attendances.filter((a) => a.studentId === studentId && a.status === 'absent')
-      .length;
+    return this.attendances.filter(
+      (a) => a.studentId === studentId && a.status === 'absent',
+    ).length;
   }
 
   protected getStudentTotalHours(studentId: number): number {
@@ -4978,13 +5615,17 @@ export class App {
       (u) =>
         u.role === 'student' &&
         this.isSameSchool(u.school, user.school) &&
-        !(u.advisorIds ? u.advisorIds.includes(user.id) : u.advisorId === user.id),
+        !(u.advisorIds
+          ? u.advisorIds.includes(user.id)
+          : u.advisorId === user.id),
     );
   }
 
   protected getSelectedStudentInfo(): User | undefined {
     if (!this.selectedStudentToAssignId) return undefined;
-    return this.users.find((u) => u.id === Number(this.selectedStudentToAssignId));
+    return this.users.find(
+      (u) => u.id === Number(this.selectedStudentToAssignId),
+    );
   }
 
   protected assignSelectedStudent(): void {
@@ -4995,7 +5636,10 @@ export class App {
 
   protected hasAdvisor(student: User | undefined): boolean {
     if (!student) return false;
-    return !!(student.advisorId || (student.advisorIds && student.advisorIds.length > 0));
+    return !!(
+      student.advisorId ||
+      (student.advisorIds && student.advisorIds.length > 0)
+    );
   }
 
   protected async completeInternship(internshipId: number): Promise<void> {
@@ -5013,7 +5657,10 @@ export class App {
     if (result.isConfirmed) {
       try {
         await this.data.updateInternshipStatus(internshipId, 'completed');
-        this.notifications.success('บันทึกการเสร็จสิ้นการฝึกงานสำเร็จ', 'สำเร็จ');
+        this.notifications.success(
+          'บันทึกการเสร็จสิ้นการฝึกงานสำเร็จ',
+          'สำเร็จ',
+        );
         this.closeInternshipDetail();
       } catch (err: any) {
         this.notifications.error(
@@ -5057,7 +5704,10 @@ export class App {
       let ids: number[] = stored ? JSON.parse(stored) : [];
       if (!ids.includes(appId)) {
         ids.push(appId);
-        window.localStorage.setItem('dismissed_application_ids', JSON.stringify(ids));
+        window.localStorage.setItem(
+          'dismissed_application_ids',
+          JSON.stringify(ids),
+        );
         this.notifications.success('ซ่อนใบสมัครออกจากรายการแล้ว', 'สำเร็จ');
         this.cdr.markForCheck();
       }
@@ -5073,7 +5723,10 @@ export class App {
         (app) => app.status === 'approved' || app.status === 'rejected',
       );
       if (processedVisible.length === 0) {
-        this.notifications.info('ไม่มีใบสมัครที่ดำเนินการแล้วให้ล้าง', 'แจ้งเตือน');
+        this.notifications.info(
+          'ไม่มีใบสมัครที่ดำเนินการแล้วให้ล้าง',
+          'แจ้งเตือน',
+        );
         return;
       }
 
@@ -5086,8 +5739,14 @@ export class App {
         }
       });
 
-      window.localStorage.setItem('dismissed_application_ids', JSON.stringify(ids));
-      this.notifications.success('ล้างรายการใบสมัครที่ดำเนินการแล้วทั้งหมดสำเร็จ', 'สำเร็จ');
+      window.localStorage.setItem(
+        'dismissed_application_ids',
+        JSON.stringify(ids),
+      );
+      this.notifications.success(
+        'ล้างรายการใบสมัครที่ดำเนินการแล้วทั้งหมดสำเร็จ',
+        'สำเร็จ',
+      );
       this.cdr.markForCheck();
     } catch (e) {
       console.error(e);
@@ -5101,8 +5760,14 @@ export class App {
       let ids: number[] = stored ? JSON.parse(stored) : [];
       if (!ids.includes(internshipId)) {
         ids.push(internshipId);
-        window.localStorage.setItem('dismissed_internship_ids', JSON.stringify(ids));
-        this.notifications.success('ซ่อนประวัติการฝึกงานออกจากรายการแล้ว', 'สำเร็จ');
+        window.localStorage.setItem(
+          'dismissed_internship_ids',
+          JSON.stringify(ids),
+        );
+        this.notifications.success(
+          'ซ่อนประวัติการฝึกงานออกจากรายการแล้ว',
+          'สำเร็จ',
+        );
         this.cdr.markForCheck();
       }
     } catch (e) {
@@ -5130,7 +5795,10 @@ export class App {
     return err.message || String(err);
   }
 
-  protected getFileNameFromUrl(url: string, defaultName = 'document.pdf'): string {
+  protected getFileNameFromUrl(
+    url: string,
+    defaultName = 'document.pdf',
+  ): string {
     if (!url) return defaultName;
     try {
       if (url.startsWith('/api/uploads/')) {
@@ -5158,7 +5826,8 @@ export class App {
     if (!filePath) return 'javascript:void(0)';
 
     const isMock =
-      filePath.includes('drive.google.com/file/d/mock_') || filePath.startsWith('mock_');
+      filePath.includes('drive.google.com/file/d/mock_') ||
+      filePath.startsWith('mock_');
     if (isMock) {
       const filename = this.getFileNameFromUrl(filePath);
       return `/api/uploads/${filename}`;
@@ -5183,7 +5852,10 @@ export class App {
 
   protected async addCompanyFromView(): Promise<void> {
     if (!this.newCompanyName.trim()) {
-      this.notifications.warning('กรุณาระบุชื่อสถานประกอบการ', 'ข้อมูลไม่ครบถ้วน');
+      this.notifications.warning(
+        'กรุณาระบุชื่อสถานประกอบการ',
+        'ข้อมูลไม่ครบถ้วน',
+      );
       return;
     }
     const res = await this.data.addCompany(
@@ -5210,7 +5882,9 @@ export class App {
   protected getFilteredCompanies(): any[] {
     const q = this.compSchoolSearch.toLowerCase().trim();
     if (!q) return this.data.companies;
-    return this.data.companies.filter((c) => c.companyName.toLowerCase().includes(q));
+    return this.data.companies.filter((c) =>
+      c.companyName.toLowerCase().includes(q),
+    );
   }
 
   // Ticket system methods
@@ -5238,13 +5912,18 @@ export class App {
 
     if (this.data.api.apiEnabled()) {
       try {
-        const res = await firstValueFrom(this.data.api.getTicketById(ticket.id));
+        const res = await firstValueFrom(
+          this.data.api.getTicketById(ticket.id),
+        );
         if (res) {
           this.selectedTicket = res.ticket;
           this.selectedTicketReplies = res.replies || [];
         }
       } catch (err) {
-        this.notifications.error('ดึงข้อมูลคำตอบของคำร้องช่วยเหลือล้มเหลว', 'เกิดข้อผิดพลาด');
+        this.notifications.error(
+          'ดึงข้อมูลคำตอบของคำร้องช่วยเหลือล้มเหลว',
+          'เกิดข้อผิดพลาด',
+        );
       } finally {
         this.ticketDetailLoading = false;
       }
@@ -5257,7 +5936,8 @@ export class App {
           user_id: 9999,
           user_name: 'ฝ่ายดูแลระบบ (Support)',
           user_role: 'admin',
-          message: 'สวัสดีค่ะ ได้รับเรื่องแล้วนะคะ ทางทีมงานกำลังเร่งตรวจสอบให้ค่ะ',
+          message:
+            'สวัสดีค่ะ ได้รับเรื่องแล้วนะคะ ทางทีมงานกำลังเร่งตรวจสอบให้ค่ะ',
           created_at: new Date(
             new Date(ticket.created_at).getTime() + 30 * 60 * 1000,
           ).toISOString(),
@@ -5269,7 +5949,10 @@ export class App {
 
   protected async createSupportTicket(): Promise<void> {
     if (!this.newTicketTitle.trim() || !this.newTicketDesc.trim()) {
-      this.notifications.warning('กรุณาระบุหัวข้อและรายละเอียดปัญหา', 'ข้อมูลไม่ครบถ้วน');
+      this.notifications.warning(
+        'กรุณาระบุหัวข้อและรายละเอียดปัญหา',
+        'ข้อมูลไม่ครบถ้วน',
+      );
       return;
     }
 
@@ -5284,7 +5967,10 @@ export class App {
     if (res && res.error) {
       this.notifications.error(res.error, 'สร้างคำร้องช่วยเหลือล้มเหลว');
     } else {
-      this.notifications.success('ส่งเรื่องแจ้งปัญหาเรียบร้อยแล้ว', 'ส่งสำเร็จ');
+      this.notifications.success(
+        'ส่งเรื่องแจ้งปัญหาเรียบร้อยแล้ว',
+        'ส่งสำเร็จ',
+      );
       this.newTicketTitle = '';
       this.newTicketDesc = '';
     }
@@ -5319,7 +6005,10 @@ export class App {
       this.selectedTicketReplies = [...this.selectedTicketReplies, newReply];
 
       // Update local ticket status in mock mode if user is not admin and ticket was resolved
-      if (this.currentUser?.role !== 'admin' && this.selectedTicket.status === 'resolved') {
+      if (
+        this.currentUser?.role !== 'admin' &&
+        this.selectedTicket.status === 'resolved'
+      ) {
         this.selectedTicket.status = 'open';
       }
 
@@ -5333,12 +6022,20 @@ export class App {
     }
   }
 
-  protected async changeTicketStatus(status: 'open' | 'resolved' | 'closed'): Promise<void> {
+  protected async changeTicketStatus(
+    status: 'open' | 'resolved' | 'closed',
+  ): Promise<void> {
     if (!this.selectedTicket) return;
 
-    const res = await this.data.updateTicketStatus(this.selectedTicket.id, status);
+    const res = await this.data.updateTicketStatus(
+      this.selectedTicket.id,
+      status,
+    );
     if (res && res.error) {
-      this.notifications.error(res.error, 'ปรับปรุงสถานะคำร้องช่วยเหลือล้มเหลว');
+      this.notifications.error(
+        res.error,
+        'ปรับปรุงสถานะคำร้องช่วยเหลือล้มเหลว',
+      );
     } else {
       this.selectedTicket.status = status;
       this.notifications.success(
@@ -5373,7 +6070,9 @@ export class App {
         attribution: '© OpenStreetMap contributors',
       }).addTo(this.leafletMap);
 
-      this.leafletMarker = L.marker([lat, lng], { draggable: true }).addTo(this.leafletMap);
+      this.leafletMarker = L.marker([lat, lng], { draggable: true }).addTo(
+        this.leafletMap,
+      );
 
       const radius = Number(this.profileDraft.checkRadius) || 200;
       this.leafletCircle = L.circle([lat, lng], {
@@ -5426,7 +6125,10 @@ export class App {
 
   protected async searchLocationOnMap(query: string): Promise<void> {
     if (!query.trim()) {
-      this.notifications.warning('กรุณาระบุสถานที่หรือที่อยู่ต้องการค้นหา', 'ค้นหาตำแหน่ง');
+      this.notifications.warning(
+        'กรุณาระบุสถานที่หรือที่อยู่ต้องการค้นหา',
+        'ค้นหาตำแหน่ง',
+      );
       return;
     }
 
@@ -5465,7 +6167,10 @@ export class App {
           this.leafletMap.setView(latlng, 15);
         }
 
-        this.notifications.success(`ค้นพบตำแหน่ง: ${first.display_name}`, 'ค้นหาตำแหน่ง');
+        this.notifications.success(
+          `ค้นพบตำแหน่ง: ${first.display_name}`,
+          'ค้นหาตำแหน่ง',
+        );
       } else {
         Swal.fire({
           title: 'ไม่พบตำแหน่ง',
@@ -5477,7 +6182,10 @@ export class App {
       }
     } catch (err: any) {
       Swal.close();
-      this.notifications.error(`เกิดข้อผิดพลาดในการค้นหา: ${err.message || err}`, 'ค้นหาตำแหน่ง');
+      this.notifications.error(
+        `เกิดข้อผิดพลาดในการค้นหา: ${err.message || err}`,
+        'ค้นหาตำแหน่ง',
+      );
     }
   }
 
@@ -5496,7 +6204,10 @@ export class App {
       return;
     }
     if (this.editingTemplate.criteria.length === 0) {
-      this.notifications.warning('กรุณาเพิ่มหัวข้อประเมินอย่างน้อย 1 รายการ', 'แบบประเมิน');
+      this.notifications.warning(
+        'กรุณาเพิ่มหัวข้อประเมินอย่างน้อย 1 รายการ',
+        'แบบประเมิน',
+      );
       return;
     }
 
@@ -5535,7 +6246,10 @@ export class App {
       this.editingTemplate = { name: '', criteria: [] };
       await this.loadEvaluationTemplates();
     } catch (e: any) {
-      this.notifications.error(`บันทึกแบบประเมินล้มเหลว: ${e.message || e}`, 'แบบประเมิน');
+      this.notifications.error(
+        `บันทึกแบบประเมินล้มเหลว: ${e.message || e}`,
+        'แบบประเมิน',
+      );
     }
   }
 
@@ -5572,7 +6286,10 @@ export class App {
         this.rubricScores = {};
       }
     } catch (e: any) {
-      this.notifications.error(`ลบแบบประเมินล้มเหลว: ${e.message || e}`, 'แบบประเมิน');
+      this.notifications.error(
+        `ลบแบบประเมินล้มเหลว: ${e.message || e}`,
+        'แบบประเมิน',
+      );
     }
   }
 
@@ -5597,7 +6314,9 @@ export class App {
     this.selectedTemplateId = templateId;
     this.rubricScores = {};
     if (templateId) {
-      const t = this.evaluationTemplates.find((tmpl) => tmpl.id === Number(templateId));
+      const t = this.evaluationTemplates.find(
+        (tmpl) => tmpl.id === Number(templateId),
+      );
       if (t) {
         t.criteria.forEach((c: any) => {
           this.rubricScores[c.id] = 0; // default to 0, not maxScore
@@ -5643,7 +6362,10 @@ export class App {
   protected async submitRubricEvaluation(): Promise<void> {
     const user = this.currentUser;
     if (!user || !this.selectedEvaluationInternship) {
-      this.notifications.warning('กรุณาเลือกนักศึกษาที่ต้องการประเมิน', 'ประเมินผล');
+      this.notifications.warning(
+        'กรุณาเลือกนักศึกษาที่ต้องการประเมิน',
+        'ประเมินผล',
+      );
       return;
     }
 
@@ -5661,7 +6383,10 @@ export class App {
         (tmpl) => tmpl.id === Number(this.selectedTemplateId),
       );
       if (!t) {
-        this.notifications.warning('ไม่พบแบบประเมินที่เลือก กรุณาเลือกใหม่อีกครั้ง', 'ประเมินผล');
+        this.notifications.warning(
+          'ไม่พบแบบประเมินที่เลือก กรุณาเลือกใหม่อีกครั้ง',
+          'ประเมินผล',
+        );
         return;
       }
       for (const c of t.criteria) {
@@ -5674,7 +6399,10 @@ export class App {
           return;
         }
         if (val < 0) {
-          this.notifications.warning(`คะแนนในหัวข้อ "${c.label}" ต้องไม่น้อยกว่า 0`, 'ประเมินผล');
+          this.notifications.warning(
+            `คะแนนในหัวข้อ "${c.label}" ต้องไม่น้อยกว่า 0`,
+            'ประเมินผล',
+          );
           return;
         }
         totalScore += val;
@@ -5687,11 +6415,17 @@ export class App {
     } else {
       totalScore = Number(this.evaluationScore) || 0;
       if (totalScore > 100) {
-        this.notifications.warning('คะแนนรวมดิบต้องไม่เกิน 100 คะแนน', 'ประเมินผล');
+        this.notifications.warning(
+          'คะแนนรวมดิบต้องไม่เกิน 100 คะแนน',
+          'ประเมินผล',
+        );
         return;
       }
       if (totalScore < 0) {
-        this.notifications.warning('คะแนนรวมดิบต้องไม่น้อยกว่า 0 คะแนน', 'ประเมินผล');
+        this.notifications.warning(
+          'คะแนนรวมดิบต้องไม่น้อยกว่า 0 คะแนน',
+          'ประเมินผล',
+        );
         return;
       }
     }
@@ -5714,22 +6448,33 @@ export class App {
       this.evaluationScore = 85;
       this.selectedTemplateId = null;
       this.rubricScores = {};
-      this.notifications.success(`บันทึกการประเมิน ${student} คะแนน ${totalScore}`, 'ประเมินผล');
+      this.notifications.success(
+        `บันทึกการประเมิน ${student} คะแนน ${totalScore}`,
+        'ประเมินผล',
+      );
       window.location.reload();
     } catch (err: any) {
-      this.notifications.error(`เกิดข้อผิดพลาด: ${err.message || err}`, 'ประเมินผล');
+      this.notifications.error(
+        `เกิดข้อผิดพลาด: ${err.message || err}`,
+        'ประเมินผล',
+      );
     }
   }
 
   protected getTemplateCriteria(templateId: any): any[] {
     if (!templateId) return [];
-    const t = this.evaluationTemplates.find((tmpl) => tmpl.id === Number(templateId));
+    const t = this.evaluationTemplates.find(
+      (tmpl) => tmpl.id === Number(templateId),
+    );
     return t ? t.criteria : [];
   }
 
   protected getEvaluationMaxScore(evaluation: Evaluation): number {
     if (evaluation.scores && evaluation.scores.length > 0) {
-      return evaluation.scores.reduce((sum: number, s: any) => sum + (s.maxScore || 0), 0);
+      return evaluation.scores.reduce(
+        (sum: number, s: any) => sum + (s.maxScore || 0),
+        0,
+      );
     }
     return 100;
   }
@@ -5760,7 +6505,9 @@ export class App {
 
   protected get totalDatabaseSizeKB(): number {
     if (!this.adminTables || this.adminTables.length === 0) return 0;
-    return this.adminTables.reduce((acc: number, t: any) => acc + (t.size_kb || 0), 0);
+    return this.adminTables.reduce(
+      (acc: number, t: any) => acc + (t.size_kb || 0),
+      0,
+    );
   }
-
 }

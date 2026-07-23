@@ -22,7 +22,10 @@ export class NotificationService {
 
   private saveToStorage(): void {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('intern-manager-notifications-v1', JSON.stringify(this.items));
+      localStorage.setItem(
+        'intern-manager-notifications-v1',
+        JSON.stringify(this.items),
+      );
     }
   }
 
@@ -84,7 +87,7 @@ export class NotificationService {
     type: NotificationType = 'info',
     title?: string,
     durationMs = 3000,
-    showPopup: boolean = true
+    showPopup: boolean = true,
   ): void {
     const itemTitle = title || this.defaultTitle(type);
 
@@ -106,7 +109,10 @@ export class NotificationService {
 
     // Trigger native desktop/mobile notification if supported, permission granted, and tab backgrounded
     if (showPopup) {
-      if (this.hasNotificationSupport() && Notification.permission === 'granted') {
+      if (
+        this.hasNotificationSupport() &&
+        Notification.permission === 'granted'
+      ) {
         try {
           new Notification(itemTitle, {
             body: message,
@@ -125,12 +131,14 @@ export class NotificationService {
         timer: durationMs,
         timerProgressBar: true,
         customClass: {
-          popup: '!font-sans !bg-white/95 !backdrop-blur-xl !border !border-slate-200/60 !shadow-2xl !rounded-2xl !p-4 !mt-4 !mr-4',
+          popup:
+            '!font-sans !bg-white/95 !backdrop-blur-xl !border !border-slate-200/60 !shadow-2xl !rounded-2xl !p-4 !mt-4 !mr-4',
           title: '!text-slate-900 !font-black !text-sm !mt-1',
           htmlContainer: '!text-slate-500 !font-bold !text-xs !mt-1',
           timerProgressBar: '!bg-blue-600/30',
-          closeButton: '!text-slate-400 hover:!text-slate-700 hover:!bg-slate-100 !rounded-xl !transition-all !mt-2 !mr-2',
-          icon: '!border-0 !scale-75 !m-0 !mr-3'
+          closeButton:
+            '!text-slate-400 hover:!text-slate-700 hover:!bg-slate-100 !rounded-xl !transition-all !mt-2 !mr-2',
+          icon: '!border-0 !scale-75 !m-0 !mr-3',
         },
         didOpen: (toast) => {
           toast.onmouseenter = Swal.stopTimer;

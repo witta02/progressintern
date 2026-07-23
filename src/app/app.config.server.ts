@@ -1,12 +1,17 @@
 import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
-import { provideServerRendering, withRoutes, RenderMode, ServerRoute } from '@angular/ssr';
+import {
+  provideServerRendering,
+  withRoutes,
+  RenderMode,
+  ServerRoute,
+} from '@angular/ssr';
 import { appConfig } from './app.config';
 
 const serverRoutes: ServerRoute[] = [
   {
     path: '**',
-    renderMode: RenderMode.Prerender
-  }
+    renderMode: RenderMode.Prerender,
+  },
 ];
 
 const serverConfig: ApplicationConfig = {

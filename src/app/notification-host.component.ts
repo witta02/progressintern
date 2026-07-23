@@ -29,7 +29,9 @@ import { NotificationService } from './notification.service';
         [class.translate-x-full]="!panelOpen"
       >
         <!-- Header -->
-        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div
+          class="p-6 border-b border-slate-100 flex items-center justify-between"
+        >
           <div class="flex items-center gap-3">
             <h3 class="text-xl font-black text-slate-900">การแจ้งเตือน</h3>
             <span
@@ -117,7 +119,9 @@ import { NotificationService } from './notification.service';
                 ></path>
               </svg>
             </div>
-            <h4 class="text-lg font-black text-slate-900 mb-1">ไม่มีการแจ้งเตือน</h4>
+            <h4 class="text-lg font-black text-slate-900 mb-1">
+              ไม่มีการแจ้งเตือน
+            </h4>
             <p class="text-sm text-slate-400 font-bold max-w-[250px]">
               เมื่อระบบมีประกาศหรือประวัติการทำงานของคุณจะแสดงที่นี่
             </p>
@@ -212,7 +216,9 @@ import { NotificationService } from './notification.service';
                 viewBox="0 0 24 24"
                 stroke-width="2.5"
               >
-                <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <path
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
               </svg>
             </div>
 
@@ -284,7 +290,10 @@ export class NotificationHostComponent {
   async requestPermission(): Promise<void> {
     const granted = await this.notifications.requestPermission();
     if (granted) {
-      this.notifications.success('ขอบคุณที่เปิดการแจ้งเตือนระบบ', 'เปิดการแจ้งเตือนสำเร็จ');
+      this.notifications.success(
+        'ขอบคุณที่เปิดการแจ้งเตือนระบบ',
+        'เปิดการแจ้งเตือนสำเร็จ',
+      );
     } else {
       this.notifications.warning(
         'ไม่สามารถเปิดใช้งานแจ้งเตือนได้ กรุณาตรวจสอบสิทธิ์การตั้งค่าของเบราว์เซอร์',

@@ -21,7 +21,11 @@ export interface RegisterInput {
   contactEmail?: string;
 }
 
-export type ApplicationStatus = 'pending' | 'interview' | 'approved' | 'rejected';
+export type ApplicationStatus =
+  | 'pending'
+  | 'interview'
+  | 'approved'
+  | 'rejected';
 export type JobPostingStatus = 'open' | 'closed';
 export type InternshipStatus = 'active' | 'completed' | 'terminated';
 export type AttendanceStatus = 'present' | 'late' | 'absent' | 'early_leave';
@@ -263,7 +267,12 @@ export interface Assignment {
   updatedAt?: string;
 }
 
-export type SubmissionStatus = 'submitted' | 'late' | 'graded' | 'accepted' | 'ignored';
+export type SubmissionStatus =
+  | 'submitted'
+  | 'late'
+  | 'graded'
+  | 'accepted'
+  | 'ignored';
 
 export interface Submission {
   id: number;
